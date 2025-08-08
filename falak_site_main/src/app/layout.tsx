@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Link from "next/link";
+import "@/env-fallback";
+import ClientProviders from "@/components/ClientProviders";
+import AuthButtons from "@/components/AuthButtons";
+import EnvWarning from "@/components/EnvWarning";
+import { Toaster } from "sonner";
+import NavProgress from "@/components/NavProgress";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,10 +31,27 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ClientProviders>
+          <header className="border-b">
+            <EnvWarning />
+            <nav className="max-w-6xl mx-auto p-4 flex items-center gap-4">
+              <Link href="/" className="font-semibold">Falak</Link>
+              <Link href="/passes">Passes</Link>
+              <Link href="/cultural_events">Cultural</Link>
+              <Link href="/sports_events">Sports</Link>
+              <Link href="/tickets">Tickets</Link>
+              <div className="ml-auto flex items-center gap-3">
+                <Link href="/profile">Profile</Link>
+                <Link href="/admin_manage">Admin</Link>
+                <AuthButtons />
+              </div>
+            </nav>
+          </header>
+          <main>{children}</main>
+          <NavProgress />
+          <Toaster richColors position="top-center" />
+        </ClientProviders>
       </body>
     </html>
   );
