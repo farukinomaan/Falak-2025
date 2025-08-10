@@ -1,5 +1,5 @@
 //import { getAnalytics } from "firebase/analytics";
-import { initializeApp } from "firebase/app";
+import { initializeApp,getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
@@ -12,8 +12,9 @@ const firebaseConfig = {
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length == 0? initializeApp(firebaseConfig) : getApp();    // Helps us to not create multiple firebaase instances,which may cause disparancies, it pretty much like prisma configuration.
 //const analytics = getAnalytics(app);
 const auth = getAuth(app);
+auth.useDeviceLanguage();
 
 export { auth };
