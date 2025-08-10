@@ -1,0 +1,177 @@
+You are an engineering agent working in a Next.js 14 App Router codebase located at `falak_site_main/`. Implement the Falak cultural fest website with Next.js + NextAuth + Supabase, using mock data to power UI initially. Optimize for clear structure, scalability to ~10k users, and easy future migration to Supabase tables and edge functions.
+
+High-level goals
+- Create pages: `/` (home), `/passes`, `/cultural_events`, `/cultural_events/[category]`, `/cultural_events/[category]/[slug]`, `/sports_events`, `/sports_events/[category]`, `/sports_events/[category]/[slug]`, `/tickets`, `/profile`, `/admin_manage`.
+- Use mock data from `src/lib/mock_data` for categories, events, passes, and sample users.
+- Implement a tickets page form with: username, phone number, non_mahe_student checkbox, clg_registration_number (conditionally hidden when non_mahe_student is checked), category dropdown (e.g., "pro-show-pass not generated", "event-pass not generated", "other"), and a large "problem" textarea.
+- Wire NextAuth scaffold (placeholders only; user will add secrets later) and protect `/profile` and `/admin_manage`.
+- Prefer Server Actions for simple backend tasks (e.g., submitting tickets); later we can swap to Supabase Edge Functions or Vercel functions.
+
+Assumptions
+- Directory root for app code: `falak_site_main/src`.
+- Use TypeScript.
+- For the tickets form: Treat `non_mahe_student` as the single checkbox. If checked (true), hide `clg_registration_number`; if unchecked (MAHE student), show the field.
+- Styling use shadcn/ui as a UI library
+
+Tasks
+
+1) Dependencies
+- Add these packages (latest stable):
+  - next-auth
+  - @supabase/supabase-js
+  - zod
+  - shadcn/ui
+- Do not configure OAuth providers yet; just scaffold NextAuth with placeholders.I will add Outh secrets for NextAuth later 
+
+2) Environment and config
+- Create `falak_site_main/.env.local.example` with placeholders:
+  NEXTAUTH_URL=
+  NEXTAUTH_SECRET=
+  SUPABASE_URL=
+  SUPABASE_ANON_KEY=
+  SUPABASE_SERVICE_ROLE_KEY=
+- Ensure `falak_site_main/next.config.ts` is compatible with App Router defaults.
+- Do not commit `.env.local`.
+
+3) Lib setup
+- Create `falak_site_main/src/lib/types.ts` with strong types:
+  - EventCategory, SubCategory, Event, Pass, TicketCategory, SupportTicketInput, UserProfile.
+- Create `falak_site_main/src/lib/mock_data/` with:
+  - `categories.ts`: cultural and sports top-level categories, each with subcategories.
+  - `events.ts`: events keyed by category and subcategory, with fields: id, title, slug, description, venue, startDate, endDate, price, capacity, image, tags, isRegistrationOpen.
+  - `passes.ts`: pass options (e.g., Pro-Show, All-Access, Day Pass) with ids, titles, price, description, perks, slug.
+- Create `falak_site_main/src/lib/supabase/client.ts` and `falak_site_main/src/lib/supabase/server.ts`:
+  - Client and server helpers using `@supabase/supabase-js`, reading env vars; if envs missing, export clients that throw with clear messages to avoid silent failures during local mock mode.
+
+4) Auth scaffold
+- Create `falak_site_main/src/lib/auth.ts`:
+  - Export `authOptions` for NextAuth with Credentials provider placeholder (no real login, accept any non-empty email for now; mark clearly as placeholder).
+  - Prepare room for `@auth/supabase-adapter` integration later (comment TODOs).
+- Create `falak_site_main/src/app/api/auth/[...nextauth]/route.ts` with NextAuth handler using `authOptions`.
+- Create `falak_site_main/src/middleware.ts` protecting `/profile` and `/admin_manage` routes; redirect unauthenticated users to `/`.
+- In `falak_site_main/src/app/layout.tsx`, add `SessionProvider` setup via `next-auth/react`.
+
+5) Pages and routing
+- Ensure these routes exist with minimal but complete pages that render from mock data and link together:
+
+  - `/` (`falak_site_main/src/app/page.tsx`): Home with links to passes, cultural, sports, tickets, profile.
+  - `/passes`:
+    - List passes from `mock_data/passes.ts`.
+    - Each pass card shows title, price, short desc, and "Buy Now" (link to a placeholder checkout or log).
+  - `/cultural_events`:
+    - List cultural categories and subcategories; link to `/cultural_events/[category]`.
+  - `/cultural_events/[category]`:
+    - Show subcategories for the category; list events grid; link each to `/cultural_events/[category]/[slug]`.
+  - `/cultural_events/[category]/[slug]`:
+    - Show event details by slug (from mock data), and a "Buy Now" button.
+  - `/sports_events`: Same structure as cultural.
+  - `/sports_events/[category]`: Same as cultural category.
+  - `/sports_events/[category]/[slug]`: Same as cultural slug page.
+  - `/tickets`:
+    - Form fields:
+      - username (text, required)
+      - phone (string, basic validation)
+      - non_mahe_student (checkbox)
+      - clg_registration_number (text; show only when non_mahe_student is unchecked)
+      - category (select; options: "pro-show-pass not generated", "event-pass not generated", "other")
+      - problem (textarea, required, min length)
+    - Validate with `zod`.
+    - Implement server action `submitSupportTicket` in `falak_site_main/src/app/tickets/actions.ts`:
+      - Accept validated data.
+      - If Supabase envs exist, insert into table `support_tickets`.
+      - If not, simulate success (console log) and return success.
+    - Show success/error UI states.
+  - `/profile`:
+    - Protected page; show mock user profile (from session or fallback) and their purchased passes/events from mock data.
+  - `/admin_manage`:
+    - Protected page; basic table showing counts (events by category, total passes, support tickets count if Supabase available; otherwise mock).
+    - Provide links to category/event pages.
+
+- For dynamic routes, load data based on URL segments using the mock datasets. Use `notFound()` for invalid slugs.
+
+6) Data models (mock and future Supabase)
+- Types in `types.ts` (example shapes):
+  - EventCategory: { id: string; slug: string; title: string; kind: 'cultural'|'sports'; subcategories: SubCategory[] }
+  - SubCategory: { id: string; slug: string; title: string }
+  - Event: { id: string; slug: string; title: string; description: string; categorySlug: string; subCategorySlug: string; kind: 'cultural'|'sports'; venue: string; startDate: string; endDate?: string; image?: string; price?: number; capacity?: number; tags?: string[]; isRegistrationOpen: boolean }
+  - Pass: { id: string; slug: string; title: string; description: string; price: number; perks: string[] }
+  - TicketCategory: 'pro-show-pass not generated' | 'event-pass not generated' | 'other'
+  - SupportTicketInput: { username: string; phone: string; non_mahe_student: boolean; clg_registration_number?: string; category: TicketCategory; problem: string }
+- Place initial sample data covering at least:
+  - Cultural: music, dance, drama; 2–3 events each.
+  - Sports: football, basketball, athletics; 2–3 events each.
+  - Passes: pro-show, event, all-access.
+
+7) Server action and (optional) DB table
+- `submitSupportTicket`:
+  - Validate input with zod.
+  - Try Supabase insert into table `support_tickets` with columns:
+    - id (uuid default gen_random_uuid())
+    - created_at (timestamp)
+    - username (text)
+    - phone (text)
+    - non_mahe_student (boolean)
+    - clg_registration_number (text nullable)
+    - category (text)
+    - problem (text)
+  - If Supabase not configured, resolve with mocked success.
+- Provide a SQL snippet in a comment block inside `actions.ts` for later migration:
+  -- create extension if not exists "pgcrypto";
+  create table if not exists public.support_tickets (
+    id uuid primary key default gen_random_uuid(),
+    created_at timestamp with time zone default now(),
+    username text not null,
+    phone text not null,
+    non_mahe_student boolean not null default false,
+    clg_registration_number text,
+    category text not null check (category in ('pro-show-pass not generated','event-pass not generated','other')),
+    problem text not null
+  );
+  alter table public.support_tickets enable row level security;
+  -- TODO: Add RLS policies for insert by authenticated and anonymous if needed.
+
+8) Auth protection
+- `middleware.ts`: protect `/profile` and `/admin_manage`. If unauthenticated, redirect to `/`.
+- On the nav, show "Sign In" / "Sign Out" using NextAuth client helpers.
+
+9) Performance
+- For event and category pages, use static generation with revalidation:
+  - Export `generateStaticParams` for `[category]` and `[slug]` based on mock data.
+  - Export `revalidate = 60` on listing pages. Keep `dynamicParams = false` where applicable.
+- Keep images in `public/` and use `next/image`.
+- Avoid blocking client bundles with heavy libs.
+
+10) Navigation and layout
+- Minimal header/footer in `src/app/layout.tsx`:
+  - Links: Home, Passes, Cultural, Sports, Tickets, Profile, Admin.
+- Ensure active route highlighting.
+
+11) Acceptance criteria
+- All routes work and render from mock data.
+- `/tickets` form validates, conditionally shows `clg_registration_number`, and submits via server action with visible success/error states.
+- `/profile` and `/admin_manage` require auth; placeholder Credentials sign-in flow works locally with no secrets.
+- Clean TypeScript, no type errors.
+- No runtime errors if Supabase envs are absent; server action gracefully mocks.
+
+12) File tree (expected new/updated)
+- `src/lib/types.ts`
+- `src/lib/mock_data/categories.ts`
+- `src/lib/mock_data/events.ts`
+- `src/lib/mock_data/passes.ts`
+- `src/lib/supabase/client.ts`
+- `src/lib/supabase/server.ts`
+- `src/lib/auth.ts`
+- `src/middleware.ts`
+- `src/app/(routes created as above)/...`
+- `src/app/tickets/actions.ts`
+- `src/app/api/auth/[...nextauth]/route.ts`
+- `.env.local.example`
+
+Implementation notes
+- Keep components simple and accessible.
+- Use Tailwind with a good design.
+- Add TODO comments where future Supabase integration or policies will slot in.
+
+Deliverables
+- Commit all created files and edits with clear messages.
+- Provide a brief README section in `falak_site_main/README.md` describing routes, mock data, how to run locally, and how to configure env secrets later.

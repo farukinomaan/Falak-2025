@@ -10,7 +10,8 @@ export default function AuthButtons() {
       <button
         className="text-sm"
         onClick={async () => {
-          await signOut({ callbackUrl: "/" });
+          await signOut({ redirect: false });
+          window.location.href = "/"; 
           toast.success("Signed out");
         }}
       >
@@ -22,13 +23,14 @@ export default function AuthButtons() {
     <button
       className="text-sm"
       onClick={async () => {
-        const res = await signIn(undefined, { callbackUrl: "/" });
-        if (res === undefined) {
-          toast.info("Sign-in flow opened");
-        }
+        //  const res = await signIn("google", { callbackUrl: "/" });
+        await signIn("google", { callbackUrl: "/" });
+        // if (res === undefined) {
+        //   toast.info("Sign-in flow opened");
+        // }
       }}
     >
-      Sign in
+      Sign in with Google
     </button>
   );
 }
