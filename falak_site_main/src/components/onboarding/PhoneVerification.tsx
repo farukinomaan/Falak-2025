@@ -4,6 +4,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { auth } from "@/lib/firebase/firebase";
 import { signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
+import { Button } from "@/components/ui/button";
+import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
+import { Input } from "@/components/ui/input";
+import { RecaptchaVerifier } from "firebase/auth/web-extension";
 
 interface PhoneVerificationProps {
   phone: string;
@@ -15,6 +19,7 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
   const [otp, setOtp] = useState("");
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [recaptchaVerifier,setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null)
   const [confirmed, setConfirmed] = useState<ConfirmationResult | null>(null);
   const [verified, setVerified] = useState(false);
 
@@ -58,42 +63,41 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
       <div>
         <label className="block text-sm font-medium">Phone (+91...)</label>
         <div className="flex gap-2">
-          <input
-            className="flex-1 border rounded px-3 py-2"
+          <Input
+            className="flex-1"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+91XXXXXXXXXX"
             required
           />
-          <button
-            className="px-3 py-2 rounded bg-black text-white disabled:opacity-50"
-            onClick={handleSendOtp}
-            disabled={sending}
-            type="button"
-          >
+          <Button onClick={handleSendOtp} disabled={sending} type="button" variant="outline">
             {sending ? "Sending..." : "Send OTP"}
-          </button>
+          </Button>
         </div>
       </div>
 
       {confirmed && !verified && (
-        <div>
+        <div className="space-y-2">
           <label className="block text-sm font-medium">Enter OTP</label>
-          <div className="flex gap-2">
-            <input
-              className="flex-1 border rounded px-3 py-2"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              placeholder="6-digit code"
-            />
-            <button
-              className="px-3 py-2 rounded bg-black text-white disabled:opacity-50"
-              onClick={handleVerifyOtp}
-              disabled={verifying}
-              type="button"
-            >
+          <div className="flex justify-between">
+            <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+                <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                </InputOTPGroup>
+
+                <InputOTPSeparator></InputOTPSeparator>
+                
+                <InputOTPGroup>
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                </InputOTPGroup>
+            </InputOTP>
+            <Button onClick={handleVerifyOtp} disabled={verifying} type="button">
               {verifying ? "Verifying..." : "Verify"}
-            </button>
+            </Button>
           </div>
         </div>
       )}

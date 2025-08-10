@@ -8,6 +8,7 @@ import { completeOnboarding } from "./actions";
 import { RegistrationForm } from "@/components/onboarding/RegistrationForm";
 import { PhoneVerification } from "@/components/onboarding/PhoneVerification";
 import { useRecaptcha } from "@/components/onboarding/useRecaptcha";
+import { Button } from "@/components/ui/button";
 
 export default function OnboardingPage() {
   const { data: session, status } = useSession();
@@ -62,19 +63,25 @@ export default function OnboardingPage() {
           setRegNo={setRegNo}
         />
         
-        <PhoneVerification
-          phone={phone}
-          setPhone={setPhone}
-          onVerificationComplete={() => setVerified(true)}
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Enter the OTP sent to your phone
+          </label>
+          <PhoneVerification
+            phone={phone}
+            setPhone={setPhone}
+            onVerificationComplete={() => setVerified(true)}
+          />
+        </div>
 
-        <button
+        <Button
           type="submit"
-          className="px-4 py-2 rounded bg-black text-white disabled:opacity-50"
+          variant={"default"}
+          className=" disabled:opacity-50"
           disabled={!verified}
         >
           Proceed
-        </button>
+        </Button>
       </form>
 
       {/* invisible recaptcha host */}
