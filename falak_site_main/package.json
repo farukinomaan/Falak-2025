@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-toast": "1.2.14",
     "@supabase/supabase-js": "2.54.0",
     "clsx": "^2.1.1",

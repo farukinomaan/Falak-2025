@@ -1,0 +1,90 @@
+Here’s a concise walkthrough of the code flow across the relevant files, with extra focus on the lightweight form primitives.
+
+Overall flow
+
+- page.tsx
+
+    -Client component that orchestrates the onboarding.
+Uses next-auth useSession:
+If unauthenticated → signIn("google").
+If authenticated and needsOnboarding is false → redirect to "/".
+Manages local state for name, regNo, phone, and verified.
+Calls useRecaptcha() to ensure window.recaptchaVerifier is ready for Firebase phone auth (host div with id="recaptcha-container" at the bottom).
+On submit:
+Blocks if not verified.
+Calls server action completeOnboarding with name, regNo, phone.
+On success → toast + redirect + refresh.
+PhoneVerification.tsx
+
+Client component that handles phone input, sending OTP, and verifying OTP.
+State:
+otp: typed value for OTP
+sending: disables “Send OTP”
+verifying: disables “Verify”
+confirmed: Firebase ConfirmationResult object from signInWithPhoneNumber
+verified: local success flag
+handleSendOtp:
+Uses window.recaptchaVerifier (created by useRecaptcha) and signInWithPhoneNumber(auth, phone, appVerifier).
+On success, stores ConfirmationResult in confirmed and shows toast.
+handleVerifyOtp:
+Uses confirmed.confirm(otp) to verify code.
+On success, sets verified and calls onVerificationComplete() so the parent can enable “Proceed”.
+Renders:
+Phone input + shadcn Button to “Send OTP”.
+Conditionally renders shadcn InputOTP when confirmed && !verified.
+Uses InputOTP + InputOTPGroup + InputOTPSlot + InputOTPSeparator for a 3-3 split UI.
+“Verify” button calls handleVerifyOtp.
+input-otp.tsx
+
+Shadcn UI wrapper around the input-otp library.
+InputOTP:
+Thin pass-through to OTPInput with containerClassName/className normalization via cn().
+InputOTPGroup:
+Flex container for grouping slots.
+InputOTPSlot:
+Uses OTPInputContext to access the given slot index; pulls char, hasFakeCaret, isActive.
+Renders the char and a blinking caret overlay when hasFakeCaret is true.
+Applies Tailwind-based styles that react to data-active and aria-invalid states.
+InputOTPSeparator:
+Simple separator using MinusIcon.
+Your copy matches the shadcn reference and is fine.
+components/ui/button.tsx
+
+Shadcn Button built with class-variance-authority (cva).
+Defines visual variants (default, destructive, outline, secondary, ghost, link) and sizes (default, sm, lg, icon).
+Supports asChild to render any element via Radix Slot while keeping styles.
+Exports both Button and buttonVariants.
+Otp.tsx
+
+Simple demo component showing how to use InputOTP and Button.
+Local pin state; on submit validates length === 6 and shows a toast with the value.
+app/onboarding/actions.ts (server action)
+
+Validates input with zod (name, regNo, phone).
+Gets server session; aborts if unauthenticated.
+Creates Supabase client with service role key (if env vars present).
+Upserts into users table (onConflict: email) with auth_user_id, email, name, reg_no, phone, provider.
+Returns { ok: true/false, message? } for the client to toast and navigate.
+Form primitives (components/ui/form.tsx) — what’s going on
+
+Purpose:
+These are lightweight, styling-only shadcn-style primitives to structure forms without bringing in react-hook-form/zod.
+They do not create any form context, validation, or field registration. They’re just visual wrappers.
+Components:
+Form: pass-through wrapper that simply renders children.
+FormItem: div with grid/gap and a data-slot="form-item" attribute.
+FormLabel: label with shadcn-like font and size classes.
+FormControl: wrapper div for inputs; no special behavior.
+FormDescription: p tag styled as muted help text.
+FormMessage: p tag styled as error message (text-destructive).
+FormField: another pass-through; no RHF binding.
+Key implications:
+No validation or error wiring is automatic. If you want to show errors, you must pass them in manually and render them where needed (e.g., inside FormMessage).
+No Controller or register. If later you install react-hook-form and zod, these components can be replaced with the official shadcn form primitives that wire to RHF context.
+How everything ties together
+
+The onboarding page composes the RegistrationForm (not shown here) and PhoneVerification.
+PhoneVerification uses the shadcn InputOTP and Button components for a cohesive UI.
+The page uses useRecaptcha to prep window.recaptchaVerifier required by signInWithPhoneNumber.
+After OTP verify, verified flips to true, enabling the main “Proceed” submit, which calls the server action to persist data.
+If you want, I can replace the plain HTML phone input in PhoneVerification with shadcn’s Input for consistency.
