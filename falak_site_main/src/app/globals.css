@@ -111,6 +111,10 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+html {
+  background-color: black;
+}
+
 
 @layer base {
   * {
@@ -119,4 +123,25 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+.hero-bg {
+  @apply bg-black;
+}
+.special-font b {
+  font-family: "Zentry";
+  font-feature-settings: "ss01" on;
+}
+.hero-heading {
+  text-transform: uppercase;
+  font-family: 'Zentry', sans-serif;
+  font-weight: 900;
+  font-size: 3rem;
+}
+.font-orbitron {
+  font-family: 'Orbitron', sans-serif;
+}
+.home-page {
+  background-color: black;
+  min-height: 100vh; 
+  color: white;
 }

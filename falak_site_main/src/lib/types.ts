@@ -39,6 +39,7 @@ export interface PassItem {
   description: string;
   price: number;
   perks: string[];
+  videoSrc: string;
 }
 
 export type TicketCategory =
