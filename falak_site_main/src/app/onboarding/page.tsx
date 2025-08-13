@@ -64,9 +64,9 @@ export default function OnboardingPage() {
         />
         
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          {/* <label className="block text-sm font-medium text-gray-700">
             Enter the OTP sent to your phone
-          </label>
+          </label> */}
           <PhoneVerification
             phone={phone}
             setPhone={setPhone}
