@@ -8,7 +8,6 @@ import AuthButtons from "@/components/AuthButtons";
 import EnvWarning from "@/components/EnvWarning";
 import { Toaster } from "sonner";
 import NavProgress from "@/components/NavProgress";
-import Hero from "@/components/Hero";
 import Head from "next/head";
 
 const geistSans = Geist({
@@ -34,33 +33,32 @@ export default function RootLayout({
   return (
     <html lang="en">
       <Head>
-        <link rel="preload" as="video" href="/videos/hero-1.mp4" type="video/mp4" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap"
-        rel="stylesheet"
-      />
-
+          href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
       </Head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ClientProviders>
-        <EnvWarning />
-    
-<nav className="fixed top-6 left-1/2 z-50 -translate-x-1/2 px-6 py-3 flex items-center gap-4 
+          <EnvWarning />
+
+          <nav className="fixed top-6 left-1/2 z-50 -translate-x-1/2 px-6 py-3 flex items-center gap-4 
   bg-black/70 text-white rounded-full shadow-lg backdrop-blur-md border border-white/10">
-  
-  <Link href="/" className="font-semibold">FALAK</Link>
-  <Link href="/passes">Passes</Link>
-  <Link href="/cultural_events">Cultural</Link>
-  <Link href="/sports_events">Sports</Link>
-  <Link href="/tickets">Tickets</Link>
+            <Link href="/" className="font-semibold">
+              FALAK
+            </Link>
+            <Link href="/passes">Passes</Link>
+            <Link href="/cultural_events">Cultural</Link>
+            <Link href="/sports_events">Sports</Link>
+            <Link href="/tickets">Tickets</Link>
 
-  <div className="ml-auto flex items-center gap-3">
-    <Link href="/profile">Profile</Link>
-    <Link href="/admin_manage">Admin</Link>
-    <AuthButtons />
-  </div>
-</nav>
-
+            <div className="ml-auto flex items-center gap-3">
+              <Link href="/profile">Profile</Link>
+              <Link href="/admin_manage">Admin</Link>
+              <AuthButtons />
+            </div>
+          </nav>
 
           <main>{children}</main>
           <NavProgress />
