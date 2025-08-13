@@ -1,62 +1,18 @@
 "use client";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/all";
-import { TiLocationArrow } from "react-icons/ti";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Button from "./Button";
-import VideoPreview from "./VideoPreview";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const totalVideos = 4;
-
 const Hero: React.FC = () => {
-  const [currentIndex, setCurrentIndex] = useState<number>(1);
-  const [hasClicked, setHasClicked] = useState<boolean>(false);
+  const [currentIndex] = useState<number>(1);
 
-  const [loading, setLoading] = useState<boolean>(true);
-  const [loadedVideos, setLoadedVideos] = useState<number>(0);
-
-  // Separate refs for current and next videos
-  const currentVideoRef = useRef<HTMLVideoElement | null>(null);
-  const nextVideoRef = useRef<HTMLVideoElement | null>(null);
-
-  // ✅ Hide loader as soon as the first video loads
-  const handleVideoLoad = (index: number) => {
-    if (index === currentIndex) {
-      setLoading(false); // first visible video loaded → show Hero
-    }
-    setLoadedVideos((prev) => prev + 1);
-  };
-
-  const handleMiniVdClick = () => {
-    setHasClicked(true);
-    setCurrentIndex((prevIndex) => (prevIndex % totalVideos) + 1);
-  };
-
-  useEffect(() => {
-    if (hasClicked) {
-      gsap.set("#next-video", { visibility: "visible" });
-      gsap.to("#next-video", {
-        transformOrigin: "center center",
-        scale: 1,
-        width: "100%",
-        height: "100%",
-        duration: 1,
-        ease: "power1.inOut",
-        onStart: () => {
-          nextVideoRef.current?.play();
-        },
-      });
-      gsap.from("#current-video", {
-        transformOrigin: "center center",
-        scale: 0,
-        duration: 1.5,
-        ease: "power1.inOut",
-      });
-    }
-  }, [currentIndex, hasClicked]);
+  // Video ref
+  const mainVideoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     gsap.set("#video-frame", {
@@ -75,74 +31,49 @@ const Hero: React.FC = () => {
       },
     });
   }, []);
-  useEffect(() => {
-    for (let i = 1; i <= totalVideos; i++) {
-      const vid = document.createElement("video");
-      vid.src = getVideoSrc(i);
-      vid.preload = "auto";
-      vid.muted = true;
-      vid.playsInline = true;
-  
-      // Force decoding by starting playback silently
-      vid.play().catch(() => {});
-    }
-  }, []);
-  
-
-  // Safety fallback: hide loader after 3s max
-  useEffect(() => {
-    const fallback = setTimeout(() => setLoading(false), 3000);
-    return () => clearTimeout(fallback);
-  }, []);
 
   const getVideoSrc = (index: number): string => `/videos/hero-${index}.mp4`;
 
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   return (
     <div className="relative h-dvh w-screen overflow-x-hidden bg-white">
-      {loading && (
-        <div className="flex-center absolute z-[100] h-dvh w-screen overflow-hidden bg-violet-50">
-          {/* Loader animation */}
-          <div className="three-body">
-            <div className="three-body__dot"></div>
-            <div className="three-body__dot"></div>
-            <div className="three-body__dot"></div>
-          </div>
-        </div>
-      )}
-
       <div
         id="video-frame"
         className="relative z-10 h-dvh w-screen overflow-hidden rounded-lg bg-blue-75"
+        style={{ willChange: "transform" }}
       >
         <div>
-
-          {/* Small Next Video */}
-          <video
-            ref={currentVideoRef}
-            src={getVideoSrc(currentIndex)}
-            loop
-            muted
-            id="next-video"
-            className="absolute-center invisible absolute z-20 size-64 object-cover object-center"
-            onLoadedData={() => handleVideoLoad(currentIndex)}
-          />
-
           {/* Main Background Video */}
-          <video
-            src={getVideoSrc(
-              currentIndex === totalVideos - 1 ? 1 : currentIndex
-            )}
-            autoPlay
-            loop
-            muted
-            preload="auto"
-            className="absolute left-0 top-0 size-full object-cover object-center"
-            onLoadedData={() =>
-              handleVideoLoad(
-                currentIndex === totalVideos - 1 ? 1 : currentIndex
-              )
-            }
-          />
+          {!prefersReducedMotion ? (
+            <video
+              ref={mainVideoRef}
+              src={getVideoSrc(currentIndex)}
+              autoPlay
+              loop
+              muted
+              preload="metadata"
+              playsInline
+              poster="/window.svg"
+              className="absolute left-0 top-0 size-full object-cover object-center opacity-0 transition-opacity duration-500"
+              onLoadedData={(e) => {
+                (e.currentTarget as HTMLVideoElement).classList.remove("opacity-0");
+              }}
+            />
+          ) : (
+            // Reduced motion fallback image
+            <Image
+              src="/window.svg"
+              alt="Falak hero"
+              fill
+              priority
+              sizes="100vw"
+              className="absolute left-0 top-0 object-cover object-center"
+            />
+          )}
         </div>
 
         {/* Foreground Text */}
@@ -153,21 +84,15 @@ const Hero: React.FC = () => {
         {/* Overlay Content */}
         <div className="absolute left-0 top-0 z-40 size-full">
           <div className="mt-24 px-5 sm:px-10">
-            <h1 className="special-font hero-heading text-blue-100">
-            Join us
-            </h1>
+            <h1 className="special-font hero-heading text-blue-100">Join us</h1>
 
             <p className="mb-5 max-w-64 font-robert-regular text-blue-100">
-            Where Talent Meets Passion <br /> The Ultimate Fest Experience
+              Where Talent Meets Passion <br /> The Ultimate Fest Experience
             </p>
 
             <Link href="/passes">
-            <Button
-              id="watch-trailer"
-              title="Get your passes now"
-              containerClass="bg-yellow-300 flex-center gap-"
-              />
-              </Link>
+              <Button id="watch-trailer" title="Get your passes now" containerClass="bg-yellow-300 flex-center gap-" />
+            </Link>
           </div>
         </div>
       </div>
