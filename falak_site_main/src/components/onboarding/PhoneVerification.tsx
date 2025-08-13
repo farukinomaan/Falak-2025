@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { auth } from "@/lib/firebase/firebase";
 import { signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
@@ -19,16 +19,31 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
   const [otp, setOtp] = useState("");
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [recaptchaVerifier,setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null)
   const [confirmed, setConfirmed] = useState<ConfirmationResult | null>(null);
   const [verified, setVerified] = useState(false);
+
+  const [recaptchaVerifier,setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
+  const [resendCountdown,setResendCountdown] = useState(0);
+  const [isPending,startTransition] = useTransition(); // New shit, gotta learn
+
+  // Nigga this is how you use timer
+  useEffect(()=>{
+    let timer: NodeJS.Timeout;
+    if (resendCountdown >0){
+        timer = setTimeout(()=>setResendCountdown(resendCountdown-1),1000);
+    }else{
+        return () => clearTimeout(timer);
+    }
+  },[resendCountdown])  // As resendCountdown changes for the forst time, this will trigger and start a reverse countdown, untill state becomes 0, then the timeout is cleared
+
 
   async function handleSendOtp(e: React.FormEvent) {
     e.preventDefault();
     try {
       setSending(true);
       const appVerifier = window.recaptchaVerifier!;
-      const result = await signInWithPhoneNumber(auth, phone, appVerifier);
+      const updatedPhone:string = '+91' + phone;
+      const result = await signInWithPhoneNumber(auth, updatedPhone, appVerifier);
       setConfirmed(result);
       toast.success("OTP sent");
     } catch (err: unknown) {
@@ -65,9 +80,10 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
         <div className="flex gap-2">
           <Input
             className="flex-1"
+            type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder="+91XXXXXXXXXX"
+            placeholder="98XXXXXX01"
             required
           />
           <Button onClick={handleSendOtp} disabled={sending} type="button" variant="outline">
