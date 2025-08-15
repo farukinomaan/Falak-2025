@@ -486,7 +486,7 @@ function PassForm({ row, events, onSubmit }: { row?: PassRow; events: EventRow[]
           <FormLabel>Event</FormLabel>
           <FormControl>
             <select value={form.event_id || ""} onChange={(e) => handleChange("event_id", e.target.value)} className="h-9 rounded-md border px-3">
-              <option value="">Unassigned</option>
+              <option value="">Pro Show</option>
               {events.map((ev) => (
                 <option key={ev.id} value={ev.id}>{ev.name}</option>
               ))}

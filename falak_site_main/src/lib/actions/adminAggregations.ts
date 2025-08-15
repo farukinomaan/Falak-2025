@@ -7,7 +7,6 @@ import {
   EventUpdateSchema,
   PassCreateSchema,
   PassUpdateSchema,
-  UserPassCreateSchema,
   uuid,
 } from "./schemas";
 import {
@@ -21,7 +20,9 @@ import {
   updatePass as _updatePass,
   deletePass as _deletePass,
   listPasses as _listPasses,
+  listPassesWithoutEvent as _listPassesWithoutEvent,
 } from "./tables/pass";
+import { createUserPass as _createUserPass } from "./tables/userPasses";
 
 // Wrapper Server Actions for Events
 export async function saListEvents() {
@@ -40,6 +41,9 @@ export async function saDeleteEvent(id: string) {
 // Wrapper Server Actions for Passes
 export async function saListPasses() {
   return _listPasses();
+}
+export async function saListProshowPasses() {
+  return _listPassesWithoutEvent();
 }
 export async function saCreatePass(input: z.infer<typeof PassCreateSchema>) {
   return _createPass(input);
@@ -244,15 +248,10 @@ export async function assignPassToUser(userId: string, passId: string) {
       return { ok: false as const, error: "Pass sold out" };
     }
   }
-  const parsed = UserPassCreateSchema.safeParse({ userId, passId });
-  if (!parsed.success) return { ok: false as const, error: "Invalid input" };
-  const { data, error } = await supabase
-    .from("User_passes")
-    .insert({ userId, passId })
-    .select("*")
-    .single();
-  if (error) return { ok: false as const, error: error.message };
-  return { ok: true as const, data };
+  // Use central creator to also generate QR token securely
+  const created = await _createUserPass({ userId, passId });
+  if (!created.ok) return { ok: false as const, error: created.error || "Failed to assign pass" } as const;
+  return { ok: true as const, data: created.data };
 }
 
 // Role resolver helper for the page

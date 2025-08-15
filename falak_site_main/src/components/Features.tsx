@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, ReactNode } from "react";
-import { passes } from "@/lib/mock_data/passes";
 import BuyNowButton from "@/components/BuyNowButton";
 
 // -----------------------------
@@ -83,7 +82,28 @@ export const BentoCard: React.FC<BentoCardProps> = ({ src, title, description, p
 // -----------------------------
 // Features Section
 // -----------------------------
-const Features: React.FC = () => {
+type FeaturePass = { id: string; pass_name: string; description?: string | null; cost?: number | string | null };
+interface FeaturesProps { passes?: FeaturePass[] }
+
+const Features: React.FC<FeaturesProps> = ({ passes = [] }) => {
+  // Normalize data: enforce exactly 3 tiles to match 2x2 grid with first spanning 2 rows
+  const normalized = (passes || []).map((p) => ({
+    id: p.id,
+    title: p.pass_name,
+    description: p.description ?? undefined,
+    price: `₹${p.cost ?? ""}`,
+    videoSrc: "/videos/feature-1.mp4", // fallback demo video to keep hover animation intact
+  }));
+  const tiles = normalized.slice(0, 3);
+  while (tiles.length < 3) {
+    tiles.push({
+      id: `placeholder-${tiles.length}`,
+      title: "Falak Pass",
+      description: undefined,
+      price: "",
+      videoSrc: "/videos/feature-1.mp4",
+    });
+  }
   return (
     <section className="bg-black pb-10">
       <div className="container mx-auto px-3 md:px-0">
@@ -96,7 +116,7 @@ const Features: React.FC = () => {
         <>
           <div>
             <div className="grid h-[80vh] w-full grid-cols-2 grid-rows-2 gap-7 ">
-              {passes.map((p, index) => (
+              {tiles.map((p, index) => (
                 <BentoTilt
                   key={p.id}
                   className={
@@ -108,11 +128,10 @@ const Features: React.FC = () => {
                   }
                 >
                   <BentoCard
-                    // src={p.videoSrc}
+                    src={p.videoSrc}
                     title={p.title}
                     description={p.description}
-                    price={`₹${p.price}`}
-                    perks={p.perks}
+                    price={p.price}
                   />
                 </BentoTilt>
               ))}
