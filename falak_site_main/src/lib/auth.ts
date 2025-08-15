@@ -1,35 +1,26 @@
 import type { AuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import { createClient } from "@supabase/supabase-js";
+// Supabase direct client not needed here; use existing server actions instead
 import type { Session } from "next-auth";
 
 import { auth } from "./firebase/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getUserByEmail } from "@/lib/actions";
 
 type AugSession = Session & { needsOnboarding?: boolean; user: Session["user"] & { id?: string } };
 
 // Helper: check if user exists in Supabase
 async function checkUserExistsByEmail(email?: string | null) {
   if (!email) return false;
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    // No DB in dev -> skip forcing onboarding
+  // If env is missing, skip forcing onboarding to avoid blocking local dev
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return true;
+  const res = await getUserByEmail(email);
+  if (!res.ok) {
+    console.error("checkUserExists error", res.error);
     return true;
   }
-  const supabase = createClient(url, key);
-  const { data, error } = await supabase
-    .from("users")
-    .select("id")
-    .eq("email", email)
-    .limit(1)
-    .maybeSingle();
-  if (error) {
-    console.error("checkUserExists error", error);
-    return true;
-  }
-  return !!data;
+  return Boolean(res.data);
 }
 
 export const  authOptions: AuthOptions = {
@@ -67,21 +58,19 @@ export const  authOptions: AuthOptions = {
     //   }
     //   return false;
     // },
-    jwt: async ({ token, account, profile }) => {
-      if (account?.provider === "google") {
-        //const exists = await checkUserExistsByEmail(token.email);
-        //token.needsOnboarding = !exists;
-        token.needsOnboarding = true;
-      }
+    jwt: async ({ token }) => {
+      // Always recompute based on DB so onboarding status updates immediately after creation
+      const exists = await checkUserExistsByEmail(token.email);
+      token.needsOnboarding = !exists;
       return token;
     },
-    session: async ({ session, token }) => {
+  session: async ({ session, token }) => {
       const s = session as AugSession;
       if (s.user) {
         //session.user.id = token.sub as string;
         
         s.user.id = token.sub;
-        s.needsOnboarding = (token as any).needsOnboarding ?? false;
+    s.needsOnboarding = (token as { needsOnboarding?: boolean }).needsOnboarding ?? false;
       }
       return s;
     },
