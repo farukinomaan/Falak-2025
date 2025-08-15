@@ -6,6 +6,7 @@ import { listUserPassesByUserId } from "@/lib/actions/tables/userPasses";
 import { listPassesByIds } from "@/lib/actions/tables/pass";
 import { listTeamMembersByMemberId } from "@/lib/actions/tables/teamMembers";
 import { listEventsByIds } from "@/lib/actions/tables/events";
+import QrCode from "@/components/QrCode";
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
@@ -53,16 +54,25 @@ export default async function ProfilePage() {
           <EmptyState message="You don’t own any passes yet." ctaHref="/passes" ctaLabel="Browse Passes" />
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {passes.map((p) => (
-              <li key={p.id} className="border rounded-lg p-4 hover:shadow-sm transition">
-                <h3 className="font-medium">{p.pass_name}</h3>
-                <p className="text-sm text-gray-600 line-clamp-3">{p.description || ""}</p>
-                <div className="mt-2 text-sm text-gray-800">₹{Number(p.cost)}</div>
-                {p.enable === false && (
-                  <span className="mt-2 inline-block text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded">Disabled</span>
-                )}
-              </li>
-            ))}
+            {userPasses.map((up) => {
+              const pass = passes.find((p) => p.id === up.passId);
+              const qr = up.qr_token as string | null | undefined;
+              const qrPayloadUrl = qr ? `${process.env.NEXT_PUBLIC_QR_BASE_URL ?? "https://falak.mitblr.in"}/api/qr/verify?token=${encodeURIComponent(qr)}` : null;
+              return (
+                <li key={up.id ?? `${up.userId}-${up.passId}`} className="border rounded-lg p-4 hover:shadow-sm transition">
+                  <h3 className="font-medium">{pass?.pass_name ?? "Pass"}</h3>
+                  <p className="text-sm text-gray-600 line-clamp-3">{pass?.description || ""}</p>
+                  {typeof pass?.cost !== "undefined" && (
+                    <div className="mt-2 text-sm text-gray-800">₹{Number(pass?.cost)}</div>
+                  )}
+                  {qrPayloadUrl && (
+                    <div className="mt-3">
+                      <QrCode value={qrPayloadUrl} />
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -97,6 +107,7 @@ export default async function ProfilePage() {
     </div>
   );
 }
+// QR renderer moved to client component at components/QrCode
 
 function EmptyState({ message, ctaHref, ctaLabel }: { message: string; ctaHref: string; ctaLabel: string }) {
   return (
