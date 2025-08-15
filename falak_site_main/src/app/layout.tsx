@@ -31,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="h-full">
       <Head>
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
@@ -39,12 +39,12 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </Head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen h-full flex flex-col`}>
         <ClientProviders>
           <EnvWarning />
 
           <nav className="fixed top-6 left-1/2 z-50 -translate-x-1/2 px-6 py-3 flex items-center gap-4 
-  bg-black/70 text-white rounded-full shadow-lg backdrop-blur-md border border-white/10">
+          bg-black/70 text-white rounded-full shadow-lg backdrop-blur-md border border-white/10">
             <Link href="/" className="font-semibold">
               FALAK
             </Link>
@@ -60,7 +60,7 @@ export default function RootLayout({
             </div>
           </nav>
 
-          <main>{children}</main>
+          <main className="flex-1 w-full min-h-screen ">{children}</main>
           <NavProgress />
           <Toaster richColors position="top-center" />
         </ClientProviders>
