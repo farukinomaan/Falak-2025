@@ -33,6 +33,14 @@ export async function listPasses() {
   return { ok: true as const, data }
 }
 
+export async function listPassesByIds(ids: string[]) {
+  if (!Array.isArray(ids) || ids.length === 0) return { ok: true as const, data: [] as Pass[] };
+  const supabase = getServiceClient()
+  const { data, error } = await supabase.from(table).select("*").in("id", ids)
+  if (error) return { ok: false as const, error: error.message }
+  return { ok: true as const, data }
+}
+
 export async function updatePass(input: z.infer<typeof PassUpdateSchema>) {
   const parsed = PassUpdateSchema.safeParse(input)
   if (!parsed.success) return { ok: false as const, error: "Invalid input" }
