@@ -1,58 +1,76 @@
 "use server";
 
 import { z } from "zod";
-import { createClient } from "@supabase/supabase-js";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { createUser, getUserByEmail } from "@/lib/actions";
+import { UserCreateSchema } from "@/lib/actions/schemas";
 
-const OnboardSchema = z.object({
-  name: z.string().min(2),
-  regNo: z.string().min(2),
-  phone: z.string().min(7),
-});
+const OnboardSchema = z
+  .object({
+    name: z.string().min(2),
+    phone: z.string().min(7),
+    mahe: z.boolean(),
+    regNo: z.string().optional().nullable(),
+    institute: z.string().optional().nullable(),
+  })
+  .superRefine((val, ctx) => {
+    if (val.mahe) {
+      if (!val.regNo || val.regNo.trim().length < 2) {
+        ctx.addIssue({ code: "custom", path: ["regNo"], message: "Registration number is required for MAHE" });
+      }
+    } else {
+      if (!val.institute || val.institute.trim().length < 2) {
+        ctx.addIssue({ code: "custom", path: ["institute"], message: "College name is required for Non-MAHE" });
+      }
+    }
+  });
 
-export async function completeOnboarding(input: z.infer<typeof OnboardSchema>) {
+export type OnboardInput = z.infer<typeof OnboardSchema>;
+
+export async function completeOnboarding(input: OnboardInput) {
   try {
     const parsed = OnboardSchema.safeParse(input);
     if (!parsed.success) {
-      return { ok: false, message: "Invalid input" };
-    }
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email || !(session as any).user.id) {
-      return { ok: false, message: "Not authenticated" };
+      return { ok: false, message: "Invalid input" } as const;
     }
 
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) {
-      console.warn("Supabase envs missing, skipping DB persist");
-      return { ok: true };
+    const session = await getServerSession(authOptions);
+    const email = session?.user?.email;
+    if (!email) {
+      return { ok: false, message: "Not authenticated" } as const;
     }
-    const supabase = createClient(url, key);
-    const payload = {
-      auth_user_id: (session as any).user.id as string,
-      email: session.user.email as string,
-      name: parsed.data.name,
-      reg_no: parsed.data.regNo,
-      phone: parsed.data.phone,
-      provider: "google",
+
+    // Idempotent create using existing server actions
+    const existing = await getUserByEmail(email);
+    if (!existing.ok) {
+      return { ok: false, message: existing.error || "Lookup error" } as const;
+    }
+    if (existing.data) {
+      // Already onboarded
+      return { ok: true } as const;
+    }
+
+    // Build payload matching UserCreateSchema
+    const v = parsed.data;
+    const toCreate: z.infer<typeof UserCreateSchema> = {
+      name: v.name,
+      phone: v.phone,
+      email,
+      mahe: v.mahe,
+      reg_no: v.mahe ? (v.regNo || "") : null,
+      institute: v.mahe ? null : (v.institute || null),
+      active: true,
     };
 
-    // Upsert user
-    const { error } = await supabase.from("users").upsert(payload, {
-      onConflict: "email",
-    });
-    if (error) {
-      console.error("users upsert error", error);
-      return { ok: false, message: "DB error" };
+    const created = await createUser(toCreate);
+    if (!created.ok) {
+      return { ok: false, message: created.error || "DB error" } as const;
     }
 
-    // Mark token flag off on next request by storing a cookie or let jwt recalc on next login
-    // Simple approach: rely on middleware refresh on next nav, or force redirect done by client.
-
-    return { ok: true };
+    return { ok: true } as const;
   } catch (e) {
     console.error(e);
-    return { ok: false, message: "Unexpected error" };
+    return { ok: false, message: "Unexpected error" } as const;
   }
 }

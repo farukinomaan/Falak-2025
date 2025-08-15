@@ -45,6 +45,8 @@ export interface PassItem {
 export type TicketCategory =
   | "pro-show-pass not generated"
   | "event-pass not generated"
+  | "account-access"
+  | "payment-issue"
   | "other";
 
 export interface SupportTicketInput {
