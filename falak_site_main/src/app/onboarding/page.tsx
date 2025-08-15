@@ -16,6 +16,8 @@ export default function OnboardingPage() {
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [regNo, setRegNo] = useState("");
+  const [mahe, setMahe] = useState<boolean>(true);
+  const [institute, setInstitute] = useState("");
   const [verified, setVerified] = useState(false);
 
   useRecaptcha();
@@ -33,16 +35,35 @@ export default function OnboardingPage() {
       toast.warning("Verify phone first");
       return;
     }
+    if (!mahe && !institute.trim()) {
+      toast.warning("Please enter your college name");
+      return;
+    }
+    if (mahe && !regNo.trim()) {
+      toast.warning("Registration number is required for MAHE");
+      return;
+    }
     try {
-      const res = await completeOnboarding({
+      const payload = {
         name,
-        regNo,
         phone,
-      });
+        mahe,
+        regNo: mahe ? regNo : null,
+        institute: mahe ? null : institute.trim(),
+      };
+      const res = await completeOnboarding(payload);
       if (res.ok) {
         toast.success("Onboarding complete");
+        // Force session refresh so needsOnboarding updates before navigating
+        // next-auth v4: call getSession via window focus hack
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("focus"));
+        }
         router.replace("/");
-        router.refresh();
+        router.refresh(); // TL-DR:- Fcker aint working
+
+        // Abhi ke liye hard reload
+        window.location.reload();
       } else {
         toast.error(res.message || "Failed to save");
       }
@@ -61,12 +82,12 @@ export default function OnboardingPage() {
           setName={setName}
           regNo={regNo}
           setRegNo={setRegNo}
+          mahe={mahe}
+          setMahe={setMahe}
+          institute={institute}
+          setInstitute={setInstitute}
         />
-        
         <div>
-          {/* <label className="block text-sm font-medium text-gray-700">
-            Enter the OTP sent to your phone
-          </label> */}
           <PhoneVerification
             phone={phone}
             setPhone={setPhone}

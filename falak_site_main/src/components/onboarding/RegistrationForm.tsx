@@ -5,13 +5,26 @@ interface RegistrationFormProps {
   setName: (name: string) => void;
   regNo: string;
   setRegNo: (regNo: string) => void;
+  mahe: boolean;
+  setMahe: (val: boolean) => void;
+  institute: string;
+  setInstitute: (val: string) => void;
 }
 
-export function RegistrationForm({ name, setName, regNo, setRegNo }: RegistrationFormProps) {
+export function RegistrationForm({
+  name,
+  setName,
+  regNo,
+  setRegNo,
+  mahe,
+  setMahe,
+  institute,
+  setInstitute,
+}: RegistrationFormProps) {
   return (
     <>
       <div>
-        <label className="block text-sm font-medium">Name</label>
+        <label className="block text-sm font-medium">Full name</label>
         <input
           className="w-full border rounded px-3 py-2"
           value={name}
@@ -20,16 +33,44 @@ export function RegistrationForm({ name, setName, regNo, setRegNo }: Registratio
           placeholder="Your name"
         />
       </div>
+
       <div>
-        <label className="block text-sm font-medium">Registration number</label>
-        <input
-          className="w-full border rounded px-3 py-2"
-          value={regNo}
-          onChange={(e) => setRegNo(e.target.value)}
-          required
-          placeholder="e.g. MAHE123..."
-        />
+        <label className="block text-sm font-medium mb-1">Are you from MAHE?</label>
+        <div className="flex items-center gap-4">
+          <label className="inline-flex items-center gap-2">
+            <input type="radio" name="mahe" checked={mahe === true} onChange={() => setMahe(true)} />
+            <span>MAHE</span>
+          </label>
+          <label className="inline-flex items-center gap-2">
+            <input type="radio" name="mahe" checked={mahe === false} onChange={() => setMahe(false)} />
+            <span>Non-MAHE</span>
+          </label>
+        </div>
       </div>
+
+      {mahe ? (
+        <div>
+          <label className="block text-sm font-medium">Registration number</label>
+          <input
+            className="w-full border rounded px-3 py-2"
+            value={regNo}
+            onChange={(e) => setRegNo(e.target.value)}
+            required
+            placeholder="e.g. MAHE123..."
+          />
+        </div>
+      ) : (
+        <div>
+          <label className="block text-sm font-medium">College name</label>
+          <input
+            className="w-full border rounded px-3 py-2"
+            value={institute}
+            onChange={(e) => setInstitute(e.target.value)}
+            required
+            placeholder="Your college"
+          />
+        </div>
+      )}
     </>
   );
 }
