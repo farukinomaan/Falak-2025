@@ -26,7 +26,7 @@ export const BentoTilt: React.FC<BentoTiltProps> = ({ children, className = "" }
 // BentoCard Component
 // -----------------------------
 interface BentoCardProps {
-  src: string;
+  src?: string;
   title: ReactNode;
   description?: string;
   price: string;
@@ -108,7 +108,7 @@ const Features: React.FC = () => {
                   }
                 >
                   <BentoCard
-                    src={p.videoSrc}
+                    // src={p.videoSrc}
                     title={p.title}
                     description={p.description}
                     price={`₹${p.price}`}
