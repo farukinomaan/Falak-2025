@@ -110,6 +110,7 @@ export const UserPassSchema = z.object({
   passId: uuid,
   created_at: timestamp.optional(),
   active: z.boolean().optional(),
+  qr_token: z.string().nullable().optional(),
 })
 export const UserPassCreateSchema = UserPassSchema.omit({ id: true, created_at: true })
 export const UserPassUpdateSchema = UserPassSchema.partial().extend({ id: uuid })
