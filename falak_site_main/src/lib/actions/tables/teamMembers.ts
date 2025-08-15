@@ -33,6 +33,19 @@ export async function listTeamMembers() {
   return { ok: true as const, data }
 }
 
+export async function listTeamMembersByMemberId(memberId: string) {
+  const parsed = uuid.safeParse(memberId)
+  if (!parsed.success) return { ok: false as const, error: "Invalid memberId" }
+  const supabase = getServiceClient()
+  const { data, error } = await supabase
+    .from(table)
+    .select("*")
+    .eq("memberId", memberId)
+    .order("updated_at", { ascending: false })
+  if (error) return { ok: false as const, error: error.message }
+  return { ok: true as const, data }
+}
+
 export async function updateTeamMember(input: z.infer<typeof TeamMemberUpdateSchema>) {
   const parsed = TeamMemberUpdateSchema.safeParse(input)
   if (!parsed.success) return { ok: false as const, error: "Invalid input" }

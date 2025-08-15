@@ -33,6 +33,19 @@ export async function listUserPasses() {
   return { ok: true as const, data }
 }
 
+export async function listUserPassesByUserId(userId: string) {
+  const parsed = uuid.safeParse(userId)
+  if (!parsed.success) return { ok: false as const, error: "Invalid userId" }
+  const supabase = getServiceClient()
+  const { data, error } = await supabase
+    .from(table)
+    .select("*")
+    .eq("userId", userId)
+    .order("created_at", { ascending: false })
+  if (error) return { ok: false as const, error: error.message }
+  return { ok: true as const, data }
+}
+
 export async function updateUserPass(input: z.infer<typeof UserPassUpdateSchema>) {
   const parsed = UserPassUpdateSchema.safeParse(input)
   if (!parsed.success) return { ok: false as const, error: "Invalid input" }
