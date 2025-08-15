@@ -4,6 +4,8 @@ import type { TicketCategory } from "@/lib/types";
 export const ticketCategories: TicketCategory[] = [
   "pro-show-pass not generated",
   "event-pass not generated",
+  "account-access",
+  "payment-issue",
   "other",
 ];
 
