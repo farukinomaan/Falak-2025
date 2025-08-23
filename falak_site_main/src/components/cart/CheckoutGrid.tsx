@@ -4,21 +4,14 @@ import { useState } from "react";
 
 type Row = { id: string; pass_name: string; description?: string | null };
 
-export default function CheckoutGrid({ items, validate }: { items: Row[]; validate?: (id: string) => Promise<boolean> }) {
+export default function CheckoutGrid({ items }: { items: Row[] }) {
   const [validated, setValidated] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState<Record<string, boolean>>({});
   const onValidate = async (id: string) => {
     setBusy((b) => ({ ...b, [id]: true }));
     try {
-      if (validate) {
-        const ok = await validate(id);
-        setValidated((v) => ({ ...v, [id]: ok }));
-      } else {
-        const res = await fetch(`/api/cart/validate_ownership?passId=${encodeURIComponent(id)}`, { cache: "no-store" });
-        const json = await res.json();
-        const ok = Boolean(json?.data);
-        setValidated((v) => ({ ...v, [id]: ok }));
-      }
+  // For now, just mark as validated locally. Server ownership check removed with legacy cart system.
+  setValidated((v) => ({ ...v, [id]: true }));
     } finally {
       setBusy((b) => ({ ...b, [id]: false }));
     }
