@@ -1,3 +1,7 @@
+// NOTE: This is the only remaining cart-related API. All legacy DB cart endpoints
+// (add, count, merge, validate_ownership) and server actions have been removed
+// after migrating to a purely client-side (localStorage) cart. This endpoint
+// simply resolves a list of ids (which may be pass ids OR event ids) to Pass rows.
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getServiceClient } from "@/lib/actions/supabaseClient";
