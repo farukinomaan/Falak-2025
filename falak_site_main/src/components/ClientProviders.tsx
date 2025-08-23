@@ -7,6 +7,10 @@ export default function ClientProviders({
 }: {
   children: React.ReactNode;
 }) {
-  return <SessionProvider>{children}</SessionProvider>;
+  return (
+    <SessionProvider>
+      {children}
+    </SessionProvider>
+  );
 }
 

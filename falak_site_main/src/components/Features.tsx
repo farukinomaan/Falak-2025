@@ -2,6 +2,7 @@
 
 import { useRef, ReactNode } from "react";
 import BuyNowButton from "@/components/BuyNowButton";
+import AddToCartButton from "@/components/cart/AddToCartButton";
 
 // -----------------------------
 // BentoTilt Component
@@ -30,9 +31,10 @@ interface BentoCardProps {
   description?: string;
   price: string;
   perks?: string[];
+  passId?: string;
 }
 
-export const BentoCard: React.FC<BentoCardProps> = ({ src, title, description, price, perks }) => {
+export const BentoCard: React.FC<BentoCardProps> = ({ src, title, description, price, perks, passId }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   return (
@@ -72,7 +74,11 @@ export const BentoCard: React.FC<BentoCardProps> = ({ src, title, description, p
               ))}
             </ul>
           )}
-          <BuyNowButton />
+          {passId ? (
+            <AddToCartButton passId={passId} />
+          ) : (
+            <BuyNowButton />
+          )}
         </div>
       </div>
     </div>
@@ -84,17 +90,19 @@ export const BentoCard: React.FC<BentoCardProps> = ({ src, title, description, p
 // -----------------------------
 type FeaturePass = { id: string; pass_name: string; description?: string | null; cost?: number | string | null };
 interface FeaturesProps { passes?: FeaturePass[] }
+type Tile = { id: string; title: string; description?: string; price: string; videoSrc: string; passId?: string };
 
 const Features: React.FC<FeaturesProps> = ({ passes = [] }) => {
   // Normalize data: enforce exactly 3 tiles to match 2x2 grid with first spanning 2 rows
-  const normalized = (passes || []).map((p) => ({
+  const normalized: Tile[] = (passes || []).map((p) => ({
     id: p.id,
     title: p.pass_name,
     description: p.description ?? undefined,
     price: `₹${p.cost ?? ""}`,
     videoSrc: "/videos/feature-1.mp4", // fallback demo video to keep hover animation intact
+    passId: p.id,
   }));
-  const tiles = normalized.slice(0, 3);
+  const tiles: Tile[] = normalized.slice(0, 3);
   while (tiles.length < 3) {
     tiles.push({
       id: `placeholder-${tiles.length}`,
@@ -102,6 +110,8 @@ const Features: React.FC<FeaturesProps> = ({ passes = [] }) => {
       description: undefined,
       price: "",
       videoSrc: "/videos/feature-1.mp4",
+      // no passId means show Buy Now CTA instead of Add to Cart
+      passId: undefined,
     });
   }
   return (
@@ -132,6 +142,7 @@ const Features: React.FC<FeaturesProps> = ({ passes = [] }) => {
                     title={p.title}
                     description={p.description}
                     price={p.price}
+                    passId={p.passId}
                   />
                 </BentoTilt>
               ))}
