@@ -2,11 +2,13 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ShoppingCart } from "lucide-react";
+import { useCartCount } from "@/components/cart/useCartCount";
 
 export default function Navbar() {
   const [show, setShow] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const cartCount = useCartCount();
   const lastScrollY = useRef(0);
   const menuRef = useRef<HTMLDivElement | null>(null); // Type the ref here
 
@@ -53,6 +55,15 @@ export default function Navbar() {
       <Link href="/tickets">Tickets</Link>
       <Link href="/profile">Profile</Link>
       <Link href="/admin_manage">Admin</Link>
+      <Link href="/cart" className="relative inline-flex items-center gap-1">
+        <ShoppingCart size={18} />
+        <span>Cart</span>
+        {cartCount > 0 && (
+          <span className="absolute -top-2 -right-3 text-[10px] bg-red-500 text-white rounded-full px-1.5 py-0.5">
+            {cartCount}
+          </span>
+        )}
+      </Link>
     </>
   );
 

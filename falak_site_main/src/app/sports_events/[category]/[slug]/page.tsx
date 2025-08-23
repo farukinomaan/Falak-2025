@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { saListEvents } from "@/lib/actions/adminAggregations";
+import AddToCartButton from "@/components/cart/AddToCartButton";
 
 export const dynamicParams = false;
 
@@ -33,7 +34,7 @@ export default async function SportsEventDetail({
         {dateStr && <p>Date: {dateStr}</p>}
         {priceStr && <p>Price: ₹{priceStr}</p>}
       </div>
-      <button className="px-4 py-2 rounded bg-black text-white">Buy Now</button>
+  <AddToCartButton passId={event.id} />
     </div>
   );
 }
