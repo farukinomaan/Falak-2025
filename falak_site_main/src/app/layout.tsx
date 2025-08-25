@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
 import "@/env-fallback";
 import ClientProviders from "@/components/ClientProviders";
-import AuthButtons from "@/components/AuthButtons";
 import EnvWarning from "@/components/EnvWarning";
 import { Toaster } from "sonner";
 import NavProgress from "@/components/NavProgress";
-import Head from "next/head";
+import Navbar from "@/components/Nav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,33 +30,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <Head>
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap"
-          rel="stylesheet"
-        />
-      </Head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen h-full flex flex-col`}>
         <ClientProviders>
           <EnvWarning />
-
-          <nav className="fixed top-6 left-1/2 z-50 -translate-x-1/2 px-6 py-3 flex items-center gap-4 
-          bg-black/70 text-white rounded-full shadow-lg backdrop-blur-md border border-white/10">
-            <Link href="/" className="font-semibold">
-              FALAK
-            </Link>
-            <Link href="/passes">Passes</Link>
-            <Link href="/cultural_events">Cultural</Link>
-            <Link href="/sports_events">Sports</Link>
-            <Link href="/tickets">Tickets</Link>
-
-            <div className="ml-auto flex items-center gap-3">
-              <Link href="/profile">Profile</Link>
-              <Link href="/admin_manage">Admin</Link>
-              <AuthButtons />
-            </div>
-          </nav>
+          {/* Central navigation with right user menu */}
+          <Navbar />
 
           <main className="flex-1 w-full min-h-screen ">{children}</main>
           <NavProgress />
