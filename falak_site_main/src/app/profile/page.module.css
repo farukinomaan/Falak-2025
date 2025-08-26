@@ -28,8 +28,8 @@
 
 .profilePage {
   max-width: 100%;
-  margin: 0;
-  padding: 2rem;
+  margin: 0 auto;
+  padding: 5rem 2rem 2rem; /* Added padding-top */
   font-family: 'Robert', sans-serif;
   color: #333;
   position: relative;

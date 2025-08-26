@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { forwardRef } from 'react';
 
-const Vinyl = () => (
+const Vinyl = forwardRef<SVGSVGElement>((props, ref) => (
   <svg
-    width="200"
-    height="200"
+    ref={ref}
+    width="100%"
+    height="100%"
     viewBox="0 0 200 200"
     xmlns="http://www.w3.org/2000/svg"
     className="vinyl-record"
@@ -56,6 +57,8 @@ const Vinyl = () => (
     </text>
     <circle cx="100" cy="100" r="98" fill="url(#shine)" />
   </svg>
-);
+));
+
+Vinyl.displayName = 'Vinyl';
 
 export default Vinyl;

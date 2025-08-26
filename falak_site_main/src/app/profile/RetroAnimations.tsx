@@ -6,22 +6,14 @@ import Vinyl from './Vinyl';
 import Cassette from './Cassette';
 
 const RetroAnimations = () => {
-  const vinylRef = useRef<HTMLDivElement>(null);
+  const vinylRef = useRef<SVGSVGElement>(null);
   const cassetteRef = useRef<HTMLDivElement>(null);
   const tl = useRef<gsap.core.Timeline | null>(null);
 
   useEffect(() => {
-    // Vinyl Animation
-    if (vinylRef.current) {
-      gsap.to(vinylRef.current, {
-        rotation: 360,
-        repeat: -1,
-        duration: 10,
-        ease: 'none',
-      });
-    }
+    const mm = gsap.matchMedia();
 
-    // Cassette Animation
+    // Desktop and default animations
     if (cassetteRef.current) {
       gsap.set(cassetteRef.current, { 
         rotation: -45,
@@ -54,6 +46,33 @@ const RetroAnimations = () => {
       }
     }
 
+    mm.add("(min-width: 768px)", () => {
+      // Desktop vinyl animation
+      if (vinylRef.current) {
+        gsap.to(vinylRef.current, {
+          rotation: 360,
+          repeat: -1,
+          duration: 10,
+          ease: 'none',
+          transformOrigin: 'center center'
+        });
+      }
+    });
+
+    mm.add("(max-width: 767px)", () => {
+      // Mobile vinyl animation
+      if (vinylRef.current) {
+        gsap.set(vinylRef.current, { scale: 0.7, bottom: '-20%', left: '50%', x: '-50%' });
+        gsap.to(vinylRef.current, {
+          rotation: 360,
+          repeat: -1,
+          duration: 10,
+          ease: 'none',
+          transformOrigin: 'center center'
+        });
+      }
+    });
+
     const handleScroll = () => {
       if (tl.current) {
         const scrollPosition = window.scrollY;
@@ -67,13 +86,14 @@ const RetroAnimations = () => {
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      mm.revert();
     };
   }, []);
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', overflow: 'hidden', zIndex: -1 }}>
-      <div ref={vinylRef} style={{ position: 'absolute', bottom: '0', left: '0' }}>
-        <Vinyl />
+      <div style={{ position: 'absolute', bottom: '-50%', left: '-50%', width: '100vw', height: '100vw' }}>
+        <Vinyl ref={vinylRef} />
       </div>
       <div ref={cassetteRef}>
         <Cassette />
