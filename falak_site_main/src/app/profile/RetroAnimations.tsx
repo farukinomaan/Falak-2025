@@ -62,7 +62,7 @@ const RetroAnimations = () => {
     mm.add("(max-width: 767px)", () => {
       // Mobile vinyl animation
       if (vinylRef.current) {
-        gsap.set(vinylRef.current, { scale: 0.7, bottom: '-20%', left: '50%', x: '-50%' });
+        gsap.set(vinylRef.current, { scale: 0.8 });
         gsap.to(vinylRef.current, {
           rotation: 360,
           repeat: -1,
@@ -92,7 +92,7 @@ const RetroAnimations = () => {
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', overflow: 'hidden', zIndex: -1 }}>
-      <div style={{ position: 'absolute', bottom: '-50%', left: '-50%', width: '100vw', height: '100vw' }}>
+      <div style={{ position: 'absolute', bottom: '-45vmin', left: '-35vmin', width: '120vmin', height: '120vmin' }}>
         <Vinyl ref={vinylRef} />
       </div>
       <div ref={cassetteRef}>

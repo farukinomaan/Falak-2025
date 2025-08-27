@@ -38,10 +38,10 @@ const Vinyl = forwardRef<SVGSVGElement>((props, ref) => (
       x="100"
       y="95"
       textAnchor="middle"
-      fill="#fff"
+      fill="#FDFBF5"
       fontSize="12"
       fontFamily="'Zentry', sans-serif"
-      style={{ textShadow: "1px 1px #8c3a2e" }}
+      style={{ textShadow: "1px 1px #5a5242" }}
     >
       FALAK
     </text>
@@ -49,9 +49,10 @@ const Vinyl = forwardRef<SVGSVGElement>((props, ref) => (
       x="100"
       y="110"
       textAnchor="middle"
-      fill="#fff"
+      fill="#FDFBF5"
       fontSize="10"
       fontFamily="'General', sans-serif"
+      style={{ textShadow: "1px 1px #5a5242" }}
     >
       2025
     </text>

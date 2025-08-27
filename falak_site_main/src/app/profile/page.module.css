@@ -116,30 +116,102 @@
 .eventList {
   list-style: none;
   padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
 .passItem,
 .eventItem {
-  border-bottom: 1px solid #e0daca;
-  padding: 1rem 0;
+  background: #FDFBF5;
+  border: 1px solid #e0daca;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: transform 0.3s, box-shadow 0.3s, opacity 0.3s, border-color 0.3s, background-color 0.3s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  opacity: 0.6;
 }
 
-.passItem:last-child,
-.eventItem:last-child {
-  border-bottom: none;
+.passItem:hover,
+.eventItem:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(77, 182, 172, 0.2);
+  opacity: 1;
+  border-color: #4db6ac;
+  background-color: #E0F2F1;
 }
 
 .passItem h3,
 .eventItem h3 {
-  font-family: 'General', sans-serif;
-  font-size: 1.2rem;
-  color: #333;
+  font-family: 'Zentry', sans-serif;
+  font-size: 1.5rem;
+  color: #C74B2E;
+  margin-bottom: 0.5rem;
 }
 
 .passItem p,
 .eventItem p {
   font-family: 'Robert', sans-serif;
   color: #5a5242;
+  margin: 0.5rem 0;
+  flex-grow: 1;
+}
+
+.passCost {
+  font-family: 'General', sans-serif;
+  font-weight: bold;
+  color: #333;
+}
+
+.passDetails {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.qrContainer {
+  margin-top: 1rem;
+  text-align: center;
+  background: #EAE5D9;
+  padding: 1rem;
+  border-radius: 8px;
+  align-self: center;
+  width: 100%;
+}
+
+.eventDetails {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 1rem;
+  border-top: 1px solid #e0daca;
+  padding-top: 1rem;
+}
+
+.eventMeta {
+  font-family: 'General', sans-serif;
+  font-size: 0.9rem;
+  color: #5a5242;
+}
+
+.eventMeta span {
+  display: inline-block;
+  margin-right: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: #EAE5D9;
+  border-radius: 4px;
+  margin-bottom: 0.25rem;
+}
+
+.eventDate {
+  font-family: 'Zentry', sans-serif;
+  font-size: 1.2rem;
+  color: #C74B2E;
+  text-align: right;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {

@@ -49,14 +49,21 @@ export default async function ProfilePage() {
   const userPasses = [
     { id: "1", userId: "1", passId: "p1", qr_token: "qr1" },
     { id: "2", userId: "1", passId: "p2", qr_token: "qr2" },
+    { id: "3", userId: "1", passId: "p3", qr_token: "qr3" },
+    { id: "4", userId: "1", passId: "p4", qr_token: "qr4" },
   ];
   const passes = [
     { id: "p1", pass_name: "Proshow Pass", description: "Access to all proshows.", cost: 1000 },
     { id: "p2", pass_name: "Workshop Pass", description: "Access to all workshops.", cost: 500 },
+    { id: "p3", pass_name: "Cultural Pass", description: "Access to all cultural events.", cost: 750 },
+    { id: "p4", pass_name: "Sports Pass", description: "Access to all sports events.", cost: 400 },
   ];
   const events = [
     { id: "e1", name: "Battle of Bands", description: "Rock and roll!", sub_cluster: "Music", venue: "Mega Audi", time: "6 PM", date: "2025-10-28" },
-    { id: "e2", name: "Treasure Hunt", description: "idk", sub_cluster: "casual", venue: "Amphi", time: "10 AM", date: "2025-10-29" },
+    { id: "e2", name: "Treasure Hunt", description: "A fun treasure hunt across the campus.", sub_cluster: "Casual", venue: "Amphi", time: "10 AM", date: "2025-10-29" },
+    { id: "e3", name: "Standup Comedy", description: "Evening of laughter with top comedians.", sub_cluster: "Comedy", venue: "Quadrangle", time: "8 PM", date: "2025-10-29" },
+    { id: "e4", name: "DJ Night", description: "Dance the night away.", sub_cluster: "Music", venue: "Main Stage", time: "9 PM", date: "2025-10-30" },
+    { id: "e5", name: "Street Play", description: "Thought-provoking street plays.", sub_cluster: "Drama", venue: "Food Court", time: "4 PM", date: "2025-10-28" },
   ];
   // --- temporary data ---
 
@@ -91,14 +98,16 @@ export default async function ProfilePage() {
                   const qrPayloadUrl = qr ? `${process.env.NEXT_PUBLIC_QR_BASE_URL ?? "https://falak.mitblr.in"}/api/qr/verify?token=${encodeURIComponent(qr)}` : null;
                   return (
                     <li key={up.id ?? `${up.userId}-${up.passId}`} className={styles.passItem}>
-                      <h3>{pass?.pass_name ?? "Pass"}</h3>
-                      <p>{pass?.description || ""}</p>
-                      {typeof pass?.cost !== "undefined" && (
-                        <div>₹{Number(pass?.cost)}</div>
-                      )}
+                      <div className={styles.passDetails}>
+                        <h3>{pass?.pass_name ?? "Pass"}</h3>
+                        <p>{pass?.description || ""}</p>
+                        {typeof pass?.cost !== "undefined" && (
+                          <p className={styles.passCost}>₹{Number(pass?.cost)}</p>
+                        )}
+                      </div>
                       {qrPayloadUrl && (
-                        <div>
-                          <QrCode value={qrPayloadUrl} />
+                        <div className={styles.qrContainer}>
+                          <QrCode value={qrPayloadUrl} size={192} />
                         </div>
                       )}
                     </li>
@@ -119,16 +128,16 @@ export default async function ProfilePage() {
                     <div>
                       <h3>{e.name}</h3>
                       <p>{e.description || ""}</p>
-                      <div>
+                    </div>
+                    <div className={styles.eventDetails}>
+                      <div className={styles.eventMeta}>
                         <span>{e.sub_cluster}</span>
-                        {" • "}
                         <span>{e.venue}</span>
-                        {" • "}
                         <span>{e.time}</span>
                       </div>
-                    </div>
-                    <div>
-                      <p>{new Date(String(e.date)).toLocaleDateString()}</p>
+                      <div className={styles.eventDate}>
+                        {new Date(String(e.date)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </div>
                     </div>
                   </li>
                 ))}
