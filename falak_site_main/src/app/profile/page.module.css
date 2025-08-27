@@ -35,12 +35,11 @@
   position: relative;
   z-index: 1;
   min-height: 100vh;
-  background-color: #f5f2e8; /* Original light yellow/beige base */
+  background-color: #F4CA8E;
   background-image: 
-    radial-gradient(ellipse at 90% 80%, rgba(114, 176, 171, 0.3), transparent 40%), /* Teal */
-    radial-gradient(ellipse at 10% 20%, rgba(253, 193, 180, 0.4), transparent 50%), /* Pinkish */
-    radial-gradient(ellipse at 20% 90%, rgba(242, 192, 120, 0.3), transparent 40%), /* Goldish */
-    linear-gradient(to bottom, rgba(245, 242, 232, 0.1), rgba(245, 242, 232, 0.5));
+    radial-gradient(ellipse at 100% 0%, rgba(210, 74, 88, 0.6), transparent 60%),  /* #D24A58 at top-right */
+    radial-gradient(ellipse at 0% 100%, rgba(89, 144, 125, 0.6), transparent 60%), /* #59907D at bottom-left */
+    radial-gradient(ellipse at 100% 100%, rgba(191, 87, 0, 0.6), transparent 60%); /* Burnt Orange at bottom-right */
 }
 
 .detailsColumn {
@@ -163,6 +162,7 @@
   font-family: 'Robert', sans-serif;
   color: #5a5242;
   margin: 0.5rem 0;
+  font-size: 1rem;
 }
 
 .passDescription,
@@ -225,7 +225,7 @@
   align-items: center;
   justify-content: center;
   font-family: 'General', sans-serif;
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: #333;
   text-align: center;
   padding: 0 0.5rem;
@@ -277,10 +277,14 @@
     font-size: 2.5rem;
   }
 
+  .timingItem {
+    font-size: 0.8rem;
+    padding: 0 0.25rem;
+  }
+
   .passList,
   .eventList {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    grid-template-columns: minmax(0, 400px);
+    justify-content: center;
   }
 }
