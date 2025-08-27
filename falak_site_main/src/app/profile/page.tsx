@@ -7,7 +7,7 @@ import { listPassesByIds } from "@/lib/actions/tables/pass";
 import { listTeamMembersByMemberId } from "@/lib/actions/tables/teamMembers";
 import { listEventsByIds } from "@/lib/actions/tables/events";
 import QrCode from "@/components/QrCode";
-import RetroAnimations from "./RetroAnimations";
+import RetroAnimations from "../../components/RetroAnimations";
 import styles from "./page.module.css";
 
 export default async function ProfilePage() {
