@@ -39,6 +39,7 @@
   background-image: 
     radial-gradient(ellipse at 90% 80%, rgba(114, 176, 171, 0.3), transparent 40%), /* Teal */
     radial-gradient(ellipse at 10% 20%, rgba(253, 193, 180, 0.4), transparent 50%), /* Pinkish */
+    radial-gradient(ellipse at 20% 90%, rgba(242, 192, 120, 0.3), transparent 40%), /* Goldish */
     linear-gradient(to bottom, rgba(245, 242, 232, 0.1), rgba(245, 242, 232, 0.5));
 }
 
@@ -68,7 +69,7 @@
 }
 
 .section {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid #e0daca;
   border-radius: 8px;
   padding: 1.5rem;
@@ -81,6 +82,7 @@
   font-size: 1.8rem;
   color: #355E58; /* New Dark Teal */
   margin-bottom: 1rem;
+  text-align: center;
 }
 
 .emptyState {
@@ -117,7 +119,7 @@
   list-style: none;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
 }
 
@@ -153,7 +155,7 @@
 
 .passItem:hover h3,
 .eventItem:hover h3 {
-    background-color: #355E58;
+    color: #355E58;
 }
 
 .passItem p,
@@ -161,6 +163,10 @@
   font-family: 'Robert', sans-serif;
   color: #5a5242;
   margin: 0.5rem 0;
+}
+
+.passDescription,
+.eventDescription {
   flex-grow: 1;
 }
 
@@ -188,18 +194,53 @@
 }
 
 .eventDetails {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
   border-top: 1px solid #e0daca;
-  padding-top: 1rem;
+  padding-top: 1.5rem;
 }
 
 .eventMeta {
   font-family: 'General', sans-serif;
   font-size: 0.9rem;
   color: #5a5242;
+  margin-bottom: 0.5rem;
+}
+
+.eventContent {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.eventTiming {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  align-items: stretch;
+}
+
+.timingItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'General', sans-serif;
+  font-size: 0.9rem;
+  color: #333;
+  text-align: center;
+  padding: 0 0.5rem;
+}
+
+.timingItem strong {
+  font-family: 'Zentry', sans-serif;
+  color: #355E58;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.timingSeparator {
+  width: 1px;
+  background-color: #e0daca;
 }
 
 .eventMeta span {

@@ -51,12 +51,14 @@ export default async function ProfilePage() {
     { id: "2", userId: "1", passId: "p2", qr_token: "qr2" },
     { id: "3", userId: "1", passId: "p3", qr_token: "qr3" },
     { id: "4", userId: "1", passId: "p4", qr_token: "qr4" },
+    { id: "5", userId: "1", passId: "p5", qr_token: "qr5" },
   ];
   const passes = [
     { id: "p1", pass_name: "Proshow Pass", description: "Access to all proshows.", cost: 1000 },
     { id: "p2", pass_name: "Workshop Pass", description: "Access to all workshops.", cost: 500 },
     { id: "p3", pass_name: "Cultural Pass", description: "Access to all cultural events.", cost: 750 },
     { id: "p4", pass_name: "Sports Pass", description: "Access to all sports events.", cost: 400 },
+    { id:"p5",pass_name:"Some Pass",description:"Access to something",cost:20},
   ];
   const events = [
     { id: "e1", name: "Battle of Bands", description: "Rock and roll!", sub_cluster: "Music", venue: "Mega Audi", time: "6 PM", date: "2025-10-28" },
@@ -100,7 +102,7 @@ export default async function ProfilePage() {
                     <li key={up.id ?? `${up.userId}-${up.passId}`} className={styles.passItem}>
                       <div className={styles.passDetails}>
                         <h3>{pass?.pass_name ?? "Pass"}</h3>
-                        <p>{pass?.description || ""}</p>
+                        <p className={styles.passDescription}>{pass?.description || ""}</p>
                         {typeof pass?.cost !== "undefined" && (
                           <p className={styles.passCost}>₹{Number(pass?.cost)}</p>
                         )}
@@ -125,18 +127,29 @@ export default async function ProfilePage() {
               <ul className={styles.eventList}>
                 {events.map((e) => (
                   <li key={e.id} className={styles.eventItem}>
-                    <div>
+                    <div className={styles.eventContent}>
                       <h3>{e.name}</h3>
-                      <p>{e.description || ""}</p>
-                    </div>
-                    <div className={styles.eventDetails}>
                       <div className={styles.eventMeta}>
                         <span>{e.sub_cluster}</span>
-                        <span>{e.venue}</span>
-                        <span>{e.time}</span>
                       </div>
-                      <div className={styles.eventDate}>
-                        {new Date(String(e.date)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      <p className={styles.eventDescription}>{e.description || ""}</p>
+                    </div>
+                    <div className={styles.eventDetails}>
+                      <div className={styles.eventTiming}>
+                        <div className={styles.timingItem}>
+                          <strong>Venue</strong>
+                          <span>{e.venue}</span>
+                        </div>
+                        <div className={styles.timingSeparator}></div>
+                        <div className={styles.timingItem}>
+                          <strong>Time</strong>
+                          <span>{e.time}</span>
+                        </div>
+                        <div className={styles.timingSeparator}></div>
+                        <div className={styles.timingItem}>
+                          <strong>Date</strong>
+                          <span>{new Date(String(e.date)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                        </div>
                       </div>
                     </div>
                   </li>

@@ -22,7 +22,8 @@ const RetroAnimations = () => {
         y: '0%',
         top: '0',
         right: '0',
-        position: 'absolute'
+        position: 'absolute',
+        visibility: 'visible'
       });
 
       const tapePath = cassetteRef.current.querySelector('#tape-path');
@@ -95,7 +96,7 @@ const RetroAnimations = () => {
       <div style={{ position: 'absolute', bottom: '-45vmin', left: '-35vmin', width: '120vmin', height: '120vmin' }}>
         <Vinyl ref={vinylRef} />
       </div>
-      <div ref={cassetteRef}>
+      <div ref={cassetteRef} style={{ visibility: 'hidden' }}>
         <Cassette />
       </div>
     </div>
