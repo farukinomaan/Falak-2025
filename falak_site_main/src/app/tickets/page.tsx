@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { getUserByEmail } from "@/lib/actions/tables/users";
 import { createTicket } from "@/lib/actions/tables/tickets";
 import { ticketCategories } from "@/lib/validation/tickets";
-import GuestContactForm from "./GuestContactForm";
+import GuestContactForm from "../../components/tickets/GuestContactForm";
 import { redirect } from "next/navigation";
 
 // Server component renders the right view depending on user registration
