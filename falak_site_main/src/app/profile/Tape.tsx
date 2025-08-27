@@ -11,10 +11,12 @@ const Tape = () => (
     style={{ position: 'absolute', top: 0, left: 0, overflow: 'visible', transform: 'rotate(45deg)', transformOrigin: '80px 105px' }}
   >
     <defs>
-      <linearGradient id="tape-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#444" />
-        <stop offset="50%" stopColor="#666" />
-        <stop offset="100%" stopColor="#444" />
+      <linearGradient id="tape-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#5a5242" />
+        <stop offset="30%" stopColor="#8c806c" />
+        <stop offset="50%" stopColor="#f5f2e8" />
+        <stop offset="70%" stopColor="#8c806c" />
+        <stop offset="100%" stopColor="#5a5242" />
       </linearGradient>
     </defs>
     <path

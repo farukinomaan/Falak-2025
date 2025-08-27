@@ -62,7 +62,7 @@ const RetroAnimations = () => {
     mm.add("(max-width: 767px)", () => {
       // Mobile vinyl animation
       if (vinylRef.current) {
-        gsap.set(vinylRef.current, { scale: 0.8 });
+        gsap.set(vinylRef.current, { scale: 1.1 });
         gsap.to(vinylRef.current, {
           rotation: 360,
           repeat: -1,
