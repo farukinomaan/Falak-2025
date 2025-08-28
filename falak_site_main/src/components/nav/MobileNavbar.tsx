@@ -9,9 +9,10 @@ interface MobileNavbarProps {
   isMobileMenuOpen: boolean;
   toggleMobileMenu: () => void;
   activeSection: string;
+  menuButtonRef: React.RefObject<HTMLButtonElement | null>; // ADDED
 }
 
-export const MobileNavbar: React.FC<MobileNavbarProps> = ({ show, isMobileMenuOpen, toggleMobileMenu, activeSection }) => {
+export const MobileNavbar: React.FC<MobileNavbarProps> = ({ show, isMobileMenuOpen, toggleMobileMenu, activeSection, menuButtonRef }) => {
   return (
     <div className={`fixed top-0 left-0 right-0 z-50 flex xl:hidden items-start justify-between p-4 transition-all duration-500 ${show ? 'translate-y-0' : '-translate-y-32'}`}>
       {/* Logo container top left */}
@@ -71,6 +72,7 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({ show, isMobileMenuOp
 
         {/* Menu Button - smaller */}
         <button
+          ref={menuButtonRef} // ADDED
           onClick={toggleMobileMenu}
           className="relative w-8 h-8 flex-shrink-0 focus:outline-none group rounded-full overflow-hidden"
           style={{
