@@ -1,4 +1,3 @@
-
 /**
  * @copyright Falak 2025
  */
@@ -45,7 +44,7 @@ export default function Nav() {
   // Close menu if clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node) && !menuButtonRef.current?.contains(event.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node) && menuButtonRef.current && !menuButtonRef.current.contains(event.target as Node)) {
         setIsMobileMenuOpen(false);
       }
     };
@@ -128,6 +127,7 @@ export default function Nav() {
         isMobileMenuOpen={isMobileMenuOpen}
         toggleMobileMenu={toggleMobileMenu}
         activeSection={activeSection}
+        menuButtonRef={menuButtonRef} // ADDED
       />
 
       <MobileMenuDropdown
