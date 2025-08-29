@@ -38,7 +38,7 @@ export default function RootLayout({
 
           <main className="flex-1 w-full min-h-screen ">{children}</main>
           <NavProgress />
-          <Toaster richColors position="top-center" />
+          <Toaster richColors position="bottom-right" />
         </ClientProviders>
       </body>
     </html>
