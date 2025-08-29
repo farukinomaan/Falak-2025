@@ -97,9 +97,6 @@ export default async function ProfilePage() {
                         <div className={styles.passDetails}>
                           <h3>{pass?.pass_name ?? "Pass"}</h3>
                           <p className={styles.passDescription}>{pass?.description || ""}</p>
-                          {typeof pass?.cost !== "undefined" && (
-                            <p className={styles.passCost}>₹{Number(pass?.cost)}</p>
-                          )}
                         </div>
                         {qrPayloadUrl && (
                           <div className={styles.qrContainer}>

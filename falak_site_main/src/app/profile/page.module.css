@@ -178,9 +178,10 @@
 .passItem p,
 .eventItem p {
   font-family: 'Robert', sans-serif;
-  color: #5a5242;
+  color: #fff;
   margin: 0.5rem 0;
   font-size: 1rem;
+  text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; /* Added text-shadow */
 }
 
 .passDescription,
@@ -188,7 +189,7 @@
   flex-grow: 1;
 }
 
-.passCost {
+.passItem .passCost {
   font-family: 'General', sans-serif;
   font-weight: bold;
   color: #B89D47; /* Gold */
@@ -202,7 +203,7 @@
 
 .qrContainer {
   margin-top: 1rem;
-  background: #EAE5D9;
+  background: #F4A259;
   padding: 1rem;
   border-radius: 8px;
   align-self: center;
@@ -210,7 +211,9 @@
   display: flex;
   justify-content: center;
 }
-
+.passItem:hover .qrContainer {
+  background-color: #58907D;
+}
 .eventDetails {
   margin-top: 1.5rem;
   border-top: 1px solid #e0daca;
@@ -323,22 +326,6 @@
   z-index: 0;
 }
 
-.waveSvg {
-  filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
-  transform: rotate(-30deg);
-}
-
-.wave1, .wave2, .wave3 {
-    opacity: 0.7;
-}
-
-.wave2 {
-    transform: translateY(30px);
-}
-
-.wave3 {
-    transform: translateY(60px);
-}
 
 /* New background waves using external SVG */
 .waveImg {
@@ -358,9 +345,9 @@
 }
 
 .waveBottomRight {
-  bottom: -60px;
-  right: -120px;
+  bottom: -110px;
+  right: -100px;
   width: 900px;
   height: auto;
-  transform: rotate(-30deg);
+  transform: rotate(-25deg);
 }
