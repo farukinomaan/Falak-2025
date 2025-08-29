@@ -6,11 +6,13 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { toast } from "sonner";
 
-type PassRow = { id: string; pass_name: string; description?: string | null; cost?: number | string | null };
+type PassRow = { id: string; pass_name: string; description?: string | null; cost?: number | string | null; event_id?: string | null; original_id?: string };
+type EventRow = { id: string; name: string };
 
-export default function CartList({ passes }: { passes: PassRow[] }) {
+export default function CartList() {
   const { ids, remove } = useGuestCart();
   const [guestPasses, setGuestPasses] = useState<PassRow[]>([]);
+  const [eventsById, setEventsById] = useState<Map<string, EventRow>>(new Map());
   const [loading, setLoading] = useState(false);
   const [pending, start] = useTransition();
   const { status } = useSession();
@@ -44,6 +46,26 @@ export default function CartList({ passes }: { passes: PassRow[] }) {
     return () => controller.abort();
   }, [ids]);
 
+  // Fetch related events for passes having event_id
+  useEffect(() => {
+    const eventIds = Array.from(new Set(guestPasses.map(g => g.event_id).filter(Boolean))) as string[];
+    if (eventIds.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const params = new URLSearchParams({ ids: eventIds.join(",") });
+        const res = await fetch(`/api/events/byIds?${params.toString()}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const json = await res.json().catch(() => null);
+        if (!json?.ok || !Array.isArray(json.data) || cancelled) return;
+        const map = new Map<string, EventRow>();
+        (json.data as EventRow[]).forEach(r => map.set(r.id, r));
+        setEventsById(map);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [guestPasses]);
+
   const view = useMemo(() => guestPasses, [guestPasses]);
 
   const handleRemove = (id: string) => {
@@ -64,14 +86,14 @@ export default function CartList({ passes }: { passes: PassRow[] }) {
             {view.map((p) => (
               <li key={p.id} className="p-4 flex items-center justify-between gap-4">
                 <div>
-                  <div className="font-medium">{p.pass_name}</div>
+                  <div className="font-medium">{eventsById.get(p.event_id || "")?.name || p.pass_name}</div>
                   {p.description && <div className="text-sm text-gray-600">{p.description}</div>}
                 </div>
                 <div className="flex items-center gap-3">
                   {typeof p.cost !== "undefined" && p.cost !== null && (
                     <div className="text-sm font-semibold">₹{p.cost}</div>
                   )}
-                  <button disabled={pending} onClick={() => handleRemove(p.id)} className="px-3 py-1 rounded bg-gray-200">Remove</button>
+                  <button disabled={pending} onClick={() => handleRemove(p.original_id || p.id)} className="px-3 py-1 rounded bg-gray-200">Remove</button>
                 </div>
               </li>
             ))}

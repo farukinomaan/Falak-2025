@@ -1,14 +1,18 @@
 import type { AuthOptions } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
+import type { JWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
 // Supabase direct client not needed here; use existing server actions instead
 import type { Session } from "next-auth";
 
-import { auth } from "./firebase/firebase";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+// Removed unused Firebase client imports after simplifying auth callbacks
 import { getUserByEmail } from "@/lib/actions";
 
 type AugSession = Session & { needsOnboarding?: boolean; user: Session["user"] & { id?: string } };
+
+interface AugToken extends JWT {
+  supabaseUserId?: string;
+  needsOnboarding?: boolean;
+}
 
 // Helper: check if user exists in Supabase
 async function checkUserExistsByEmail(email?: string | null) {
@@ -50,27 +54,28 @@ export const  authOptions: AuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    // signIn: async ({ user, account, profile, email, credentials }) => {
-    //   if (account?.provider === "google") {
-    //     const provider = new GoogleAuthProvider();
-    //     const result = await signInWithPopup(auth, provider);
-    //     return true; 
-    //   }
-    //   return false;
-    // },
     jwt: async ({ token }) => {
-      // Always recompute based on DB so onboarding status updates immediately after creation
-      const exists = await checkUserExistsByEmail(token.email);
-      token.needsOnboarding = !exists;
-      return token;
+      const t = token as AugToken;
+      const exists = await checkUserExistsByEmail(t.email);
+      t.needsOnboarding = !exists;
+      // If user exists, fetch Supabase user id (only if not cached)
+      if (t.email && !t.supabaseUserId && !t.needsOnboarding) {
+        try {
+          const userRes = await getUserByEmail(t.email);
+          if (userRes.ok && userRes.data?.id) t.supabaseUserId = userRes.data.id as string;
+        } catch {
+          // ignore
+        }
+      }
+      return token; // return base token instance, mutated in place
     },
-  session: async ({ session, token }) => {
+    session: async ({ session, token }) => {
       const s = session as AugSession;
+      const t = token as AugToken;
       if (s.user) {
-        //session.user.id = token.sub as string;
-        
-        s.user.id = token.sub;
-    s.needsOnboarding = (token as { needsOnboarding?: boolean }).needsOnboarding ?? false;
+        // Prefer Supabase user id for server-side data lookups
+        s.user.id = t.supabaseUserId || t.sub;
+        s.needsOnboarding = t.needsOnboarding ?? false;
       }
       return s;
     },
