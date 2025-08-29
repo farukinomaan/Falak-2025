@@ -31,8 +31,8 @@ const Vinyl = forwardRef<SVGSVGElement>((props, ref) => (
         />
       ))
     }
-    <circle cx="100" cy="100" r="30" fill="#C74B2E" />
-    <circle cx="100" cy="100" r="28" fill="#D95C3F" />
+    <circle cx="100" cy="100" r="30" fill="#fa3741" />
+    <circle cx="100" cy="100" r="28" fill="#e23b44" />
     <circle cx="100" cy="100" r="10" fill="#F5F2E8" />
     <text
       x="100"

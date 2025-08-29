@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Caprasimo&display=swap');
+
 @font-face {
   font-family: 'Circular';
   src: url('/fonts/circularweb-book.woff2') format('woff2');
@@ -35,11 +37,7 @@
   position: relative;
   z-index: 1;
   min-height: 100vh;
-  background-color: #F4CA8E;
-  background-image: 
-    radial-gradient(ellipse at 100% 0%, rgba(210, 74, 88, 0.6), transparent 60%),  /* #D24A58 at top-right */
-    radial-gradient(ellipse at 0% 100%, rgba(89, 144, 125, 0.6), transparent 60%), /* #59907D at bottom-left */
-    radial-gradient(ellipse at 100% 100%, rgba(191, 87, 0, 0.6), transparent 60%); /* Burnt Orange at bottom-right */
+  background-color: #F2C078;
 }
 
 .detailsColumn {
@@ -53,13 +51,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+  z-index: 2;
 }
 
 .header h1 {
-  font-family: 'Zentry', sans-serif;
+  font-family: 'Caprasimo', sans-serif;
   font-size: 3rem;
-  color: #c74b2e;
-  text-shadow: 1px 1px #8c3a2e;
+  color: #fff;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
 }
 
 .header p {
@@ -69,6 +70,7 @@
 
 .section {
   background: rgba(255, 255, 255, 0.1);
+  backdrop-filter:blur(2px);
   border: 1px solid #e0daca;
   border-radius: 8px;
   padding: 1.5rem;
@@ -77,9 +79,11 @@
 }
 
 .section h2 {
-  font-family: 'Zentry', sans-serif;
+  font-family: 'Caprasimo', sans-serif;
   font-size: 1.8rem;
-  color: #355E58; /* New Dark Teal */
+  color: #fff;
+  -webkit-text-stroke: 1.5px #000;
+  paint-order: stroke fill;
   margin-bottom: 1rem;
   text-align: center;
 }
@@ -124,7 +128,7 @@
 
 .passItem,
 .eventItem {
-  background: rgba(253, 251, 245, 0.7); /* Beige with opacity */
+  background: rgba(244, 162, 89, 0.5); 
   border: 1px solid #e0daca;
   border-radius: 12px;
   padding: 1.5rem;
@@ -287,4 +291,37 @@
     grid-template-columns: minmax(0, 400px);
     justify-content: center;
   }
+}
+
+.pageContent {
+  position: relative;
+  z-index: 2;
+}
+
+/* Wave Styles */
+.waveContainer {
+  position: fixed;
+  bottom: -100px;
+  right: -100px;
+  width: 1000px;
+  height: 400px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.waveSvg {
+  filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+  transform: rotate(-30deg);
+}
+
+.wave1, .wave2, .wave3 {
+    opacity: 0.7;
+}
+
+.wave2 {
+    transform: translateY(30px);
+}
+
+.wave3 {
+    transform: translateY(60px);
 }
