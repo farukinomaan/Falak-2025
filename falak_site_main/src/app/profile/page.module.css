@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Caprasimo&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bevan&display=swap');
 
 @font-face {
   font-family: 'Circular';
@@ -28,6 +29,13 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'Bohemian';
+  src: url('/fonts/bohemian.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
 .profilePage {
   max-width: 100%;
   margin: 0 auto;
@@ -49,23 +57,26 @@
   padding-bottom: 1.5rem;
   margin-bottom: 2rem;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
+  gap: 0.75rem;
   position: relative;
   z-index: 2;
+  text-align: center;
 }
 
 .header h1 {
   font-family: 'Caprasimo', sans-serif;
   font-size: 3rem;
   color: #fff;
-  -webkit-text-stroke: 2px #000;
+  -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
 }
 
 .header p {
-  font-family: 'General', sans-serif;
-  color: #5a5242;
+  font-family: Georgia, Garamond, serif;
+  color: #000;
 }
 
 .section {
@@ -82,7 +93,7 @@
   font-family: 'Caprasimo', sans-serif;
   font-size: 1.8rem;
   color: #fff;
-  -webkit-text-stroke: 1.5px #000;
+  -webkit-text-stroke: 2.5px #000;
   paint-order: stroke fill;
   margin-bottom: 1rem;
   text-align: center;
@@ -128,7 +139,7 @@
 
 .passItem,
 .eventItem {
-  background: rgba(244, 162, 89, 0.5); 
+  background: #F4A259; 
   border: 1px solid #e0daca;
   border-radius: 12px;
   padding: 1.5rem;
@@ -149,16 +160,19 @@
 
 .passItem h3,
 .eventItem h3 {
-  font-family: 'Zentry', sans-serif;
+  font-family: 'Bevan', serif;
+  font-weight: 700;
   font-size: 1.5rem;
-  color: #C74B2E;
+  color: #fff;
   margin-bottom: 0.5rem;
-  transition: color 0.3s;
+  text-shadow: 0 2px 0 #58907D;
+  transition: color 0.3s, text-shadow 0.3s;
 }
 
 .passItem:hover h3,
 .eventItem:hover h3 {
-    color: #355E58;
+  color: #fff;
+  text-shadow: 0 3px 0 #58907D;
 }
 
 .passItem p,
@@ -324,4 +338,29 @@
 
 .wave3 {
     transform: translateY(60px);
+}
+
+/* New background waves using external SVG */
+.waveImg {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 1;
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,0.25));
+}
+
+.waveTopLeft {
+  top: -120px;
+  left: -120px;
+  width: 900px;
+  height: auto;
+  transform: rotate(155deg);
+}
+
+.waveBottomRight {
+  bottom: -60px;
+  right: -120px;
+  width: 900px;
+  height: auto;
+  transform: rotate(-30deg);
 }

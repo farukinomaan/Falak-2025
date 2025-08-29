@@ -65,10 +65,10 @@ export default async function ProfilePage() {
   return (
     <>
       <div className={styles.profilePage}>
+        <div className={styles.pageContent}>
         <header className={styles.header}>
           <div>
-            <h1>Your Profile</h1>
-            <p>Welcome back, {user.name}</p>
+            <h1>Welcome, {user.name}!</h1>
           </div>
           <div>
             <p>{user.email}</p>
@@ -154,16 +154,9 @@ export default async function ProfilePage() {
           </div>
         </div>
         <RetroAnimations />
-      </div>
-      <div className={styles.waveContainer}>
-        <svg width="100%" height="100%" viewBox="0 0 1000 400" className={styles.waveSvg}>
-            <defs>
-                <path id="wave-path" d="M0,100 C150,0 350,200 500,100 S850,-100 1000,100 L1000,400 L0,400 Z" />
-            </defs>
-            <use href="#wave-path" x="0" y="0" fill="#f4a259" className={styles.wave3}/>
-            <use href="#wave-path" x="0" y="0" fill="#f5e083" className={styles.wave2}/>
-            <use href="#wave-path" x="0" y="0" fill="#58907d" className={styles.wave1}/>
-        </svg>
+        </div>
+        <img src="/wave.svg" alt="decorative wave" className={`${styles.waveImg} ${styles.waveTopLeft}`} />
+        <img src="/wave.svg" alt="decorative wave" className={`${styles.waveImg} ${styles.waveBottomRight}`} />
       </div>
     </>
   );

@@ -17,6 +17,9 @@ const Cassette = forwardRef<HTMLDivElement>((props, ref) => (
           <stop offset="0%" stopColor="#2D2D2D" />
           <stop offset="100%" stopColor="#3D3D3D" />
         </linearGradient>
+        <filter id="bevan-undershadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="2" stdDeviation="0" floodColor="#58907D" floodOpacity="1" />
+        </filter>
       </defs>
       <rect x="5" y="5" width="240" height="140" rx="10" fill="url(#cassette-gradient)" stroke="#1A1A1A" strokeWidth="2" />
       <rect x="15" y="15" width="220" height="120" rx="5" fill="#1F1F1F" stroke="#111" strokeWidth="1" />
@@ -36,10 +39,10 @@ const Cassette = forwardRef<HTMLDivElement>((props, ref) => (
         y="55"
         textAnchor="middle"
         fill="#FFFFFF"
-        stroke="#000000"
-        strokeWidth="0.5"
         fontSize="20"
-        fontFamily="'Zentry', sans-serif"
+        fontFamily="'Bevan', serif"
+        fontWeight="700"
+        filter="url(#bevan-undershadow)"
       >
         FALAK '25
       </text>
