@@ -12,55 +12,27 @@ import styles from "./page.module.css";
 // import BackgroundColorSetter from "./BackgroundColorSetter"; // Removed
 
 export default async function ProfilePage() {
-  // const session = await getServerSession(authOptions);
-  // const email = session?.user?.email;
-  // if (!email) redirect("/api/auth/signin");
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email;
+  if (!email) redirect("/api/auth/signin");
 
-  // const userRes = await getUserByEmail(email);
-  // if (!userRes.ok || !userRes.data) redirect("/onboarding");
-  // const user = userRes.data;
+  const userRes = await getUserByEmail(email);
+  if (!userRes.ok || !userRes.data) redirect("/onboarding");
+  const user = userRes.data;
 
   // // Fetch passes owned by user
-  // const upRes = await listUserPassesByUserId(user.id!);
-  // const userPasses = upRes.ok && upRes.data ? upRes.data : [];
-  // const passIds = userPasses.map((p) => p.passId).filter(Boolean) as string[];
-  // const passRes = await listPassesByIds(passIds);
-  // const passes = passRes.ok && passRes.data ? passRes.data : [];
+  const upRes = await listUserPassesByUserId(user.id!);
+  const userPasses = upRes.ok && upRes.data ? upRes.data : [];
+  const passIds = userPasses.map((p) => p.passId).filter(Boolean) as string[];
+  const passRes = await listPassesByIds(passIds);
+  const passes = passRes.ok && passRes.data ? passRes.data : [];
 
   // // Fetch events by team membership
-  // const tmRes = await listTeamMembersByMemberId(user.id!);
-  // const memberships = tmRes.ok && tmRes.data ? tmRes.data : [];
-  // const eventIds = Array.from(new Set(memberships.map((m) => m.eventId))).filter(Boolean) as string[];
-  // const evRes = await listEventsByIds(eventIds);
-  // const events = evRes.ok && evRes.data ? evRes.data : [];
-
-  // --- TEMP DATA ---
-  const user = {
-    name: "Falak",
-    email: "falak@mitblr.in",
-    mahe: true,
-    reg_no: "2109XXXXX",
-    institute: "MIT",
-    id: "user_123"
-  };
-
-  const passes = [
-    { id: "pass_1", pass_name: "Proshow Pass", description: "Access to all proshows.", cost: 1500 },
-    { id: "pass_2", pass_name: "Cultural Pass", description: "Access to all cultural events.", cost: 800 },
-    { id: "pass_3", pass_name: "Sports Pass", description: "Access to all sports events.", cost: 500 },
-  ];
-
-  const userPasses = [
-    { id: "up_1", userId: "user_123", passId: "pass_1", qr_token: "qr_token_123" },
-    { id: "up_2", userId: "user_123", passId: "pass_2", qr_token: "qr_token_456" },
-  ];
-
-  const events = [
-    { id: "event_1", name: "Battle of Bands", description: "Rock and metal bands competition.", sub_cluster: "Music", venue: "Quadrangle", time: "6 PM", date: "2025-10-28" },
-    { id: "event_2", name: "Street Play", description: "Nukkad natak competition.", sub_cluster: "Drama", venue: "KC", time: "2 PM", date: "2025-10-29" },
-    { id: "event_3", name: "Footloose", description: "Group dance competition.", sub_cluster: "Dance", venue: "AB5", time: "4 PM", date: "2025-10-30" },
-  ];
-  // --- END TEMP DATA ---
+  const tmRes = await listTeamMembersByMemberId(user.id!);
+  const memberships = tmRes.ok && tmRes.data ? tmRes.data : [];
+  const eventIds = Array.from(new Set(memberships.map((m) => m.eventId))).filter(Boolean) as string[];
+  const evRes = await listEventsByIds(eventIds);
+  const events = evRes.ok && evRes.data ? evRes.data : [];
 
   return (
     <>
