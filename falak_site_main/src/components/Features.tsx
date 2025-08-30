@@ -2,7 +2,7 @@
 
 import { useRef, ReactNode } from "react";
 import BuyNowButton from "@/components/BuyNowButton";
-import AddToCartButton from "@/components/cart/AddToCartButton";
+import PassAddToCartButton from "@/components/cart/PassAddToCartButton";
 
 // -----------------------------
 // BentoTilt Component
@@ -74,11 +74,7 @@ export const BentoCard: React.FC<BentoCardProps> = ({ src, title, description, p
               ))}
             </ul>
           )}
-          {passId ? (
-            <AddToCartButton passId={passId} />
-          ) : (
-            <BuyNowButton />
-          )}
+          {passId ? <PassAddToCartButton passId={passId} /> : <BuyNowButton />}
         </div>
       </div>
     </div>
