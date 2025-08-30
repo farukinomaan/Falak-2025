@@ -1,34 +1,42 @@
+/**
+ * @copyright Falak 2025
+ */
+
 "use client";
-
-import { useEffect, useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
-import { NavLinks } from "./nav/NavLinks";
 import { UserMenu } from "./nav/UserMenu";
+import { DesktopNavbar } from "./nav/DesktopNavbar";
+import { MobileNavbar } from "./nav/MobileNavbar";
+import { MobileMenuDropdown } from "./nav/nav-components/MobileMenuDropdown";
 
-export default function Navbar() {
+interface NavItem {
+  id: string;
+  label: string;
+  href: string;
+}
+
+export default function Nav() {
+  const [activeSection, setActiveSection] = useState<string>("events");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [show, setShow] = useState(true);
-  const [menuOpen, setMenuOpen] = useState(false);
-  // cart count handled inside UserMenu
   const lastScrollY = useRef(0);
-  const menuRef = useRef<HTMLDivElement | null>(null); // Type the ref here
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
 
   // Toggle navbar visibility based on scroll
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-
       if (currentScrollY <= 10) {
-        setShow(true); // Show navbar if we're near the top
+        setShow(true); 
       } else if (currentScrollY > lastScrollY.current) {
-        setShow(false); // Hide navbar if scrolling down
+        setShow(false);
       } else {
-        setShow(true); // Show navbar if scrolling up
+        setShow(true); 
       }
-
       lastScrollY.current = currentScrollY;
     };
-
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -36,59 +44,100 @@ export default function Navbar() {
   // Close menu if clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
+      if (menuRef.current && !menuRef.current.contains(event.target as Node) && menuButtonRef.current && !menuButtonRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const navLinks = <NavLinks />;
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.classList.add('no-scroll');
+    } else {
+      document.body.classList.remove('no-scroll');
+    }
+    return () => {
+      document.body.classList.remove('no-scroll');
+    };
+  }, [isMobileMenuOpen]);
+
+  const navItems: NavItem[] = [
+    { id: "FALAK", label: "FALAK", href: "/" },
+    { id: "events", label: "Events", href: "/events" },
+    { id: "passes", label: "Passes", href: "/passes" },
+    { id: "tickets", label: "Tickets", href: "/tickets" },
+  ];
+
+  const mobileNavItems: NavItem[] = [
+    ...navItems,
+    { id: "signin", label: "Sign In", href: "/signin" },
+    { id: "cart", label: "Cart", href: "/cart" },
+  ];
+
+  const rollNext = () => {
+    const currentIndex = navItems.findIndex((item) => item.id === activeSection);
+    const nextIndex = (currentIndex + 1) % navItems.length;
+    setActiveSection(navItems[nextIndex].id);
+  };
+
+  const rollPrev = () => {
+    const currentIndex = navItems.findIndex((item) => item.id === activeSection);
+    const prevIndex = (currentIndex - 1 + navItems.length) % navItems.length;
+    setActiveSection(navItems[prevIndex].id);
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleItemClick = (itemId: string): void => {
+    setActiveSection(itemId);
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <>
-      {/* Logo fixed top-left */}
-      <div className="fixed top-4 left-9 z-50 pointer-events-auto">
-        <Link href="/" onClick={() => setMenuOpen(false)}>
-          <h1 className="special-font hero-heading text-white">
-            F<b>A</b>LAK
-          </h1>
-        </Link>
-      </div>
-
-      {/* User menu fixed top-right */}
-      <div className="fixed top-4 right-6 z-50">
-        <UserMenu />
-      </div>
-
-      {/* Main Navbar */}
-      <nav
-        className={`fixed top-6 left-1/2 z-40 -translate-x-1/2 px-6 py-3 flex items-center gap-6
-          bg-black/70 text-white rounded-full shadow-lg backdrop-blur-md border border-white/10
-          transition-transform duration-300 ${show ? "translate-y-0" : "-translate-y-32"}
-          before:content-[''] before:absolute before:inset-0 before:rounded-full
-          before:bg-gradient-to-t before:from-white/10 before:to-transparent before:pointer-events-none before:z-[-1]`}
-      >
-        {/* Desktop View */}
-  <div className="hidden md:flex items-center gap-6">{navLinks}</div>
-
-        {/* Mobile View */}
-        <div className="flex md:hidden items-center justify-between w-full relative pr-2">
-          <button onClick={() => setMenuOpen(!menuOpen)} className="p-1">
-            {menuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-          {menuOpen && (
-            <div
-              ref={menuRef}
-              className="absolute top-full left-0 mt-2 w-48 bg-black/80 rounded-lg shadow-lg backdrop-blur-md border border-white/10 flex flex-col p-4 gap-3"
-            >
-              {navLinks}
-            </div>
-          )}
+      <div className="hidden xl:block">
+        <div className="fixed top-4 left-9 z-50 pointer-events-auto">
+          <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+            <h1 className="special-font hero-heading text-white">
+              F<b>A</b>LAK
+            </h1>
+          </Link>
         </div>
-      </nav>
+        <div className="fixed top-4 right-6 z-50">
+          <UserMenu />
+        </div>
+      </div>
+
+      <DesktopNavbar
+        show={show}
+        navItems={navItems}
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+        rollNext={rollNext}
+        rollPrev={rollPrev}
+      />
+
+      <MobileNavbar
+        show={show}
+        isMobileMenuOpen={isMobileMenuOpen}
+        toggleMobileMenu={toggleMobileMenu}
+        activeSection={activeSection}
+        menuButtonRef={menuButtonRef} // ADDED
+      />
+
+      <MobileMenuDropdown
+        isMobileMenuOpen={isMobileMenuOpen}
+        menuRef={menuRef}
+        mobileNavItems={mobileNavItems}
+        activeSection={activeSection}
+        handleItemClick={handleItemClick}
+        menuButtonRef={menuButtonRef}
+      />
     </>
   );
 }
