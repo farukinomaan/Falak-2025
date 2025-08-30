@@ -28,6 +28,21 @@ export function UserMenu({ className = "" }: { className?: string }) {
 
   return (
     <div ref={ref} className={`relative ${className}`}>
+      {/* Cart Count Badge */}
+        {cartCount > 0 && (
+          <span
+            className="absolute -top-1 -right-1 text-[10px] rounded-full px-1.5 py-0.5 font-bold animate-bounce z-20"
+            style={{
+              backgroundColor: "#D24A58", 
+              color: "#fff",
+              border: "1px solid #F4CA8E", 
+              boxShadow: "0 0 8px rgba(210, 74, 88, 0.6)",
+              fontFamily: "monospace"
+            }}
+          >
+            {cartCount}
+          </span>
+        )}
       {/* User Button - Matching navbar orb style */}
       <button
         onClick={() => setOpen(o => !o)}
@@ -66,21 +81,7 @@ export function UserMenu({ className = "" }: { className?: string }) {
           />
         </div>
 
-        {/* Cart Count Badge */}
-        {cartCount > 0 && (
-          <span
-            className="absolute -top-1 -right-1 text-[10px] rounded-full px-1.5 py-0.5 font-bold animate-pulse"
-            style={{
-              backgroundColor: "#D24A58", 
-              color: "#fff",
-              border: "1px solid #F4CA8E", 
-              boxShadow: "0 0 8px rgba(210, 74, 88, 0.6)",
-              fontFamily: "monospace"
-            }}
-          >
-            {cartCount}
-          </span>
-        )}
+        
 
         {/* Rotating outer ring */}
         <div className={`absolute inset-1 rounded-full border border-opacity-40 ${open ? 'animate-spin' : ''}`}
