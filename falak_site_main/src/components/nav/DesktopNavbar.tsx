@@ -1,5 +1,7 @@
-import React from 'react';
-import Link from 'next/link';
+"use client";
+
+import React, { useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Press_Start_2P } from "next/font/google";
 import { RetroButton } from './nav-components/RetroButton';
 
@@ -14,15 +16,30 @@ interface NavItem {
 interface DesktopNavbarProps {
   show: boolean;
   navItems: NavItem[];
-  activeSection: string;
+  // activeSection prop deprecated; kept optional for backward compatibility
+  activeSection?: string;
   setActiveSection: (id: string) => void;
   rollNext: () => void;
   rollPrev: () => void;
 }
 
-export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, activeSection, setActiveSection, rollNext, rollPrev }) => {
+export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, setActiveSection, rollNext, rollPrev }) => {
+  const pathname = usePathname();
+  // Spinner rotation state (persistent incremental rotation each click)
+  const [leftAngle, setLeftAngle] = useState(0);
+  const [rightAngle, setRightAngle] = useState(0);
   const leftItems = navItems.slice(0, 2);
   const rightItems = navItems.slice(2, 4);
+
+  // Determine if the current route matches a nav item; fallback to prop-based activeSection if it also matches
+  const matched = useMemo(() => {
+    if (!pathname) return null;
+    // Exact or nested match (e.g., /events/category/slug should match /events)
+    return navItems.find(n => pathname === n.href || pathname.startsWith(n.href + '/')) || null;
+  }, [pathname, navItems]);
+
+  const effectiveActiveId = matched ? matched.id : undefined;
+  const centerLabel = matched ? matched.label.toUpperCase() : "-------";
 
   return (
     <nav
@@ -43,14 +60,19 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, ac
       {/* Left spinner + nav */}
       <div className="flex items-center gap-2">
         <button
-          onClick={rollPrev}
-          className="relative w-6 h-6 flex-shrink-0 focus:outline-none group"
+          onClick={() => {
+            setLeftAngle(a => a - 180);
+            rollPrev();
+          }}
+          className="relative w-6 h-6 flex-shrink-0 focus:outline-none"
+          aria-label="Previous"
         >
           <div
-            className="w-full h-full rounded-full shadow-md relative transition-transform duration-500 group-active:rotate-180"
+            className="w-full h-full rounded-full shadow-md relative transition-transform duration-500"
             style={{
               background: "radial-gradient(circle, #59907D 0%, #191919 100%)",
               border: "1.5px solid #D24A58",
+              transform: `rotate(${leftAngle}deg)`
             }}
           >
             <div
@@ -70,11 +92,11 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, ac
 
         {/* Left buttons */}
         <div className="flex gap-1.5">
-          {leftItems.map((item) => (
+      {leftItems.map((item) => (
             <RetroButton
               key={item.id}
               item={item}
-              isActive={activeSection === item.id}
+        isActive={effectiveActiveId === item.id}
               onClick={setActiveSection}
               size="sm"
             />
@@ -105,11 +127,11 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, ac
                 textAlign: "center",
               }}
             >
-              {activeSection.toUpperCase()}
+              {centerLabel}
             </div>
             <div className="absolute inset-0 pointer-events-none">
               <div
-                className="h-full w-full opacity-40"
+                className={`h-full w-full ${matched ? 'opacity-40' : 'opacity-10'}`}
                 style={{
                   backgroundImage:
                     "repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(244,202,142,0.15) 1px, rgba(244,202,142,0.15) 2px)",
@@ -124,11 +146,11 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, ac
       <div className="flex items-center gap-2">
         {/* Right buttons */}
         <div className="flex gap-1.5">
-          {rightItems.map((item) => (
+      {rightItems.map((item) => (
             <RetroButton
               key={item.id}
               item={item}
-              isActive={activeSection === item.id}
+        isActive={effectiveActiveId === item.id}
               onClick={setActiveSection}
               size="sm"
             />
@@ -137,14 +159,19 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, ac
 
         {/* Spinner with trigger */}
         <button
-          onClick={rollNext}
-          className="relative w-6 h-6 flex-shrink-0 focus:outline-none group"
+          onClick={() => {
+            setRightAngle(a => a + 180);
+            rollNext();
+          }}
+          className="relative w-6 h-6 flex-shrink-0 focus:outline-none"
+          aria-label="Next"
         >
           <div
-            className="w-full h-full rounded-full shadow-md relative transition-transform duration-500 group-active:-rotate-180"
+            className="w-full h-full rounded-full shadow-md relative transition-transform duration-500"
             style={{
               background: "radial-gradient(circle, #59907D 0%, #191919 100%)",
               border: "1.5px solid #D24A58",
+              transform: `rotate(${rightAngle}deg)`
             }}
           >
             <div
