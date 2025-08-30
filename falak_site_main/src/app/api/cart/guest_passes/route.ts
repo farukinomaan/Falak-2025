@@ -22,19 +22,25 @@ export async function GET(req: NextRequest) {
     const supabase = getServiceClient();
     const { data: byId, error: e1 } = await supabase
       .from("Pass")
-      .select("id, pass_name, description, cost")
+      .select("id, pass_name, description, cost, event_id")
       .in("id", ids);
     if (e1) return NextResponse.json({ ok: false, error: e1.message }, { status: 400 });
   const { data: byEvent, error: e2 } = await supabase
       .from("Pass")
-      .select("id, pass_name, description, cost")
+      .select("id, pass_name, description, cost, event_id")
       .in("event_id", ids);
     if (e2) return NextResponse.json({ ok: false, error: e2.message }, { status: 400 });
-  type Row = { id: string; pass_name: string; description: string | null; cost: number | string | null };
+  type Row = { id: string; pass_name: string; description: string | null; cost: number | string | null; event_id?: string | null };
+  const requested = new Set(ids);
   const combined: Row[] = ([...(byId || []), ...(byEvent || [])] as Row[]);
   // de-dupe by id
-  const map = new Map<string, Row>();
-  for (const row of combined) map.set(row.id, row);
+  const map = new Map<string, Row & { original_id: string }>();
+  for (const row of combined) {
+      const original_id = requested.has(row.id)
+        ? row.id
+        : (row.event_id && requested.has(row.event_id) ? row.event_id : row.id);
+      map.set(row.id, { ...row, original_id });
+  }
   return NextResponse.json({ ok: true, data: Array.from(map.values()) });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Service client error";

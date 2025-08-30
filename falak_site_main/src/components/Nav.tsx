@@ -3,7 +3,8 @@
  */
 
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { UserMenu } from "./nav/UserMenu";
 import { DesktopNavbar } from "./nav/DesktopNavbar";
@@ -18,6 +19,8 @@ interface NavItem {
 
 export default function Nav() {
   const [activeSection, setActiveSection] = useState<string>("events");
+  const router = useRouter();
+  const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [show, setShow] = useState(true);
   const lastScrollY = useRef(0);
@@ -64,12 +67,12 @@ export default function Nav() {
     };
   }, [isMobileMenuOpen]);
 
-  const navItems: NavItem[] = [
+  const navItems: NavItem[] = useMemo(() => ([
     { id: "FALAK", label: "FALAK", href: "/" },
     { id: "events", label: "Events", href: "/events" },
     { id: "passes", label: "Passes", href: "/passes" },
     { id: "tickets", label: "Tickets", href: "/tickets" },
-  ];
+  ]), []);
 
   const mobileNavItems: NavItem[] = [
     ...navItems,
@@ -77,16 +80,28 @@ export default function Nav() {
     { id: "cart", label: "Cart", href: "/cart" },
   ];
 
+  // Sync activeSection with current path (covers direct navigation / deep links)
+  useEffect(() => {
+    const match = navItems.find(n => pathname === n.href || pathname.startsWith(n.href + "/"));
+    if (match && match.id !== activeSection) {
+      setActiveSection(match.id);
+    }
+  }, [pathname, navItems, activeSection]);
+
   const rollNext = () => {
     const currentIndex = navItems.findIndex((item) => item.id === activeSection);
     const nextIndex = (currentIndex + 1) % navItems.length;
-    setActiveSection(navItems[nextIndex].id);
+    const next = navItems[nextIndex];
+    setActiveSection(next.id); // immediate optimistic UI
+    router.push(next.href);
   };
 
   const rollPrev = () => {
     const currentIndex = navItems.findIndex((item) => item.id === activeSection);
     const prevIndex = (currentIndex - 1 + navItems.length) % navItems.length;
-    setActiveSection(navItems[prevIndex].id);
+    const prev = navItems[prevIndex];
+    setActiveSection(prev.id);
+    router.push(prev.href);
   };
 
   const toggleMobileMenu = () => {
@@ -94,7 +109,11 @@ export default function Nav() {
   };
 
   const handleItemClick = (itemId: string): void => {
-    setActiveSection(itemId);
+    const target = navItems.find(n => n.id === itemId);
+    if (target) {
+      setActiveSection(itemId);
+      router.push(target.href);
+    }
     setIsMobileMenuOpen(false);
   };
 
