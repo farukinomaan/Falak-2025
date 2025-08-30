@@ -181,7 +181,8 @@
   color: #fff;
   margin: 0.5rem 0;
   font-size: 1rem;
-  text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; /* Added text-shadow */
+  -webkit-text-stroke: 1px #000; /* Increased stroke width to 1px */
+  paint-order: stroke fill; /* Ensures stroke is behind fill */
 }
 
 .passDescription,
@@ -308,24 +309,24 @@
     grid-template-columns: minmax(0, 400px);
     justify-content: center;
   }
+
+  .waveTopLeft {
+    width: 200vw;
+    top: 0vw;
+    left: 0vw;
+  }
+
+  .waveBottomRight {
+    width: 200vw;
+    bottom: 0vw;
+    right: 0vw;
+  }
 }
 
 .pageContent {
   position: relative;
   z-index: 2;
 }
-
-/* Wave Styles */
-.waveContainer {
-  position: fixed;
-  bottom: -100px;
-  right: -100px;
-  width: 1000px;
-  height: 400px;
-  pointer-events: none;
-  z-index: 0;
-}
-
 
 /* New background waves using external SVG */
 .waveImg {
@@ -334,14 +335,17 @@
   z-index: 0;
   opacity: 1;
   filter: drop-shadow(0 6px 18px rgba(0,0,0,0.25));
+  max-width: none;
+  transform-origin: center; /* keep scaling from center */
 }
 
+/* Desktop defaults */
 .waveTopLeft {
   top: -120px;
   left: -120px;
   width: 900px;
   height: auto;
-  transform: rotate(155deg);
+  transform: rotate(155deg) scale(1);
 }
 
 .waveBottomRight {
@@ -349,5 +353,28 @@
   right: -100px;
   width: 900px;
   height: auto;
-  transform: rotate(-25deg);
+  transform: rotate(-25deg) scale(1);
 }
+
+/* Tablet adjustments */
+@media (max-width: 768px) {
+  .waveTopLeft {
+    transform: rotate(155deg) scale(1); /* slightly bigger */
+  }
+
+  .waveBottomRight {
+    transform: rotate(-25deg) scale(1);
+  }
+}
+
+/* Small mobile adjustments */
+@media (max-width: 480px) {
+  .waveTopLeft {
+    transform: rotate(155deg) scale(1); /* much bigger */
+  }
+
+  .waveBottomRight {
+    transform: rotate(-25deg) scale(1);
+  }
+}
+
