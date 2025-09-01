@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { auth } from "@/lib/firebase/firebase";
-import { signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
+import { signInWithPhoneNumber, ConfirmationResult, RecaptchaVerifier } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import { Input } from "@/components/ui/input";
-import { RecaptchaVerifier } from "firebase/auth/web-extension";
 
 interface PhoneVerificationProps {
   phone: string;
@@ -22,9 +21,9 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
   const [confirmed, setConfirmed] = useState<ConfirmationResult | null>(null);
   const [verified, setVerified] = useState(false);
 
-  const [recaptchaVerifier,setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
+  // We rely on global window.recaptchaVerifier created by useRecaptcha hook or fallback init here
   const [resendCountdown,setResendCountdown] = useState(0);
-  const [isPending,startTransition] = useTransition(); // New shit, gotta learn
+  // Removed unused transition state
 
   // Nigga this is how you use timer
   useEffect(()=>{
@@ -37,18 +36,38 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
   },[resendCountdown])  // As resendCountdown changes for the forst time, this will trigger and start a reverse countdown, untill state becomes 0, then the timeout is cleared
 
 
+  async function ensureRecaptcha() {
+    if (typeof window === 'undefined') return;
+    if (!window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+        await window.recaptchaVerifier.render();
+      } catch (e) {
+        console.error('Failed to init recaptcha', e);
+      }
+    }
+  }
+
   async function handleSendOtp(e: React.FormEvent) {
     e.preventDefault();
     try {
       setSending(true);
-      const appVerifier = window.recaptchaVerifier!;
+      await ensureRecaptcha();
+      const appVerifier = window.recaptchaVerifier;
+      if (!appVerifier) {
+        toast.error("reCAPTCHA not ready");
+        return;
+      }
       const updatedPhone:string = '+91' + phone;
       const result = await signInWithPhoneNumber(auth, updatedPhone, appVerifier);
       setConfirmed(result);
       toast.success("OTP sent");
     } catch (err: unknown) {
       console.error(err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to send OTP";
+      let errorMessage = err instanceof Error ? err.message : "Failed to send OTP";
+      if (errorMessage.includes('argument-error')) {
+        errorMessage = 'Phone auth failed: reCAPTCHA or phone format issue';
+      }
       toast.error(errorMessage);
     } finally {
       setSending(false);
