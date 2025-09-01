@@ -48,6 +48,7 @@ export const EventSchema = z.object({
   created_at: timestamp.optional(),
   cluster_name: nullableText,
   enable: z.boolean().optional(),
+  max_team_size: z.number().int().positive().optional(),
 })
 export const EventCreateSchema = EventSchema.omit({ id: true, created_at: true })
 export const EventUpdateSchema = EventSchema.partial().extend({ id: uuid })
