@@ -14,7 +14,7 @@ import {
 } from "@/lib/actions/adminAggregations";
 import AddToCartButton from "@/components/cart/AddToCartButton";
 // @ts-expect-error local client component path resolution at build
-import TeamRegistrationClient from "../events/[category]/[slug]/team-registration-client";
+import TeamRegistrationClient from "./team-registration-client";
 import { getServiceClient } from "@/lib/actions/supabaseClient";
 
 type EvtBase = {
