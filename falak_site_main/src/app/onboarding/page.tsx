@@ -13,13 +13,13 @@ import { Button } from "@/components/ui/button";
 export default function OnboardingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [phone, setPhone] = useState("");
+  // Deprecated direct phone input removed (Firebase flow).
   const [name, setName] = useState("");
   const [regNo, setRegNo] = useState("");
   const [mahe, setMahe] = useState<boolean>(true);
   const [institute, setInstitute] = useState("");
   const [verified, setVerified] = useState(false);
-
+  const [phone, setPhone] = useState("");
   useRecaptcha();
 
   useEffect(() => {
@@ -31,10 +31,7 @@ export default function OnboardingPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!verified) {
-      toast.warning("Verify phone first");
-      return;
-    }
+  if (!verified) { toast.warning("Verify phone first"); return; }
     if (!mahe && !institute.trim()) {
       toast.warning("Please enter your college name");
       return;
@@ -46,7 +43,7 @@ export default function OnboardingPage() {
     try {
       const payload = {
         name,
-        phone,
+  phone: "+91" + phone.replace(/[^0-9]/g, ""),
         mahe,
         regNo: mahe ? regNo : null,
         institute: mahe ? null : institute.trim(),
@@ -90,7 +87,7 @@ export default function OnboardingPage() {
         <div>
           <PhoneVerification
             phone={phone}
-            setPhone={setPhone}
+            setPhone={(p) => setPhone(p.replace(/[^0-9]/g, "").slice(0,10))}
             onVerificationComplete={() => setVerified(true)}
           />
         </div>
@@ -106,7 +103,7 @@ export default function OnboardingPage() {
       </form>
 
       {/* invisible recaptcha host */}
-      <div id="recaptcha-container" />
+  {/* <div id="recaptcha-container" /> Firebase recaptcha container no longer needed for MSG91 */}
     </div>
   );
 }
