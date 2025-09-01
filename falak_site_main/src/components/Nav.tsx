@@ -74,30 +74,46 @@ export default function Nav() {
     { id: "tickets", label: "Tickets", href: "/tickets" },
   ]), []);
 
-  const mobileNavItems: NavItem[] = [
+  // Extended candidates for mobile & active detection (not all appear in desktop spinner cycle)
+  const extendedCandidates: NavItem[] = useMemo(() => ([
     ...navItems,
-    { id: "signin", label: "Sign In", href: "/signin" },
     { id: "cart", label: "Cart", href: "/cart" },
-  ];
+    { id: "profile", label: "Profile", href: "/profile" },
+    { id: "signin", label: "Sign In", href: "/signin" },
+  ]), [navItems]);
+
+  const mobileNavItems: NavItem[] = useMemo(() => ([
+    ...navItems,
+    { id: "cart", label: "Cart", href: "/cart" },
+    { id: "signin", label: "Sign In", href: "/signin" },
+  ]), [navItems]);
 
   // Sync activeSection with current path (covers direct navigation / deep links)
   useEffect(() => {
-    const match = navItems.find(n => pathname === n.href || pathname.startsWith(n.href + "/"));
+    if (!pathname) return;
+    const match = extendedCandidates.find(n => pathname === n.href || pathname.startsWith(n.href + "/"));
     if (match && match.id !== activeSection) {
       setActiveSection(match.id);
+      return;
     }
-  }, [pathname, navItems, activeSection]);
+    // Fallback: if no match & activeSection not in extended list, reset to events
+    if (!match && !extendedCandidates.some(n => n.id === activeSection)) {
+      setActiveSection("events");
+    }
+  }, [pathname, extendedCandidates, activeSection]);
 
   const rollNext = () => {
-    const currentIndex = navItems.findIndex((item) => item.id === activeSection);
+    let currentIndex = navItems.findIndex((item) => item.id === activeSection);
+    if (currentIndex === -1) currentIndex = 0; // if currently on cart/profile etc.
     const nextIndex = (currentIndex + 1) % navItems.length;
     const next = navItems[nextIndex];
-    setActiveSection(next.id); // immediate optimistic UI
+    setActiveSection(next.id);
     router.push(next.href);
   };
 
   const rollPrev = () => {
-    const currentIndex = navItems.findIndex((item) => item.id === activeSection);
+    let currentIndex = navItems.findIndex((item) => item.id === activeSection);
+    if (currentIndex === -1) currentIndex = 0;
     const prevIndex = (currentIndex - 1 + navItems.length) % navItems.length;
     const prev = navItems[prevIndex];
     setActiveSection(prev.id);
@@ -155,7 +171,6 @@ export default function Nav() {
         mobileNavItems={mobileNavItems}
         activeSection={activeSection}
         handleItemClick={handleItemClick}
-        menuButtonRef={menuButtonRef}
       />
     </>
   );

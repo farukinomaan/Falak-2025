@@ -15,9 +15,11 @@ interface RetroButtonProps {
   isActive: boolean;
   onClick: (id: string) => void;
   size?: 'sm' | 'md';
+  /** If provided, overrides default navigation + onClick(id). */
+  overrideAction?: () => void;
 }
 
-export const RetroButton: React.FC<RetroButtonProps> = ({ item, isActive, onClick, size = 'md' }) => {
+export const RetroButton: React.FC<RetroButtonProps> = ({ item, isActive, onClick, size = 'md', overrideAction }) => {
   const isMobile = size === 'sm';
   const paddingClass = isMobile ? 'px-2.5 py-1' : 'p-3';
   const textClass = isMobile ? 'text-xs' : 'text-xs';
@@ -29,7 +31,14 @@ export const RetroButton: React.FC<RetroButtonProps> = ({ item, isActive, onClic
     <Link
       key={item.id}
       href={item.href}
-      onClick={() => onClick(item.id)}
+      onClick={(e) => {
+        if (overrideAction) {
+          e.preventDefault();
+          overrideAction();
+          return;
+        }
+        onClick(item.id);
+      }}
       className={`group relative ${paddingClass} ${roundedClass} ${textClass} font-bold uppercase flex justify-center items-center transition-all duration-300 ${press.className}
         ${isActive ? activeScale + ' z-10' : "hover:scale-102"}`}
       style={{

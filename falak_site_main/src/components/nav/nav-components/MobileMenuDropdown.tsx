@@ -1,9 +1,6 @@
 import React from 'react';
-import Link from 'next/link';
 import { RetroButton } from './RetroButton';
-import { Press_Start_2P } from 'next/font/google';
-
-const press = Press_Start_2P({ weight: "400", subsets: ["latin"] });
+import { useSession, signIn } from 'next-auth/react';
 
 interface NavItem {
   id: string;
@@ -17,10 +14,10 @@ interface MobileMenuDropdownProps {
   mobileNavItems: NavItem[];
   activeSection: string;
   handleItemClick: (id: string) => void;
-  menuButtonRef: React.RefObject<HTMLButtonElement | null>; // ADDED | null
 }
 
-export const MobileMenuDropdown: React.FC<MobileMenuDropdownProps> = ({ isMobileMenuOpen, menuRef, mobileNavItems, activeSection, handleItemClick, menuButtonRef }) => {
+export const MobileMenuDropdown: React.FC<MobileMenuDropdownProps> = ({ isMobileMenuOpen, menuRef, mobileNavItems, activeSection, handleItemClick }) => {
+  const { status } = useSession();
   
   return (
     <>
@@ -42,14 +39,41 @@ export const MobileMenuDropdown: React.FC<MobileMenuDropdownProps> = ({ isMobile
       >
         <div className="p-4">
           <div className="grid grid-cols-2 gap-3 mb-4">
-            {mobileNavItems.map((item, index) => (
-              <RetroButton
-                key={item.id}
-                item={item}
-                isActive={activeSection === item.id}
-                onClick={handleItemClick}
-              />
-            ))}
+            {mobileNavItems.map((item) => {
+              if (item.id === 'signin') {
+                if (status === 'authenticated') {
+                  const profileItem = { id: 'profile', label: 'Profile', href: '/profile' };
+                  return (
+                    <RetroButton
+                      key={profileItem.id}
+                      item={profileItem}
+                      isActive={activeSection === profileItem.id}
+                      onClick={handleItemClick}
+                      size="sm"
+                    />
+                  );
+                }
+                return (
+                  <RetroButton
+                    key={item.id}
+                    item={item}
+                    isActive={false}
+                    onClick={handleItemClick}
+                    size="sm"
+                    overrideAction={() => { signIn('google'); handleItemClick('signin'); }}
+                  />
+                );
+              }
+              return (
+                <RetroButton
+                  key={item.id}
+                  item={item}
+                  isActive={activeSection === item.id}
+                  onClick={handleItemClick}
+                  size="sm"
+                />
+              );
+            })}
           </div>
           <div className="mt-4 h-px bg-gradient-to-r from-transparent via-orange-300 to-transparent opacity-40" />
         </div>

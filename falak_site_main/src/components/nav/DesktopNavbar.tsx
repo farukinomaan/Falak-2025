@@ -44,21 +44,21 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
   return (
     <nav
       role="navigation"
-      className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden xl:flex items-center justify-between gap-4 px-4 py-2
-          rounded-lg shadow-lg border-2 transition-all duration-500
+      className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden xl:flex items-stretch justify-center gap-3 px-3 py-2
+          rounded-xl shadow-lg border-2 transition-all duration-500
           ${press.className} ${show ? "translate-y-0" : "-translate-y-32"}`}
       style={{
         backgroundColor: "rgba(25, 25, 25, 0.95)",
         borderColor: "rgba(89, 144, 125, 0.6)",
         backdropFilter: "blur(12px)",
-        minWidth: "450px",
-        maxWidth: "700px",
-        width: "80%",
-        boxShadow: "0 6px 24px rgba(0,0,0,0.4), 0 0 15px rgba(244, 202, 142, 0.15)",
+        minWidth: "560px",
+        maxWidth: "760px",
+        width: "72%",
+        boxShadow: "0 6px 28px rgba(0,0,0,0.45), 0 0 18px rgba(244, 202, 142, 0.18)",
       }}
     >
-      {/* Left spinner + nav */}
-      <div className="flex items-center gap-2">
+      {/* Left spinner + nav (fixed width group for symmetry) */}
+      <div className="flex items-center gap-2 pl-1 pr-2" style={{width:"33%", justifyContent:"flex-start"}}>
         <button
           onClick={() => {
             setLeftAngle(a => a - 180);
@@ -104,10 +104,10 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
         </div>
       </div>
 
-      {/* Center glowing display */}
-      <div className="flex-1 flex justify-center">
+    {/* Center glowing display (fixed width to keep sides balanced) */}
+    <div className="flex items-center justify-center" style={{width:"34%"}}>
         <div
-          className="relative px-4 py-2 rounded-lg"
+      className="relative px-5 py-2 rounded-lg flex items-center justify-center min-w-[140px]"
           style={{
             backgroundColor: "#191919",
             border: "1.5px solid #59907D",
@@ -142,8 +142,8 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
         </div>
       </div>
 
-      {/* Right nav + spinner */}
-      <div className="flex items-center gap-2">
+  {/* Right nav + spinner (mirrors left group) */}
+  <div className="flex items-center gap-2 pr-1 pl-2 justify-end" style={{width:"33%"}}>
         {/* Right buttons */}
         <div className="flex gap-1.5">
       {rightItems.map((item) => (
