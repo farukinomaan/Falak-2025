@@ -138,9 +138,9 @@ export default function Nav() {
       <div className="hidden xl:block">
         <div className="fixed top-4 left-9 z-50 pointer-events-auto">
           <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
-            <h1 className="special-font hero-heading text-white">
+            {/* <h1 className="special-font hero-heading text-white">
               F<b>A</b>LAK
-            </h1>
+            </h1> */}
           </Link>
         </div>
         <div className="fixed top-4 right-6 z-50">
