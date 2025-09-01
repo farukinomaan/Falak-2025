@@ -1,96 +1,123 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
-import { sportsCategories } from "@/lib/mock_data/categories";
-import { useGSAP } from "@gsap/react";
+import Image from "next/image";
+import { Dancing_Script } from "next/font/google";
+import { useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+const dancingScript = Dancing_Script({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
+
 gsap.registerPlugin(ScrollTrigger);
 
-const Sports: React.FC = () => {
-  useGSAP(() => {
-    gsap.utils.toArray<HTMLElement>(".sports-card").forEach((card) => {
-      gsap.from(card, {
-        y: 40,
-        opacity: 0,
-        duration: 0.6,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: card,
-          start: "top 90%",
-        },
-      });
-    });
-  });
+type EventType = { id: string; sub_cluster: string; cluster_name?: string | null };
+
+export default function Sports({ events }: { events: EventType[] }) {
+  const introRef = useRef<SVGSVGElement>(null);
+  const cardsRef = useRef<HTMLDivElement>(null);
+  const [showIntro, setShowIntro] = useState(true);
+
+  useLayoutEffect(() => {
+    if (introRef.current) {
+      const textEl = introRef.current.querySelector("text") as SVGTextElement | null;
+      if (textEl) {
+        const length = textEl.getComputedTextLength();
+        gsap.set(textEl, {
+          strokeDasharray: length,
+          strokeDashoffset: length,
+          fill: "transparent",
+          stroke: "white",
+        });
+        const tl = gsap.timeline({
+          onComplete: () => {
+            setShowIntro(false);
+            cardsRef.current?.scrollIntoView({ behavior: "smooth" });
+          }
+        });
+        
+        tl.to(textEl, {
+          strokeDashoffset: 0,
+          duration: 4,
+          ease: "power2.out"
+        })
+        .to(introRef.current, {
+          opacity: 0,
+          duration: 1
+        }, "-=1.2"); 
+        
+      }
+    }
+  }, []);
+
+  const sports = events.filter((e) => (e.cluster_name || "").toLowerCase() === "sports");
+  const subs = Array.from(new Set(sports.map((e) => e.sub_cluster)));
 
   return (
-    <section className="sports-section relative w-full overflow-hidden">
-      {/* Background */}
-      <div
-        className="absolute top-0 left-0 w-full h-full bg-cover bg-center z-0"
-        style={{ backgroundImage: "url('/images/sports-bg.jpg')" }}
-      />
-      <div className="absolute inset-0 bg-black/50 z-10" />
-
-      {/* Content */}
-      <div
-        className="container mx-auto flex flex-col items-center py-20 relative z-20"
-        style={{ fontFamily: "'Orbitron', sans-serif" }}
-      >
-        <div className="text-center text-white space-y-2">
-          <h1 className="text-4xl font-bold">Sports Events</h1>
-          <p className="text-lg max-w-xl mx-auto text-gray-200">
-            Explore our exciting lineup of sports events and activities. Choose
-            your game, get the details, and join the action!
-          </p>
-        </div>
-
-        {/* Feature Cards */}
-        <div className="sports-grid mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
-          {sportsCategories.map((cat) => (
-            <div
-              key={cat.id}
-              className="sports-card flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition duration-300"
+    <div className="bg-black text-white">
+      {/* Intro - only shows once */}
+      {showIntro && (
+        <div className="h-screen flex items-center justify-center">
+          <svg
+            ref={introRef}
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 -80 4500 900"
+            className="w-[80%] h-auto"
+          >
+            <text
+              x="50%"
+              y="50%"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              className={dancingScript.className}
+              fontSize="800"
+              fill="transparent"
+              stroke="white"
+              strokeWidth="6"
             >
-              {/* Image */}
-              <div className="h-48 w-full bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-500 text-sm">Image here</span>
-              </div>
-
-              {/* Text */}
-              <div className="flex flex-col flex-grow p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">
-                  {cat.title}
-                </h2>
-                <ul className="space-y-2 flex-grow">
-                  {cat.subcategories.map((s) => (
-                    <li key={s.id}>
-                      <Link
-                        className="text-blue-600 hover:underline"
-                        href={`/sports_events/${cat.slug}`}
-                      >
-                        {s.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-4">
-                  <Link
-                    className="inline-block text-sm text-white bg-black px-4 py-2 rounded hover:bg-gray-800 transition"
-                    href={`/sports_events/${cat.slug}`}
-                  >
-                    View {cat.title}
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
+              Sports
+            </text>
+          </svg>
         </div>
-      </div>
-    </section>
-  );
-};
+      )}
 
-export default Sports;
+      {/* Cards Section */}
+      <div
+        ref={cardsRef}
+        className="max-w-5xl mx-auto min-h-screen pt-28 p-12 grid grid-cols-1 sm:grid-cols-2 gap-8 items-start"
+      >
+        {subs.slice(0, 2).map((slug) => (
+          <div
+            key={slug}
+            className="relative w-full aspect-square overflow-hidden rounded-2xl 
+                       border border-white/50 shadow-sm group 
+                       transition duration-300 hover:shadow-lg hover:shadow-white/20"
+          >
+            {/* Image */}
+            <Image
+              src="/images/artist.png"
+              alt={slug}
+              fill
+              className="object-cover transition duration-500 group-hover:blur-md"
+            />
+
+            {/* Hover Text */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center 
+                            text-center opacity-0 group-hover:opacity-100 transition duration-500">
+              <h2 className="text-2xl font-semibold mb-3">{slug}</h2>
+              <Link
+                className="inline-block text-sm text-black bg-white px-4 py-2 rounded"
+                href={`/sports_events/${encodeURIComponent(slug)}`}
+              >
+                View {slug}
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
