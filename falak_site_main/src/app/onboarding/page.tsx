@@ -102,8 +102,8 @@ export default function OnboardingPage() {
         </Button>
       </form>
 
-      {/* invisible recaptcha host */}
-  {/* <div id="recaptcha-container" /> Firebase recaptcha container no longer needed for MSG91 */}
+  {/* Invisible reCAPTCHA host (required for Firebase phone auth) */}
+  <div id="recaptcha-container" />
     </div>
   );
 }
