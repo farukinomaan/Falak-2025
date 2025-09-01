@@ -32,7 +32,7 @@ const Hero: React.FC = () => {
     });
   }, []);
 
-  const getVideoSrc = (index: number): string => `/videos/hero-${index}.mp4`;
+  const getVideoSrc = (index: number): string => `/videos/newafter.mp4`;
 
   const prefersReducedMotion =
     typeof window !== "undefined" &&
@@ -40,7 +40,7 @@ const Hero: React.FC = () => {
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   return (
-    <div className="relative h-dvh w-screen overflow-x-hidden bg-white">
+    <div className="relative h-dvh w-screen overflow-x-hidden bg-[#f2eae1]">
       <div
         id="video-frame"
         className="relative z-10 h-dvh w-screen overflow-hidden rounded-lg bg-blue-75"
@@ -55,10 +55,10 @@ const Hero: React.FC = () => {
               autoPlay
               loop
               muted
-              preload="metadata"
+              preload="auto"
               playsInline
               poster="/window.svg"
-              className="absolute left-0 top-0 size-full object-cover object-center opacity-0 transition-opacity duration-500"
+              className="absolute left-0 top-0 size-full object-cover object-center"
               onLoadedData={(e) => {
                 (e.currentTarget as HTMLVideoElement).classList.remove("opacity-0");
               }}
@@ -82,23 +82,37 @@ const Hero: React.FC = () => {
         </h1>
 
         {/* Overlay Content */}
-        <div className="absolute left-0 top-0 z-40 size-full">
+        <div className="absolute left-0 -top-5 z-40 size-full">
           <div className="mt-24 px-5 sm:px-10">
-            <h1 className="special-font hero-heading text-blue-100">Join us</h1>
+            <h1 className="special-font hero-heading text-white"><b>Join us</b></h1>
 
-            <p className="mb-5 max-w-64 font-robert-regular text-blue-100">
+            {/* <p className="mb-5 max-w-64 font-robert-regular text-blue-100">
               Where Talent Meets Passion <br /> The Ultimate Fest Experience
-            </p>
+            </p> */}
 
-            <Link href="/passes">
-              <Button id="watch-trailer" title="Get your passes now" containerClass="bg-yellow-300 flex-center gap-" />
-            </Link>
+<Link href="/passes">
+  <Button
+    id=""
+    title="Get your passes now"
+    containerClass="
+      bg-[#ebded1]   /* deep burnt orange */
+      text-[#1A0E07] /* almost black espresso */
+      font-extrabold uppercase tracking-wide
+      px-6 py-3 rounded-md
+      border-2 border-[#1A0E07]
+      shadow-[4px_4px_0px_0px_rgba(26,14,7,1)]
+      hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none
+      transition-all duration-150
+    "
+  />
+</Link>
+
           </div>
         </div>
       </div>
 
       {/* Background Text */}
-      <h1 className="special-font hero-heading absolute bottom-5 right-5 text-black">
+      <h1 className="special-font hero-heading absolute bottom-5 right-5 text-[#7a1f1f]">
         F<b>A</b>LAK
       </h1>
     </div>
@@ -106,3 +120,4 @@ const Hero: React.FC = () => {
 };
 
 export default Hero;
+
