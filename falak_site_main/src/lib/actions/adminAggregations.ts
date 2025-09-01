@@ -23,6 +23,7 @@ import {
   listPassesWithoutEvent as _listPassesWithoutEvent,
 } from "./tables/pass";
 import { createUserPass as _createUserPass } from "./tables/userPasses";
+// (Team create/list functions imported on demand elsewhere if needed)
 
 // Wrapper Server Actions for Events
 export async function saListEvents() {
@@ -264,4 +265,205 @@ export async function getRoleForEmail(email: string) {
     .maybeSingle();
   if (error) return { ok: false as const, error: error.message };
   return { ok: true as const, data: (data?.role as string | undefined) };
+}
+
+// Lightweight helper: list only passIds owned by a user (for quick ownership checks in UI)
+export async function saListUserPassIds(userId: string) {
+  const idOk = uuid.safeParse(userId);
+  if (!idOk.success) return { ok: false as const, error: "Invalid userId" };
+  const supabase = getServiceClient();
+  const { data, error } = await supabase.from("User_passes").select("passId").eq("userId", userId);
+  if (error) return { ok: false as const, error: error.message };
+  return { ok: true as const, data: (data as Array<{ passId: string }>).map((r) => r.passId) };
+}
+
+// Team utilities for event pages
+export async function saGetUserTeamForEvent(userId: string, eventId: string) {
+  const supabase = getServiceClient();
+  // First attempt: team where user is captain
+  const { data: captainTeam, error: capErr } = await supabase
+    .from("Teams")
+    .select("id, name, eventId, captainId")
+    .eq("eventId", eventId)
+    .eq("captainId", userId)
+    .maybeSingle();
+  if (capErr) return { ok: false as const, error: capErr.message };
+  if (captainTeam) {
+    const { data: members, error: mErr } = await supabase
+      .from("Team_members")
+      .select("id, memberId")
+      .eq("teamId", captainTeam.id);
+    if (mErr) return { ok: false as const, error: mErr.message };
+    return { ok: true as const, data: { team: captainTeam, members } };
+  }
+  // Second attempt: membership row referencing userId
+  const { data: membershipRows, error: memErr } = await supabase
+    .from("Team_members")
+    .select("teamId")
+    .eq("eventId", eventId)
+    .eq("memberId", userId)
+    .limit(1);
+  if (memErr) return { ok: false as const, error: memErr.message };
+  if (!membershipRows || membershipRows.length === 0) return { ok: true as const, data: null };
+  const teamId = (membershipRows[0] as { teamId: string }).teamId;
+  const { data: team, error: tErr } = await supabase
+    .from("Teams")
+    .select("id, name, eventId, captainId")
+    .eq("id", teamId)
+    .maybeSingle();
+  if (tErr) return { ok: false as const, error: tErr.message };
+  if (!team) return { ok: true as const, data: null };
+  const { data: members, error: mErr2 } = await supabase
+    .from("Team_members")
+    .select("id, memberId")
+    .eq("teamId", team.id);
+  if (mErr2) return { ok: false as const, error: mErr2.message };
+  return { ok: true as const, data: { team, members } };
+}
+
+export async function saCreateTeamWithMembers(input: { eventId: string; captainId: string; name: string; memberIds: string[] }) {
+  // Basic shape validation (lightweight)
+  if (!input.eventId || !input.captainId || !input.name) return { ok: false as const, error: "Missing fields" };
+  const supabase = getServiceClient();
+  // Fetch event constraints
+  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, max_team_size").eq("id", input.eventId).maybeSingle();
+  if (evtErr) return { ok: false as const, error: evtErr.message };
+  if (!evtRow) return { ok: false as const, error: "Event not found" };
+  const maxTeamSize: number | null = (evtRow as { id: string; max_team_size?: number | null }).max_team_size ?? null;
+  // Validate member uniqueness & size
+  const uniqueMembers = Array.from(new Set(input.memberIds.filter(Boolean)));
+  if (uniqueMembers.length !== input.memberIds.filter(Boolean).length) return { ok: false as const, error: "Duplicate member IDs" };
+  if (maxTeamSize && uniqueMembers.length > maxTeamSize) return { ok: false as const, error: `Team exceeds max size ${maxTeamSize}` };
+  // Ensure user does not already have a team for that event
+  const existing = await supabase
+    .from("Teams")
+    .select("id")
+    .eq("eventId", input.eventId)
+    .eq("captainId", input.captainId)
+    .maybeSingle();
+  if (existing.error) return { ok: false as const, error: existing.error.message };
+  if (existing.data) return { ok: false as const, error: "Team already exists" };
+  // Ensure members are not already in another team for same event (as captain or member)
+  if (uniqueMembers.length) {
+    const { data: conflictTeams, error: conflictErr } = await supabase
+      .from("Teams")
+      .select("id, captainId")
+      .eq("eventId", input.eventId)
+      .in("captainId", uniqueMembers);
+    if (conflictErr) return { ok: false as const, error: conflictErr.message };
+    if (conflictTeams && conflictTeams.length) return { ok: false as const, error: "One or more users already captain another team for this event" };
+    const { data: conflictMembers, error: conflictMembersErr } = await supabase
+      .from("Team_members")
+      .select("id, memberId")
+      .eq("eventId", input.eventId)
+      .in("memberId", uniqueMembers);
+    if (conflictMembersErr) return { ok: false as const, error: conflictMembersErr.message };
+    if (conflictMembers && conflictMembers.length) return { ok: false as const, error: "One or more users already in another team for this event" };
+  }
+
+  const { data: team, error: tErr } = await supabase
+    .from("Teams")
+    .insert({ eventId: input.eventId, captainId: input.captainId, name: input.name })
+    .select("id")
+    .single();
+  if (tErr) return { ok: false as const, error: tErr.message };
+  const teamId = team.id as string;
+  const membersInsert = uniqueMembers.map((memberId) => ({ teamId, memberId, eventId: input.eventId }));
+  if (membersInsert.length) {
+    const { error: mErr } = await supabase.from("Team_members").insert(membersInsert);
+    if (mErr) return { ok: false as const, error: mErr.message };
+  }
+  return { ok: true as const, data: { teamId } };
+}
+
+// Convenience: create team supplying member emails (all must already be registered users)
+export async function saCreateTeamWithMemberEmails(input: { eventId: string; captainId: string; name: string; memberEmails: string[] }) {
+  if (!input.eventId || !input.captainId || !input.name) return { ok: false as const, error: "Missing fields" };
+  const emails = input.memberEmails.map(e => e.trim().toLowerCase()).filter(Boolean);
+  const unique = Array.from(new Set(emails));
+  if (unique.length === 0) return { ok: false as const, error: "At least one member email required" };
+  // Disallow captain email among members (retrieve captain email)
+  const supabase = getServiceClient();
+  // Fetch event constraints
+  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, max_team_size").eq("id", input.eventId).maybeSingle();
+  if (evtErr) return { ok: false as const, error: evtErr.message };
+  if (!evtRow) return { ok: false as const, error: "Event not found" };
+  const maxTeamSize: number | null = (evtRow as { id: string; max_team_size?: number | null }).max_team_size ?? null;
+  const { data: captainUser, error: capErr } = await supabase.from("Users").select("id, email").eq("id", input.captainId).maybeSingle();
+  if (capErr) return { ok: false as const, error: capErr.message };
+  const captainEmail = (captainUser as { email?: string } | null)?.email?.toLowerCase();
+  const filtered = captainEmail ? unique.filter(e => e !== captainEmail) : unique;
+  if (filtered.length === 0) return { ok: false as const, error: "Members cannot only be captain" };
+  if (maxTeamSize && filtered.length > maxTeamSize) return { ok: false as const, error: `Team exceeds max size ${maxTeamSize}` };
+  // Fetch users by emails
+  const { data: userRows, error: uErr } = await supabase.from("Users").select("id, email").in("email", filtered);
+  if (uErr) return { ok: false as const, error: uErr.message };
+  const foundIds: string[] = [];
+  const foundEmails = new Set<string>();
+  for (const u of (userRows as Array<{ id: string; email: string }> || [])) {
+    foundIds.push(u.id);
+    foundEmails.add(u.email.toLowerCase());
+  }
+  const missing = filtered.filter(e => !foundEmails.has(e));
+  if (missing.length) return { ok: false as const, error: `Unregistered emails: ${missing.join(", ")}` };
+  // Ensure users not already in a team for event
+  if (foundIds.length) {
+    const { data: conflictCaptains, error: ccErr } = await supabase
+      .from("Teams")
+      .select("id, captainId")
+      .eq("eventId", input.eventId)
+      .in("captainId", foundIds);
+    if (ccErr) return { ok: false as const, error: ccErr.message };
+    if (conflictCaptains && conflictCaptains.length) return { ok: false as const, error: "One or more users already captain another team for this event" };
+    const { data: conflictMembers, error: cmErr } = await supabase
+      .from("Team_members")
+      .select("id, memberId")
+      .eq("eventId", input.eventId)
+      .in("memberId", foundIds);
+    if (cmErr) return { ok: false as const, error: cmErr.message };
+    if (conflictMembers && conflictMembers.length) return { ok: false as const, error: "One or more users already in another team for this event" };
+  }
+  // Perform creation manually to emulate transaction semantics
+  // 1. Re-check existing team for captain
+  const { data: existing, error: exErr } = await supabase
+    .from("Teams")
+    .select("id")
+    .eq("eventId", input.eventId)
+    .eq("captainId", input.captainId)
+    .maybeSingle();
+  if (exErr) return { ok: false as const, error: exErr.message };
+  if (existing) return { ok: false as const, error: "Team already exists" };
+  // 2. Create team
+  const { data: team, error: tErr } = await supabase
+    .from("Teams")
+    .insert({ eventId: input.eventId, captainId: input.captainId, name: input.name })
+    .select("id")
+    .single();
+  if (tErr) return { ok: false as const, error: tErr.message };
+  const teamId = (team as { id: string }).id;
+  // 3. Insert members
+  if (foundIds.length) {
+    const { error: mErr } = await supabase.from("Team_members").insert(foundIds.map(id => ({ teamId, memberId: id, eventId: input.eventId })));
+    if (mErr) {
+      // rollback team
+      await supabase.from("Teams").delete().eq("id", teamId);
+      return { ok: false as const, error: mErr.message };
+    }
+  }
+  return { ok: true as const, data: { teamId } };
+}
+
+// List event IDs where user participates (captain or member)
+export async function saListUserTeamEventIds(userId: string) {
+  const supabase = getServiceClient();
+  const [captainRes, memberRes] = await Promise.all([
+    supabase.from("Teams").select("eventId").eq("captainId", userId),
+    supabase.from("Team_members").select("eventId").eq("memberId", userId),
+  ]);
+  if (captainRes.error) return { ok: false as const, error: captainRes.error.message };
+  if (memberRes.error) return { ok: false as const, error: memberRes.error.message };
+  const ids = new Set<string>();
+  for (const r of (captainRes.data as Array<{ eventId: string }> || [])) ids.add(r.eventId);
+  for (const r of (memberRes.data as Array<{ eventId: string }> || [])) ids.add(r.eventId);
+  return { ok: true as const, data: Array.from(ids) };
 }

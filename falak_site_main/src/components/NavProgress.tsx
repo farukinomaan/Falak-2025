@@ -9,7 +9,7 @@ function isModifiedEvent(event: MouseEvent): boolean {
     event.ctrlKey ||
     event.shiftKey ||
     event.altKey ||
-    (event as any).button === 1
+  event.button === 1
   );
 }
 
