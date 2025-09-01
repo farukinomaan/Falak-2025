@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Press_Start_2P } from "next/font/google";
 import { RetroButton } from './nav-components/RetroButton';
@@ -31,10 +31,30 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
   const leftItems = navItems.slice(0, 2);
   const rightItems = navItems.slice(2, 4);
 
+  const [eventsOpen, setEventsOpen] = useState(false);
+  const closeTimer = useRef<NodeJS.Timeout | null>(null);
+  const openDropdown = () => {
+    if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null; }
+    setEventsOpen(true);
+  };
+  const scheduleClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => { setEventsOpen(false); }, 160);
+  };
+  useEffect(()=>()=>{ if (closeTimer.current) clearTimeout(closeTimer.current); },[]);
+  const eventsItem = navItems.find(n => n.id === 'events');
+  const dropdownItems = [
+    { id: 'sports', label: 'Sports', href: '/sports' },
+    { id: 'cultural', label: 'Cultural', href: '/cultural' }
+  ];
+
   // Determine if the current route matches a nav item; fallback to prop-based activeSection if it also matches
   const matched = useMemo(() => {
     if (!pathname) return null;
-    // Exact or nested match (e.g., /events/category/slug should match /events)
+    // Sports & Cultural should map to Events label for center display
+    if (pathname.startsWith('/sports') || pathname.startsWith('/cultural')) {
+      return navItems.find(n => n.id === 'events') || null;
+    }
     return navItems.find(n => pathname === n.href || pathname.startsWith(n.href + '/')) || null;
   }, [pathname, navItems]);
 
@@ -92,15 +112,66 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
 
         {/* Left buttons */}
         <div className="flex gap-1.5">
-      {leftItems.map((item) => (
+      {leftItems.map((item) => {
+          const isEvents = item.id === 'events';
+          if (!isEvents) return (
             <RetroButton
               key={item.id}
               item={item}
-        isActive={effectiveActiveId === item.id}
+              isActive={effectiveActiveId === item.id}
               onClick={setActiveSection}
               size="sm"
             />
-          ))}
+          );
+          return (
+            <div
+              key={item.id}
+              className="relative"
+              onMouseEnter={openDropdown}
+              onMouseLeave={scheduleClose}
+              onFocus={openDropdown}
+              onBlur={scheduleClose}
+            >
+              <button
+                aria-haspopup="true"
+                aria-expanded={eventsOpen}
+                onClick={(e)=>{ e.preventDefault(); openDropdown(); }}
+                className={`group relative px-2.5 py-1 rounded-md text-xs font-bold uppercase flex items-center gap-1 transition-all duration-300 ${effectiveActiveId === item.id ? 'scale-105' : 'hover:scale-102'}`}
+                style={{
+                  backgroundColor: effectiveActiveId === item.id ? '#D24A58' : '#59907D',
+                  color: effectiveActiveId === item.id ? '#fff' : '#F4CA8E',
+                  border: `1.5px solid ${effectiveActiveId === item.id ? '#F4CA8E' : '#191919'}`,
+                  boxShadow: effectiveActiveId === item.id ? '0 0 12px rgba(210,74,88,0.6),0 2px 4px rgba(0,0,0,0.3)' : '0 1px 2px rgba(0,0,0,0.2)'
+                }}
+              >
+                <span>{item.label}</span>
+                <span className={`transition-transform duration-300 ${eventsOpen ? 'rotate-180' : ''}`}>▾</span>
+              </button>
+              {eventsOpen && (
+                <div
+                  className="absolute left-0 top-full mt-2 w-44 border rounded-lg p-2 z-50"
+                  style={{background:'rgba(25,25,25,0.95)', borderColor:'rgba(89,144,125,0.6)', backdropFilter:'blur(12px)'}}
+                  onMouseEnter={openDropdown}
+                  onMouseLeave={scheduleClose}
+                >
+                  <div className="flex flex-col gap-1">
+                    {dropdownItems.map(d => (
+                      <a
+                        key={d.id}
+                        href={d.href}
+                        onClick={()=>{ setActiveSection(d.id); setEventsOpen(false); }}
+                        className={`px-2 py-1 rounded text-xs font-semibold uppercase transition-colors ${pathname?.startsWith(d.href) ? 'bg-[#D24A58] text-white' : 'text-[#F4CA8E] hover:bg-[#59907D] hover:text-white'}`}
+                        style={{fontFamily: press.style.fontFamily}}
+                      >
+                        {d.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
         </div>
       </div>
 

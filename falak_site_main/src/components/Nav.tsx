@@ -67,6 +67,7 @@ export default function Nav() {
     };
   }, [isMobileMenuOpen]);
 
+  // Desktop primary items (Sports & Cultural moved under Events dropdown)
   const navItems: NavItem[] = useMemo(() => ([
     { id: "FALAK", label: "FALAK", href: "/" },
     { id: "events", label: "Events", href: "/events" },
@@ -77,13 +78,18 @@ export default function Nav() {
   // Extended candidates for mobile & active detection (not all appear in desktop spinner cycle)
   const extendedCandidates: NavItem[] = useMemo(() => ([
     ...navItems,
+    { id: "sports", label: "Sports", href: "/sports" },
+    { id: "cultural", label: "Cultural", href: "/cultural" },
     { id: "cart", label: "Cart", href: "/cart" },
     { id: "profile", label: "Profile", href: "/profile" },
     { id: "signin", label: "Sign In", href: "/signin" },
   ]), [navItems]);
 
+  // Mobile menu excludes the Events parent (sports & cultural shown directly)
   const mobileNavItems: NavItem[] = useMemo(() => ([
-    ...navItems,
+    ...navItems.filter(n => n.id !== 'events'),
+    { id: "sports", label: "Sports", href: "/sports" },
+    { id: "cultural", label: "Cultural", href: "/cultural" },
     { id: "cart", label: "Cart", href: "/cart" },
     { id: "signin", label: "Sign In", href: "/signin" },
   ]), [navItems]);
