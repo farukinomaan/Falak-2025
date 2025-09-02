@@ -5,6 +5,7 @@ import { getUserByEmail } from "@/lib/actions/tables/users";
 import { listUserPassesByUserId } from "@/lib/actions/tables/userPasses";
 import { listPassesByIds } from "@/lib/actions/tables/pass";
 import { listTeamMembersByMemberId } from "@/lib/actions/tables/teamMembers";
+import { listTeams } from "@/lib/actions/tables/teams";
 import { listEventsByIds } from "@/lib/actions/tables/events";
 import QrCode from "@/components/QrCode";
 import RetroAnimations from "../../components/profile/RetroAnimations";
@@ -27,10 +28,19 @@ export default async function ProfilePage() {
   const passRes = await listPassesByIds(passIds);
   const passes = passRes.ok && passRes.data ? passRes.data : [];
 
-  // // Fetch events by team membership
+  // Fetch events by team membership (as member)
   const tmRes = await listTeamMembersByMemberId(user.id!);
   const memberships = tmRes.ok && tmRes.data ? tmRes.data : [];
-  const eventIds = Array.from(new Set(memberships.map((m) => m.eventId))).filter(Boolean) as string[];
+
+  // Include events where user is team captain (leader)
+  const teamRes = await listTeams();
+  const teams = teamRes.ok && teamRes.data ? teamRes.data : [];
+  const captainEventIds = teams.filter(t => t.captainId === user.id).map(t => t.eventId);
+
+  const eventIds = Array.from(new Set([
+    ...memberships.map(m => m.eventId),
+    ...captainEventIds,
+  ])).filter(Boolean) as string[];
   const evRes = await listEventsByIds(eventIds);
   const events = evRes.ok && evRes.data ? evRes.data : [];
 

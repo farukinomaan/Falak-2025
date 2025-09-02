@@ -25,11 +25,19 @@ export function useGuestCart() {
     try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
   }, []);
   const add = useCallback((id: string) => {
-    persist(Array.from(new Set([...(ids || []), id])));
-  }, [ids, persist]);
+    setIds((prev) => {
+      const next = Array.from(new Set([...(prev || []), id]));
+      try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
   const remove = useCallback((id: string) => {
-    persist((ids || []).filter((x) => x !== id));
-  }, [ids, persist]);
+    setIds((prev) => {
+      const next = (prev || []).filter((x) => x !== id);
+      try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
   const clear = useCallback(() => persist([]), [persist]);
   return { ids, add, remove, clear };
 }

@@ -1,12 +1,14 @@
 "use client";
 
-import { useGSAP } from "@gsap/react";
+import React, { useEffect } from "react";
 import gsap from "gsap";
 import { SplitText } from "gsap/all";
-import React from "react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger, SplitText);
 
 const Artist: React.FC = () => {
-  useGSAP(() => {
+  useEffect(() => {
     const firstMsgSplit = SplitText.create(".first-message", { type: "words" });
     const secMsgSplit = SplitText.create(".second-message", { type: "words" });
 
@@ -34,87 +36,95 @@ const Artist: React.FC = () => {
       },
     });
 
-    const revealTl = gsap.timeline({
-      delay: 1,
-      scrollTrigger: {
-        trigger: ".msg-text-scroll",
-        start: "top 60%",
+    // TV reveal animation
+    gsap.fromTo(
+      ".artist-overlay",
+      {
+        clipPath: "inset(0% 0% 0% 0%)", 
       },
-    });
-    revealTl.to(".msg-text-scroll", {
-      duration: 1,
-      clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
-      ease: "circ.inOut",
-    });
-
-    gsap.from(".message-content-box", {
-      yPercent: 20,
-      opacity: 0,
-      scale: 0.95,
-      ease: "cubic-bezier(0.05, 0.2, 0.1, 0.9)",
-      scrollTrigger: {
-        trigger: ".message-content-box",
-        start: "top 80%",
-        end: "top 50%",
-        scrub: true,
-      },
-    });
-  });
+      {
+        clipPath: "inset(50% 0% 50% 0%)", 
+        duration: 2,
+        ease: "power2.inOut",
+        scrollTrigger: {
+          trigger: ".message-content",
+          start: "top center",
+          toggleActions: "play none none none",
+          once: true,
+        },
+      }
+    );
+    
+  }, []);
 
   return (
-    <section className="message-content relative w-full overflow-hidden">
-      {/* Background Image */}
+    <section
+      className="message-content relative w-full min-h-screen overflow-hidden"
+      style={{ backgroundColor: "#f2eae1" }}
+    >
+      {/* Left Film Reel */}
+      <img
+        src="/images/s22.png"
+        alt="Film Reel Left"
+        className="hidden md:block absolute inset-y-0 left-310 h-full object-cover z-0"
+      />
+
+      {/* Right Film Reel */}
+      <img
+        src="/images/s11.png"
+        alt="Film Reel Right"
+        className="hidden md:block absolute inset-y-0 right-310 h-full object-cover z-0"
+      />
+
       <div
-        className="absolute top-0 left-0 w-full h-full bg-cover bg-no-repeat bg-center z-0"
-        style={{ backgroundImage: "url('/images/brown2.png')" }}
-      ></div>
-  
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/40 z-10" />
-  
-      {/* Content */}
-      <div
-        className="container mx-auto flex flex-col items-center py-28 relative z-20"
+        className="container mx-auto flex flex-col items-center py-0 relative z-10"
         style={{ fontFamily: "'Orbitron', sans-serif" }}
       >
+        {/* Title */}
         <div className="msg-wrapper text-center space-y-8">
-  <img
-    src="/images/art.png"
-    alt="Meet the Artist"
-    className="mx-auto w-auto max-w-full h-16 md:h-24 object-contain rounded-lg"
-  />
-</div>
+          <img
+            src="/images/art.png"
+            alt="Meet the Artist"
+            className="mx-auto w-auto max-w-full h-16 md:h-24 object-contain"
+          />
+        </div>
 
-  
-        {/* Image & Content Box */}
-        <div className="mt-16 flex justify-center w-full">
-          <div className="message-content-box max-w-2xl w-full bg-gray-200 rounded-xl shadow-lg overflow-hidden border-4 border-white">
-            
-            {/* Image */}
+        {/* Frame + Artist */}
+        <div className="relative flex justify-center items-center w-full mt-6">
+          <div className="message-content-box relative max-w-3xl w-full shadow-lg z-10">
+            {/* Frame */}
             <img
-              src="/images/artist.png"
-              alt="Artist"
-              className="w-full h-auto object-cover"
+              src="/images/frame.png"
+              alt="TV Frame"
+              className="w-full h-auto object-contain relative z-20"
             />
-            
-            {/* Text Content */}
-            <div className="p-6 text-center bg-[#3d2922] text-white">
-              <h2 className="text-2xl font-bold mb-4">Char Diwari</h2>
-              <p className="leading-relaxed">
-                Step into the sonic universe of Chaar Diwaari—where jazz, hip-hop,
-                and rock collide to create pure magic! The musical alter ego of Garv
-                Taneja, he’s the mastermind behind hits like <em>Jhaag</em> and <em>Roshni</em>,
-                blending raw emotions with experimental beats. Brace yourself for an
-                unforgettable night as he sets Solstice on fire with his electrifying vibe!
-              </p>
+
+            {/* Artist inside frame */}
+            <div className="absolute inset-0 flex justify-center items-center z-10 overflow-hidden">
+              <div className="relative w-[85%] h-auto flex justify-center items-center">
+                <img
+                  src="/images/artist.png"
+                  alt="Artist"
+                  className="tv-screen w-full h-auto object-contain"
+                />
+                {/* Overlay that reveals */}
+                <div className="artist-overlay absolute inset-0 bg-black z-30"></div>
+              </div>
             </div>
-  
           </div>
+        </div>
+
+        {/* Paper Torn Description */}
+        <div className="mt-0 max-w-2xl w-full text-center">
+          <img
+            src="/images/des.png"
+            alt="Artist Description"
+            className="mx-auto w-full h-[250px] object-contain"
+          />
         </div>
       </div>
     </section>
   );
-  
 };
 
 export default Artist;

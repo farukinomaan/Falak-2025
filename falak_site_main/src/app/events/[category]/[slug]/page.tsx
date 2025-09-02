@@ -1,61 +1,8 @@
-import { notFound } from "next/navigation";
-import { saListEvents } from "@/lib/actions/adminAggregations";
-import AddToCartButton from "@/components/cart/AddToCartButton";
+import { redirect } from "next/navigation";
 
-export const dynamicParams = true; // allow fallback if new events appear (still ISR)
-export const revalidate = 60;
+export const dynamicParams = true;
 
-export async function generateStaticParams() {
-  const res = await saListEvents();
-  const events = res.ok ? (res.data as Array<{ id: string; sub_cluster: string }>) : [];
-  return events.map((e) => ({ category: e.sub_cluster, slug: e.id }));
-}
-
-export default async function EventDetail({ params }: { params: Promise<{ category: string; slug: string }> }) {
+export default async function EventsSlugRedirect({ params }: { params: Promise<{ category: string; slug: string }> }) {
   const { category, slug } = await params;
-  type Evt = {
-    id: string;
-    name: string;
-    description?: string | null;
-    venue: string;
-    sub_cluster: string;
-    cluster_name?: string | null;
-    date?: string | Date | null;
-    price?: number | string | null;
-  };
-  const res = await saListEvents();
-  const events = res.ok ? (res.data as Evt[]) : [];
-  const event = events.find((e) => e.id === slug && e.sub_cluster === category);
-  if (!event) return notFound();
-
-  const dateStr = event.date
-    ? typeof event.date === "string"
-      ? new Date(event.date).toLocaleString()
-      : event.date instanceof Date
-      ? event.date.toLocaleString()
-      : undefined
-    : undefined;
-  const priceStr =
-    typeof event.price === "number" || typeof event.price === "string" ? String(event.price) : undefined;
-
-  return (
-    <div className="max-w-3xl mx-auto p-6 space-y-4">
-      <h1 className="text-3xl font-semibold flex items-center gap-3">
-        {event.name}
-        {event.cluster_name && (
-          <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-black text-white">
-            {event.cluster_name}
-          </span>
-        )}
-      </h1>
-      {event.description && <p className="text-gray-700 whitespace-pre-line">{event.description}</p>}
-      <div className="text-sm space-y-1">
-        <p>Sub-cluster: {event.sub_cluster}</p>
-        <p>Venue: {event.venue}</p>
-        {dateStr && <p>Date: {dateStr}</p>}
-        {priceStr && <p>Price: ₹{priceStr}</p>}
-      </div>
-      <AddToCartButton passId={event.id} />
-    </div>
-  );
+  redirect(`/sports/${encodeURIComponent(category)}/${encodeURIComponent(slug)}`);
 }
