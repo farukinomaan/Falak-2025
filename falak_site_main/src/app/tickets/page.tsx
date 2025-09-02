@@ -26,7 +26,7 @@ export default async function TicketsPage() {
   }
 
   return (
-    <div className="min-h-screen md:bg-[url/(background-mob.gif)] bg-[url(/background.gif)] bg-cover bg-center bg-no-repeat bg-fixed flex items-center py-4 sm:py-8 px-4">
+    <div className="bg-[url('/mobile_background.gif')] md:bg-[url('/laptop_background.gif')] bg-cover bg-center h-screen flex items-center py-4 sm:py-8 px-4">
       <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto">
         <h1 className="text-xl sm:text-2xl md:text-3xl text-neutral-100 font-semibold mb-4 sm:mb-6 text-center">
           Support Ticket
