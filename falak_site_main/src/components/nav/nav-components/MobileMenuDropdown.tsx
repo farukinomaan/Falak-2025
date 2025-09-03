@@ -29,7 +29,7 @@ export const MobileMenuDropdown: React.FC<MobileMenuDropdownProps> = ({ isMobile
             : "opacity-0 -translate-y-4 scale-95 pointer-events-none"
           }`}
         style={{
-          backgroundColor: "rgba(25, 25, 25, 0.98)", 
+          backgroundColor: "rgba(50, 33, 44, 0.98)", 
           borderColor: "rgba(89, 144, 125, 0.6)", 
           backdropFilter: "blur(20px)", 
           border: "2px solid",
@@ -82,7 +82,8 @@ export const MobileMenuDropdown: React.FC<MobileMenuDropdownProps> = ({ isMobile
       {/* Mobile Menu Backdrop */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-20 z-40 xl:hidden backdrop-blur-sm"
+        className="fixed inset-0 bg-[rgba(219,170,166,1.0)] z-40 xl:hidden backdrop-blur-sm"
+
           onClick={() => handleItemClick('')} // Closes the menu on backdrop click
         />
       )}
