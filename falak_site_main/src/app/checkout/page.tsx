@@ -1,3 +1,5 @@
+
+
 /**
  * @copyright Falak 2025 
  */
@@ -47,61 +49,175 @@ export default function CheckoutPage() {
 
   if (status === "loading") {
     return (
-      <div style={{ backgroundColor: '#191919' }} className="min-h-screen py-12 px-4 md:px-8 flex items-center justify-center">
-        <div className="max-w-md p-8 text-center text-white">Loading session…</div>
+      <div style={{ backgroundColor: '#32212C' }} className="min-h-screen py-12 px-4 md:px-8 flex items-center justify-center relative overflow-hidden">
+        {/* Same ribbon background as cart */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute bottom-0 left-0 w-full h-full">
+            <svg
+              viewBox="0 0 1200 600"
+              className="absolute bottom-0 left-0 w-full h-full"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="M0,300 C150,200 350,250 500,220 C650,190 800,160 950,180 C1100,200 1150,220 1200,200 L1200,600 L0,600 Z"
+                fill="#DBAAA6"
+                opacity="0.9"
+              />
+              <path
+                d="M0,350 C200,280 400,320 600,300 C750,280 900,260 1050,280 C1150,295 1180,310 1200,300 L1200,600 L0,600 Z"
+                fill="#D7897D"
+                opacity="1.0"
+              />
+              <path
+                d="M0,400 C180,350 380,380 580,360 C720,345 860,330 1000,340 C1120,350 1180,360 1200,355 L1200,600 L0,600 Z"
+                fill="#32212C"
+                opacity="1.0"
+              />
+            </svg>
+          </div>
+        </div>
+        <div className="max-w-md p-8 text-center text-white relative z-10 rounded-xl shadow-lg border-2" style={{ backgroundColor: '#32212C', borderColor: '#DBAAA6' }}>
+          Loading session…
+        </div>
       </div>
     );
   }
   
   if (status !== "authenticated") {
     return (
-      <div style={{ backgroundColor: '#191919' }} className="min-h-screen py-12 px-4 md:px-8 flex flex-col items-center justify-center">
-        <div className="max-w-md p-8 rounded-lg shadow-xl text-center" style={{ backgroundColor: '#2a2a2a' }}>
-          <div className="text-white text-lg font-bold mb-4">Please sign in to checkout.</div>
-          <button onClick={() => signIn()} className="w-full px-6 py-3 rounded-md text-white font-bold transition-colors hover:bg-green-800" style={{ backgroundColor: '#59917E' }}>Sign In</button>
+      <div style={{ backgroundColor: '#32212C' }} className="min-h-screen py-12 px-4 md:px-8 flex flex-col items-center justify-center relative overflow-hidden">
+        {/* Same ribbon background as cart */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute bottom-0 left-0 w-full h-full">
+            <svg
+              viewBox="0 0 1200 600"
+              className="absolute bottom-0 left-0 w-full h-full"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="M0,300 C150,200 350,250 500,220 C650,190 800,160 950,180 C1100,200 1150,220 1200,200 L1200,600 L0,600 Z"
+                fill="#DBAAA6"
+                opacity="0.9"
+              />
+              <path
+                d="M0,350 C200,280 400,320 600,300 C750,280 900,260 1050,280 C1150,295 1180,310 1200,300 L1200,600 L0,600 Z"
+                fill="#D7897D"
+                opacity="1.0"
+              />
+              <path
+                d="M0,400 C180,350 380,380 580,360 C720,345 860,330 1000,340 C1120,350 1180,360 1200,355 L1200,600 L0,600 Z"
+                fill="#32212C"
+                opacity="1.0"
+              />
+            </svg>
+          </div>
+        </div>
+        <div className="max-w-md p-8 rounded-xl shadow-xl text-center relative z-10 border-2" style={{ backgroundColor: '#32212C', borderColor: '#DBAAA6' }}>
+          <div className="text-white text-lg font-bold mb-4 font-serif">Please sign in to checkout.</div>
+          <button 
+            onClick={() => signIn()} 
+            className="w-full px-6 py-3 rounded-lg text-white font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-sans" 
+            style={{ backgroundColor: '#DBAAA6' }}
+          >
+            Sign In
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ backgroundColor: '#191919' }} className="min-h-screen pt-24 py-12 px-4 md:px-8">
-      <div className="container mx-auto max-w-6xl">
-        <div className="shadow-xl rounded-lg p-8" style={{ backgroundColor: '#2a2a2a' }}>
+    <div style={{ backgroundColor: '#32212C' }} className="min-h-screen pt-24 py-12 relative overflow-hidden">
+      {/* Ribbon Background - Exact match to cart */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute bottom-0 left-0 w-full h-full">
+          <svg
+            viewBox="0 0 1200 600"
+            className="absolute bottom-0 left-0 w-full h-full"
+            preserveAspectRatio="none"
+          >
+            {/* Main pink ribbon layer - larger and more prominent */}
+            <path
+              d="M0,300 C150,200 350,250 500,220 C650,190 800,160 950,180 C1100,200 1150,220 1200,200 L1200,600 L0,600 Z"
+              fill="#DBAAA6"
+              opacity="0.9"
+            />
+            {/* Secondary deeper layer */}
+            <path
+              d="M0,350 C200,280 400,320 600,300 C750,280 900,260 1050,280 C1150,295 1180,310 1200,300 L1200,600 L0,600 Z"
+              fill="#D7897D"
+              opacity="1.0"
+            />
+            {/* Third layer for depth */}
+            <path
+              d="M0,400 C180,350 380,380 580,360 C720,345 860,330 1000,340 C1120,350 1180,360 1200,355 L1200,600 L0,600 Z"
+              fill="#32212C"
+              opacity="1.0"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <div className="container mx-auto max-w-6xl px-4 md:px-8 relative z-10">
+        <div className="shadow-xl rounded-lg p-8" style={{ backgroundColor: '#32212C' }}>
           <h2 className="text-3xl font-bold font-serif mb-8 text-white text-center">Checkout</h2>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* Left Column - Checkout Grid */}
             <div className="lg:col-span-2 space-y-6">
               {loading ? (
-                <div className="border border-green-700 rounded-md p-6 text-sm text-white font-sans">Loading your items…</div>
+                <div className="rounded-xl p-8 text-center shadow-lg border-2" style={{ borderColor: '#DBAAA6', backgroundColor: '#32212C' }}>
+                  <p className="text-gray-400 text-lg mb-6 font-medium">Loading your items…</p>
+                </div>
               ) : passes.length === 0 ? (
-                <div className="border border-green-700 rounded-md p-6 text-sm text-white font-sans">
-                  No items. <Link href="/passes" className="underline text-blue-400 hover:text-blue-300 transition-colors">Browse passes</Link>.
+                <div className="rounded-xl p-8 text-center shadow-lg border-2" style={{ borderColor: '#DBAAA6', backgroundColor: '#32212C' }}>
+                  <p className="text-gray-400 text-lg mb-6 font-medium">No items.</p>
+                  <Link 
+                    href="/passes" 
+                    className="inline-flex items-center px-8 py-4 text-white font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+                    style={{ backgroundColor: '#DBAAA6' }}
+                  >
+                    Browse passes
+                  </Link>
                 </div>
               ) : (
-                <CheckoutGrid items={passes} />
+                <div className="rounded-lg shadow-xl overflow-hidden border-2" style={{ backgroundColor: '#32212C', borderColor: '#D7897D' }}>
+                  <CheckoutGrid items={passes} />
+                </div>
               )}
             </div>
 
             {/* Right Column - Order Summary */}
             <div className="lg:col-span-1">
-              <div className="sticky top-12 rounded-lg p-6 shadow-xl border-2" style={{ borderColor: '#59917E', backgroundColor: '#2a2a2a' }}>
-                <div className="flex flex-col items-end gap-4">
-                  <h3 className="text-xl font-bold font-serif text-white mb-4 w-full">Order Summary</h3>
-                  <div className="w-full">
-                    <div className="flex items-center justify-between py-2 border-t border-gray-700">
-                      <div className="text-sm text-gray-400 font-sans">Total</div>
-                      <div className="text-2xl font-bold font-mono text-green-700">₹{total}</div>
-                    </div>
+              <div className="sticky top-12 rounded-lg p-6 shadow-xl border-2" style={{ borderColor: '#DBAAA6', backgroundColor: '#32212C' }}>
+                <h3 className="text-xl font-bold font-serif text-white mb-4">Order Summary</h3>
+                <div className="border-t pt-4 mt-4" style={{ borderColor: '#DBAAA6' }}>
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-gray-400 font-sans">Items ({passes.length})</span>
+                    <span className="text-lg font-mono text-white">
+                      ₹{total.toLocaleString()}
+                    </span>
                   </div>
-                  <div className="w-full flex justify-between gap-4 mt-6">
-                    <button className="flex-1 py-3 rounded-md bg-gray-500 text-white font-semibold transition-colors hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed font-sans" disabled={passes.length === 0} onClick={() => window.history.back()}>
-                      Go back
-                    </button>
-                    <button className="flex-1 py-3 rounded-md bg-green-700 text-white font-bold transition-colors hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed font-sans" disabled={passes.length === 0} >
-                      Done
-                    </button>
+                  <div className="flex items-center justify-between font-bold text-xl pt-2">
+                    <span className="text-white font-serif">Total</span>
+                    <span className="font-mono" style={{ color: '#DBAAA6' }}>₹{total.toLocaleString()}</span>
                   </div>
+                </div>
+                <div className="flex gap-4 mt-6">
+                  <button 
+                    className="flex-1 py-3 rounded-lg text-white font-semibold transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-sans" 
+                    disabled={passes.length === 0} 
+                    onClick={() => window.history.back()}
+                    style={{ backgroundColor: '#D7897D' }}
+                  >
+                    Go back
+                  </button>
+                  <button 
+                    className="flex-1 py-3 rounded-lg text-white font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-sans" 
+                    disabled={passes.length === 0}
+                    style={{ backgroundColor: '#DBAAA6' }}
+                  >
+                    Done
+                  </button>
                 </div>
               </div>
             </div>

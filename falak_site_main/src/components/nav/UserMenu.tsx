@@ -1,3 +1,5 @@
+
+
 /**
  * @copyright Falak 2025
  */
@@ -33,10 +35,10 @@ export function UserMenu({ className = "" }: { className?: string }) {
           <span
             className="absolute -top-1 -right-1 text-[10px] rounded-full px-1.5 py-0.5 font-bold animate-bounce z-20"
             style={{
-              backgroundColor: "#D24A58", 
+              backgroundColor: "#D7897D", 
               color: "#fff",
-              border: "1px solid #F4CA8E", 
-              boxShadow: "0 0 8px rgba(210, 74, 88, 0.6)",
+              border: "1px solid #DBAAA6", 
+              boxShadow: "0 0 8px rgba(215, 137, 125, 0.6)",
               fontFamily: "monospace"
             }}
           >
@@ -49,12 +51,12 @@ export function UserMenu({ className = "" }: { className?: string }) {
         className="relative w-12 h-12 flex-shrink-0 focus:outline-none group rounded-full overflow-hidden transition-all duration-300"
         style={{
           background: open
-            ? "radial-gradient(circle, #D24A58 0%, #191919 70%)" 
-            : "radial-gradient(circle, #59907D 0%, #191919 100%)", 
-          border: `2px solid ${open ? "#F4CA8E" : "#59907D"}`, 
+            ? "radial-gradient(circle, #D7897D 0%, #32212C 50%)" 
+            : "radial-gradient(circle, #D7897D 0%, #32212C 60%)", 
+          border: `2px solid ${open ? "#DBAAA6" : "#DBAAA6"}`, 
           boxShadow: open
-            ? "0 0 20px rgba(210, 74, 88, 0.6), 0 4px 12px rgba(0,0,0,0.4)"
-            : "0 2px 8px rgba(0,0,0,0.3)",
+            ? "0 0 20px rgba(215, 137, 125, 0.8), 0 4px 12px rgba(0,0,0,0.4)"
+            : "0 2px 8px rgba(215, 137, 125, 0.4)",
         }}
         aria-haspopup="true"
         aria-expanded={open}
@@ -64,7 +66,7 @@ export function UserMenu({ className = "" }: { className?: string }) {
           <div
             className="absolute inset-0 rounded-full border-2 animate-pulse opacity-75"
             style={{
-              borderColor: "#F4CA8E", 
+              borderColor: "#DBAAA6", 
               animationDuration: "1.5s"
             }}
           />
@@ -100,8 +102,8 @@ export function UserMenu({ className = "" }: { className?: string }) {
             : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
         }`}
         style={{
-          backgroundColor: "rgba(25, 25, 25, 0.98)", 
-          borderColor: "rgba(89, 144, 125, 0.6)", 
+          backgroundColor: "rgba(50, 33, 44, 0.98)", 
+          borderColor: "rgba(219, 170, 166, 0.6)", 
           backdropFilter: "blur(16px)",
           boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(244, 202, 142, 0.2)",
         }}
@@ -128,8 +130,8 @@ export function UserMenu({ className = "" }: { className?: string }) {
                 <User 
                   size={16} 
                   style={{
-                    color: "#59907D", 
-                    filter: "drop-shadow(0 0 4px rgba(89, 144, 125, 0.6))"
+                    color: "#DBAAA6", 
+                    filter: "drop-shadow(0 0 4px rgba(219, 170, 166, 0.6))"
                   }}
                 />
               </div>
@@ -139,7 +141,7 @@ export function UserMenu({ className = "" }: { className?: string }) {
               {/* Hover effect */}
               <div 
                 className="absolute left-0 top-0 bottom-0 w-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                style={{ backgroundColor: "#D24A58" }} 
+                style={{ backgroundColor: "#D7897D" }} 
               />
             </Link>
           ) : (
@@ -159,8 +161,8 @@ export function UserMenu({ className = "" }: { className?: string }) {
                 <LogIn 
                   size={16} 
                   style={{
-                    color: "#59907D", 
-                    filter: "drop-shadow(0 0 4px rgba(89, 144, 125, 0.6))"
+                    color: "#DBAAA6", 
+                    filter: "drop-shadow(0 0 4px rgba(219, 170, 166, 0.6))"
                   }}
                 />
               </div>
@@ -170,7 +172,7 @@ export function UserMenu({ className = "" }: { className?: string }) {
               {/* Hover effect */}
               <div 
                 className="absolute left-0 top-0 bottom-0 w-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                style={{ backgroundColor: "#D24A58" }} 
+                style={{ backgroundColor: "#D7897D" }} 
               />
             </button>
           )}
@@ -179,7 +181,7 @@ export function UserMenu({ className = "" }: { className?: string }) {
           <div 
             className="mx-4 my-2 h-px opacity-30"
             style={{
-              background: "linear-gradient(to right, transparent, #59907D, transparent)"
+              background: "linear-gradient(to right, transparent, #DBAAA6, transparent)"
             }}
           />
 
@@ -201,8 +203,8 @@ export function UserMenu({ className = "" }: { className?: string }) {
               <ShoppingCart 
                 size={16} 
                 style={{
-                  color: "#59907D", // Teal icon
-                  filter: "drop-shadow(0 0 4px rgba(89, 144, 125, 0.6))"
+                  color: "#DBAAA6", // Updated icon color
+                  filter: "drop-shadow(0 0 4px rgba(219, 170, 166, 0.6))"
                 }}
               />
             </div>
@@ -215,10 +217,10 @@ export function UserMenu({ className = "" }: { className?: string }) {
               <span
                 className="ml-auto inline-flex items-center justify-center text-[9px] rounded-full px-2 py-1 font-bold animate-pulse"
                 style={{
-                  backgroundColor: "#D24A58", // Coral
+                  backgroundColor: "#D7897D", // Updated badge color
                   color: "#fff",
-                  border: "1px solid #F4CA8E", // Orange border
-                  boxShadow: "0 0 8px rgba(210, 74, 88, 0.6)",
+                  border: "1px solid #DBAAA6", // Updated border
+                  boxShadow: "0 0 8px rgba(215, 137, 125, 0.6)",
                   fontFamily: "monospace",
                   minWidth: "20px"
                 }}
@@ -230,7 +232,7 @@ export function UserMenu({ className = "" }: { className?: string }) {
             {/* Hover effect */}
             <div 
               className="absolute left-0 top-0 bottom-0 w-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-              style={{ backgroundColor: "#D24A58" }} // Coral accent
+              style={{ backgroundColor: "#D7897D" }} // Updated accent
             />
           </Link>
         </div>
