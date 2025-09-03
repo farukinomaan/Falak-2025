@@ -17,7 +17,7 @@ const Vinyl = forwardRef<SVGSVGElement>((props, ref) => (
         <stop offset="100%" stopColor="#000" stopOpacity="0" />
       </radialGradient>
       <filter id="bevan-undershadow" x="-20%" y="-20%" width="140%" height="140%">
-        <feDropShadow dx="0" dy="2" stdDeviation="0" floodColor="#58907D" floodOpacity="1" />
+        <feDropShadow dx="0" dy="2" stdDeviation="0" floodColor="#000000" floodOpacity="1" />
       </filter>
     </defs>
     <circle cx="100" cy="100" r="98" fill="#1A1A1A" />

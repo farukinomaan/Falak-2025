@@ -31,9 +31,9 @@ const Cassette = forwardRef<HTMLDivElement>((props, ref) => (
       <circle cx="235" cy="135" r="3" fill="#4A4A4A" />
 
       {/* Label Area */}
-      <rect x="25" y="25" width="200" height="16.67" fill="#fa3741" /> {/* Vinyl Red */}
-      <rect x="25" y="41.67" width="200" height="16.67" fill="#00000" /> {/* Vinyl Off-White (Middle) */}
-      <rect x="25" y="58.34" width="200" height="16.66" fill="#e23b44" /> {/* Vinyl Darker Red */}
+      <rect x="25" y="25" width="200" height="16.67" fill="#d7897d" /> {/* New Wave Top Color */}
+      <rect x="25" y="41.67" width="200" height="16.67" fill="#32212c" /> {/* New Background Color */}
+      <rect x="25" y="58.34" width="200" height="16.66" fill="#be7373" /> {/* New Card Color */}
       <text
         x="125"
         y="55"

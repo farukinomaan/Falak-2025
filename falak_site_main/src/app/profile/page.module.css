@@ -36,6 +36,27 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'Brasty Vintage';
+  src: url('/fonts/BrastyVintageRegular-ovoRz.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Unlock';
+  src: url('/fonts/Unlock-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Abhaya Libre Medium';
+  src: url('/fonts/AbhayaLibre-Medium.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 .profilePage {
   max-width: 100%;
   margin: 0 auto;
@@ -45,7 +66,7 @@
   position: relative;
   z-index: 1;
   min-height: 100vh;
-  background-color: #F2C078;
+  background-color: #32212c;
 }
 
 .detailsColumn {
@@ -67,8 +88,8 @@
 }
 
 .header h1 {
-  font-family: 'Caprasimo', sans-serif;
-  font-size: 3rem;
+  font-family: 'Brasty Vintage', sans-serif;
+  font-size: 4.5rem;
   color: #fff;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -76,7 +97,7 @@
 
 .header p {
   font-family: Georgia, Garamond, serif;
-  color: #000;
+  color: #fff;
 }
 
 .section {
@@ -90,8 +111,8 @@
 }
 
 .section h2 {
-  font-family: 'Caprasimo', sans-serif;
-  font-size: 1.8rem;
+  font-family: 'Brasty Vintage', sans-serif;
+  font-size: 2.5rem;
   color: #fff;
   -webkit-text-stroke: 2.5px #000;
   paint-order: stroke fill;
@@ -139,7 +160,7 @@
 
 .passItem,
 .eventItem {
-  background: #F4A259; 
+  background: #be7373; 
   border: 1px solid #e0daca;
   border-radius: 12px;
   padding: 1.5rem;
@@ -153,36 +174,35 @@
 .passItem:hover,
 .eventItem:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(184, 157, 71, 0.2); /* Gold shadow */
-  border-color: #B89D47; /* Gold */
-  background-color: #FFEDD1; /* Light Yellow */
+  box-shadow: 0 8px 24px rgba(168, 92, 92, 0.2); /* New shadow */
+  border-color: #a85c5c; /* New border */
+  background-color: #c98a8a; /* New hover background */
 }
 
 .passItem h3,
 .eventItem h3 {
-  font-family: 'Bevan', serif;
-  font-weight: 700;
-  font-size: 1.5rem;
+  font-family: 'Unlock', serif;
+  font-size: 2rem;
   color: #fff;
   margin-bottom: 0.5rem;
-  text-shadow: 0 2px 0 #58907D;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
   transition: color 0.3s, text-shadow 0.3s;
+  text-align: center;
 }
 
 .passItem:hover h3,
 .eventItem:hover h3 {
   color: #fff;
-  text-shadow: 0 3px 0 #58907D;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
 }
 
 .passItem p,
 .eventItem p {
-  font-family: 'Robert', sans-serif;
+  font-family: 'Abhaya Libre Medium', sans-serif;
   color: #fff;
   margin: 0.5rem 0;
-  font-size: 1rem;
-  -webkit-text-stroke: 1px #000; /* Increased stroke width to 1px */
-  paint-order: stroke fill; /* Ensures stroke is behind fill */
+  font-size: 1.5rem;
+  text-align: center;
 }
 
 .passDescription,
@@ -204,7 +224,7 @@
 
 .qrContainer {
   margin-top: 1rem;
-  background: #F4A259;
+  background: #be7373;
   padding: 1rem;
   border-radius: 8px;
   align-self: center;
@@ -213,7 +233,7 @@
   justify-content: center;
 }
 .passItem:hover .qrContainer {
-  background-color: #58907D;
+  background-color: #c98a8a;
 }
 .eventDetails {
   margin-top: 1.5rem;
@@ -247,17 +267,21 @@
   align-items: center;
   justify-content: center;
   font-family: 'General', sans-serif;
-  font-size: 1rem;
-  color: #333;
+  font-size: 1.2rem;
+  color: #fff;
   text-align: center;
   padding: 0 0.5rem;
+  -webkit-text-stroke: 0.5px #000;
+  paint-order: stroke fill;
 }
 
 .timingItem strong {
   font-family: 'Zentry', sans-serif;
-  color: #355E58;
+  color: #fff;
   margin-bottom: 0.5rem;
-  font-size: 1rem;
+  font-size: 1.3rem;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
 }
 
 .timingSeparator {
@@ -296,7 +320,7 @@
   }
 
   .header h1 {
-    font-size: 2.5rem;
+    font-size: 3.5rem;
   }
 
   .timingItem {
@@ -377,4 +401,3 @@
     transform: rotate(-25deg) scale(1);
   }
 }
-

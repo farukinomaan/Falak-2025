@@ -21,7 +21,7 @@ export default async function ProfilePage() {
   if (!userRes.ok || !userRes.data) redirect("/onboarding");
   const user = userRes.data;
 
-  // // Fetch passes owned by user
+  // Fetch passes owned by user
   const upRes = await listUserPassesByUserId(user.id!);
   const userPasses = upRes.ok && upRes.data ? upRes.data : [];
   const passIds = userPasses.map((p) => p.passId).filter(Boolean) as string[];
@@ -43,7 +43,6 @@ export default async function ProfilePage() {
   ])).filter(Boolean) as string[];
   const evRes = await listEventsByIds(eventIds);
   const events = evRes.ok && evRes.data ? evRes.data : [];
-
   return (
     <>
       <div className={styles.profilePage}>
