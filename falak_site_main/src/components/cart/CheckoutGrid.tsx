@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 
-type Row = { id: string; pass_name: string; description?: string | null };
+type Row = { id: string; pass_name: string; description?: string | null; event_id?: string | null; original_id?: string };
+interface Props { items: Row[]; eventsById?: Map<string, { id: string; name: string }> }
 
-export default function CheckoutGrid({ items }: { items: Row[] }) {
+export default function CheckoutGrid({ items, eventsById }: Props) {
   const [validated, setValidated] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState<Record<string, boolean>>({});
   const onValidate = async (id: string) => {
@@ -24,7 +25,7 @@ export default function CheckoutGrid({ items }: { items: Row[] }) {
         return (
           <div key={p.id} className="border rounded p-4 flex flex-col gap-2">
             <div className="font-medium flex items-center gap-2">
-              {p.pass_name}
+              {eventsById?.get(p.event_id || "")?.name || p.pass_name}
               {isOk ? <span className="text-green-600 text-sm">✓ Valid</span> : null}
             </div>
             {p.description && <div className="text-sm text-gray-600">{p.description}</div>}

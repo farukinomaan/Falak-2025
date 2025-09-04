@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { createUser, getUserByEmail } from "@/lib/actions";
 import { UserCreateSchema } from "@/lib/actions/schemas";
 
+// Reverted schema: require verified phone directly (Firebase OTP flow)
 const OnboardSchema = z
   .object({
     name: z.string().min(2),
@@ -53,9 +54,12 @@ export async function completeOnboarding(input: OnboardInput) {
 
     // Build payload matching UserCreateSchema
     const v = parsed.data;
+
+  const phone = v.phone;
+
     const toCreate: z.infer<typeof UserCreateSchema> = {
       name: v.name,
-      phone: v.phone,
+  phone,
       email,
       mahe: v.mahe,
       reg_no: v.mahe ? (v.regNo || "") : null,

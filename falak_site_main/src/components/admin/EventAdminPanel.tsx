@@ -168,6 +168,7 @@ export default function EventAdminPanel() {
                   const enabled = (e.enable ?? true) as boolean;
                   return (
                     <tr key={e.id} className="border-b">
+                      <td className="p-2">{e.id}</td>
                       <td className="p-2">{e.name}</td>
                       <td className="p-2">{e.sub_cluster}</td>
                       <td className="p-2">{dateText}</td>
