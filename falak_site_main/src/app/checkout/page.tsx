@@ -50,73 +50,39 @@ export default function CheckoutPage() {
   if (status === "loading") {
     return (
       <div style={{ backgroundColor: '#32212C' }} className="min-h-screen py-12 px-4 md:px-8 flex items-center justify-center relative overflow-hidden">
-        {/* Same ribbon background as cart */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute bottom-0 left-0 w-full h-full">
-            <svg
-              viewBox="0 0 1200 600"
-              className="absolute bottom-0 left-0 w-full h-full"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="M0,300 C150,200 350,250 500,220 C650,190 800,160 950,180 C1100,200 1150,220 1200,200 L1200,600 L0,600 Z"
-                fill="#DBAAA6"
-                opacity="0.9"
-              />
-              <path
-                d="M0,350 C200,280 400,320 600,300 C750,280 900,260 1050,280 C1150,295 1180,310 1200,300 L1200,600 L0,600 Z"
-                fill="#D7897D"
-                opacity="1.0"
-              />
-              <path
-                d="M0,400 C180,350 380,380 580,360 C720,345 860,330 1000,340 C1120,350 1180,360 1200,355 L1200,600 L0,600 Z"
-                fill="#32212C"
-                opacity="1.0"
-              />
-            </svg>
-          </div>
-        </div>
+        {/* svg waves background*/}
+        <div
+          className="absolute bottom-0 left-0 w-full h-[458px] pointer-events-none bg-no-repeat bg-cover"
+          style={{
+            backgroundImage: "url('/waves.svg')",
+            backgroundPosition: "bottom center",
+          }}
+        />
+
         <div className="max-w-md p-8 text-center text-white relative z-10 rounded-xl shadow-lg border-2" style={{ backgroundColor: '#32212C', borderColor: '#DBAAA6' }}>
           Loading session…
         </div>
       </div>
     );
   }
-  
+
   if (status !== "authenticated") {
     return (
       <div style={{ backgroundColor: '#32212C' }} className="min-h-screen py-12 px-4 md:px-8 flex flex-col items-center justify-center relative overflow-hidden">
-        {/* Same ribbon background as cart */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute bottom-0 left-0 w-full h-full">
-            <svg
-              viewBox="0 0 1200 600"
-              className="absolute bottom-0 left-0 w-full h-full"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="M0,300 C150,200 350,250 500,220 C650,190 800,160 950,180 C1100,200 1150,220 1200,200 L1200,600 L0,600 Z"
-                fill="#DBAAA6"
-                opacity="0.9"
-              />
-              <path
-                d="M0,350 C200,280 400,320 600,300 C750,280 900,260 1050,280 C1150,295 1180,310 1200,300 L1200,600 L0,600 Z"
-                fill="#D7897D"
-                opacity="1.0"
-              />
-              <path
-                d="M0,400 C180,350 380,380 580,360 C720,345 860,330 1000,340 C1120,350 1180,360 1200,355 L1200,600 L0,600 Z"
-                fill="#32212C"
-                opacity="1.0"
-              />
-            </svg>
-          </div>
-        </div>
+        {/* svg waves background */}
+        <div
+          className="absolute bottom-0 left-0 w-full h-[458px] pointer-events-none bg-no-repeat bg-cover"
+          style={{
+            backgroundImage: "url('/waves.svg')",
+            backgroundPosition: "bottom center",
+          }}
+        />
+
         <div className="max-w-md p-8 rounded-xl shadow-xl text-center relative z-10 border-2" style={{ backgroundColor: '#32212C', borderColor: '#DBAAA6' }}>
           <div className="text-white text-lg font-bold mb-4 font-serif">Please sign in to checkout.</div>
-          <button 
-            onClick={() => signIn()} 
-            className="w-full px-6 py-3 rounded-lg text-white font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-sans" 
+          <button
+            onClick={() => signIn()}
+            className="w-full px-6 py-3 rounded-lg text-white font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-sans"
             style={{ backgroundColor: '#DBAAA6' }}
           >
             Sign In
@@ -129,34 +95,14 @@ export default function CheckoutPage() {
   return (
     <div style={{ backgroundColor: '#32212C' }} className="min-h-screen pt-24 py-12 relative overflow-hidden">
       {/* Ribbon Background - Exact match to cart */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute bottom-0 left-0 w-full h-full">
-          <svg
-            viewBox="0 0 1200 600"
-            className="absolute bottom-0 left-0 w-full h-full"
-            preserveAspectRatio="none"
-          >
-            {/* Main pink ribbon layer - larger and more prominent */}
-            <path
-              d="M0,300 C150,200 350,250 500,220 C650,190 800,160 950,180 C1100,200 1150,220 1200,200 L1200,600 L0,600 Z"
-              fill="#DBAAA6"
-              opacity="0.9"
-            />
-            {/* Secondary deeper layer */}
-            <path
-              d="M0,350 C200,280 400,320 600,300 C750,280 900,260 1050,280 C1150,295 1180,310 1200,300 L1200,600 L0,600 Z"
-              fill="#D7897D"
-              opacity="1.0"
-            />
-            {/* Third layer for depth */}
-            <path
-              d="M0,400 C180,350 380,380 580,360 C720,345 860,330 1000,340 C1120,350 1180,360 1200,355 L1200,600 L0,600 Z"
-              fill="#32212C"
-              opacity="1.0"
-            />
-          </svg>
-        </div>
-      </div>
+      <div
+        className="absolute bottom-0 left-0 w-full h-[458px] pointer-events-none bg-no-repeat bg-cover"
+        style={{
+          backgroundImage: "url('/waves.svg')",
+          backgroundPosition: "bottom center",
+        }}
+      />
+
 
       <div className="container mx-auto max-w-6xl px-4 md:px-8 relative z-10">
         <div className="shadow-xl rounded-lg p-8" style={{ backgroundColor: '#32212C' }}>
@@ -171,8 +117,8 @@ export default function CheckoutPage() {
               ) : passes.length === 0 ? (
                 <div className="rounded-xl p-8 text-center shadow-lg border-2" style={{ borderColor: '#DBAAA6', backgroundColor: '#32212C' }}>
                   <p className="text-gray-400 text-lg mb-6 font-medium">No items.</p>
-                  <Link 
-                    href="/passes" 
+                  <Link
+                    href="/passes"
                     className="inline-flex items-center px-8 py-4 text-white font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
                     style={{ backgroundColor: '#DBAAA6' }}
                   >
@@ -203,16 +149,16 @@ export default function CheckoutPage() {
                   </div>
                 </div>
                 <div className="flex gap-4 mt-6">
-                  <button 
-                    className="flex-1 py-3 rounded-lg text-white font-semibold transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-sans" 
-                    disabled={passes.length === 0} 
+                  <button
+                    className="flex-1 py-3 rounded-lg text-white font-semibold transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-sans"
+                    disabled={passes.length === 0}
                     onClick={() => window.history.back()}
                     style={{ backgroundColor: '#D7897D' }}
                   >
                     Go back
                   </button>
-                  <button 
-                    className="flex-1 py-3 rounded-lg text-white font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-sans" 
+                  <button
+                    className="flex-1 py-3 rounded-lg text-white font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-sans"
                     disabled={passes.length === 0}
                     style={{ backgroundColor: '#DBAAA6' }}
                   >

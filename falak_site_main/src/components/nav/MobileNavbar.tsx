@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Press_Start_2P } from "next/font/google";
+import { Home, CreditCard, Ticket, Trophy, Music, ShoppingCart, LogIn } from 'lucide-react';
 
 const press = Press_Start_2P({ weight: "400", subsets: ["latin"] });
 
@@ -21,6 +22,15 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
   activeSection, 
   menuButtonRef 
 }) => {
+  const menuItems = [
+    { name: 'FALAK', href: '/', icon: Home },
+    { name: 'CULTURAL', href: '/cultural', icon: Music },
+    { name: 'SPORTS', href: '/sports', icon: Trophy },
+    { name: 'PASSES', href: '/passes', icon: CreditCard },
+    { name: 'TICKETS', href: '/tickets', icon: Ticket },
+    { name: 'CART', href: '/cart', icon: ShoppingCart }
+  ];
+
   return (
     <>
       {/* Top Navigation Bar */}
@@ -162,7 +172,7 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
         </div>
       </div>
 
-      {/* Full-Screen Menu Overlay - Less Bulky */}
+      {/* Full-Screen Menu Overlay - List Layout */}
       <div className={`fixed inset-0 z-40 xl:hidden transition-all duration-300 ${
         isMobileMenuOpen 
           ? 'opacity-100 pointer-events-auto' 
@@ -180,66 +190,80 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
         
         {/* Menu Content */}
         <div className="relative flex flex-col items-center justify-center h-full p-8">
-          {/* More compact grid - 2x3 layout */}
-          <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-            {[
-              { name: 'FALAK', href: '/' },
-              { name: 'PASSES', href: '/passes' },
-              { name: 'TICKETS', href: '/tickets' },
-              { name: 'SPORTS', href: '/sports' },
-              { name: 'CULTURAL', href: '/cultural' },
-              { name: 'CART', href: '/cart' }
-            ].map((item, index) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={toggleMobileMenu}
-                className={`group relative px-4 py-3 rounded-lg transition-all duration-300 ${press.className}`}
-                style={{
-                  background: activeSection.toUpperCase() === item.name 
-                    ? 'rgba(219, 170, 166, 0.25)' 
-                    : 'rgba(219, 170, 166, 0.1)',
-                  border: '1px solid rgba(219, 170, 166, 0.3)',
-                  backdropFilter: 'blur(8px)',
-                  animationDelay: `${index * 80}ms`,
-                  boxShadow: activeSection.toUpperCase() === item.name 
-                    ? '0 4px 16px rgba(244, 202, 142, 0.3)' 
-                    : '0 2px 8px rgba(0, 0, 0, 0.2)'
-                }}
-              >
-                {/* Subtle hover glow */}
-                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-pink-500/5 via-orange-400/10 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
-                <div
-                  className="relative text-sm font-bold tracking-wider transition-all duration-300 text-center"
+          {/* Vertical List Layout */}
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            {menuItems.map((item, index) => {
+              const IconComponent = item.icon;
+              const isActive = activeSection.toUpperCase() === item.name;
+              
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={toggleMobileMenu}
+                  className={`group relative px-6 py-4 rounded-lg transition-all duration-300 ${press.className}`}
                   style={{
-                    color: activeSection.toUpperCase() === item.name ? '#F4CA8E' : '#DBAAA6',
-                    textShadow: activeSection.toUpperCase() === item.name ? '0 0 8px #F4CA8E' : 'none',
-                    fontSize: '11px'
+                    background: isActive 
+                      ? 'rgba(219, 170, 166, 0.25)' 
+                      : 'rgba(219, 170, 166, 0.1)',
+                    border: '1px solid rgba(219, 170, 166, 0.3)',
+                    backdropFilter: 'blur(8px)',
+                    animationDelay: `${index * 80}ms`,
+                    boxShadow: isActive 
+                      ? '0 4px 16px rgba(244, 202, 142, 0.3)' 
+                      : '0 2px 8px rgba(0, 0, 0, 0.2)'
                   }}
                 >
-                  {item.name}
-                </div>
+                  {/* Subtle hover glow */}
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-pink-500/5 via-orange-400/10 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  <div className="flex items-center justify-between">
+                    {/* Left side with icon and text */}
+                    <div className="flex items-center gap-3">
+                      {/* Icon */}
+                      <IconComponent 
+                        size={16}
+                        style={{
+                          color: isActive ? '#F4CA8E' : '#DBAAA6',
+                          filter: isActive ? 'drop-shadow(0 0 4px #F4CA8E)' : 'none',
+                        }}
+                        className="flex-shrink-0 transition-all duration-300"
+                      />
+                      
+                      {/* Text */}
+                      <div
+                        className="relative font-bold tracking-wider transition-all duration-300"
+                        style={{
+                          color: isActive ? '#F4CA8E' : '#DBAAA6',
+                          textShadow: isActive ? '0 0 8px #F4CA8E' : 'none',
+                          fontSize: '14px'
+                        }}
+                      >
+                        {item.name}
+                      </div>
+                    </div>
 
-                {/* Active indicator dot */}
-                {activeSection.toUpperCase() === item.name && (
-                  <div 
-                    className="absolute top-2 right-2 w-2 h-2 rounded-full animate-pulse"
-                    style={{
-                      background: '#F4CA8E',
-                      boxShadow: '0 0 8px rgba(244, 202, 142, 0.8)'
-                    }}
-                  />
-                )}
-              </Link>
-            ))}
+                    {/* Active indicator dot */}
+                    {isActive && (
+                      <div 
+                        className="w-3 h-3 rounded-full animate-pulse flex-shrink-0"
+                        style={{
+                          background: '#F4CA8E',
+                          boxShadow: '0 0 8px rgba(244, 202, 142, 0.8)'
+                        }}
+                      />
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Sign In button - separate and smaller */}
+          {/* Sign In button - separate and styled */}
           <Link
             href="/signin"
             onClick={toggleMobileMenu}
-            className={`mt-4 px-6 py-2 rounded-lg transition-all duration-300 ${press.className} group`}
+            className={`mt-6 px-8 py-3 rounded-lg transition-all duration-300 ${press.className} group w-full max-w-xs`}
             style={{
               background: 'rgba(219, 170, 166, 0.15)',
               border: '1px solid rgba(219, 170, 166, 0.4)',
@@ -250,11 +274,18 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
             {/* Hover effect */}
             <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-pink-500/5 via-orange-400/10 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             
-            <div
-              className="relative text-xs font-bold tracking-wider"
-              style={{ color: '#DBAAA6', fontSize: '10px' }}
-            >
-              SIGN IN
+            <div className="flex items-center justify-center gap-2">
+              <LogIn 
+                size={14}
+                style={{ color: '#DBAAA6' }}
+                className="flex-shrink-0"
+              />
+              <div
+                className="relative font-bold tracking-wider"
+                style={{ color: '#DBAAA6', fontSize: '12px' }}
+              >
+                SIGN IN
+              </div>
             </div>
           </Link>
 
@@ -264,7 +295,7 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
               className={`text-xs opacity-50 ${press.className}`}
               style={{ color: '#DBAAA6', fontSize: '8px' }}
             >
-              TAP OUTSIDE TO CLOSE
+              FALAK 2025
             </div>
           </div>
         </div>
