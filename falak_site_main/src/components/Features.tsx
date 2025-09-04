@@ -3,6 +3,7 @@
 import { useRef, ReactNode } from "react";
 import BuyNowButton from "@/components/BuyNowButton";
 import AddToCartButton from "@/components/cart/AddToCartButton";
+import CassettePass from "@/components/CassettePass";
 
 // -----------------------------
 // BentoTilt Component
@@ -35,32 +36,9 @@ interface BentoCardProps {
 }
 
 export const BentoCard: React.FC<BentoCardProps> = ({ src, title, description, price, perks, passId }) => {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-
   return (
-    <div
-      className="relative size-full"
-      onMouseEnter={() => videoRef.current?.play()}
-      onMouseLeave={() => {
-        if (videoRef.current) {
-          videoRef.current.pause();
-          videoRef.current.currentTime = 0;
-        }
-      }}
-    >
-      <video
-        ref={videoRef}
-        // Defer network until interaction/viewport
-        preload="none"
-        playsInline
-        muted
-        loop
-        poster="/images/feature-1.jpg"
-        // Keep current src; could lazily set via IntersectionObserver
-        src={src}
-        className="absolute left-0 top-0 size-full object-cover object-center"
-      />
-      <div className="relative z-10 flex size-full flex-col justify-between p-5 text-blue-50">
+    <div className="relative size-full bg-[#32212C] rounded-lg">
+      <div className="flex size-full flex-col justify-between p-5 text-blue-50">
         <div>
           <h1 className="bento-title special-font">{title}</h1>
           {description && (
@@ -115,7 +93,7 @@ const Features: React.FC<FeaturesProps> = ({ passes = [] }) => {
     });
   }
   return (
-    <section className="bg-black pb-10">
+    <section className="bg-[#32212C] pb-10">
       <div className="container mx-auto px-3 md:px-0">
         <div className="px-5 pt-32 pb-16">
           <p className="special-font hero-heading text-lg text-blue-50 text-center">
@@ -123,6 +101,22 @@ const Features: React.FC<FeaturesProps> = ({ passes = [] }) => {
           </p>
           <p className="max-w-md font-circular-web text-lg text-blue-50 opacity-50"></p>
         </div>
+        
+        {/* Prominent Cassette Display */}
+        <div className="flex justify-center mb-12">
+          {tiles.length > 0 && tiles[0].passId && (
+            <div className="scale-125">
+              <CassettePass 
+                pass={{
+                  id: tiles[0].passId,
+                  pass_name: String(tiles[0].title),
+                  cost: tiles[0].price.replace('₹', '')
+                }} 
+              />
+            </div>
+          )}
+        </div>
+        
         <>
           <div>
             <div className="grid h-[80vh] w-full grid-cols-2 grid-rows-2 gap-7 ">
