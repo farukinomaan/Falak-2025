@@ -1,8 +1,8 @@
 
+
 /**
  * @copyright Falak 2025 
  */
-
 
 "use client";
 import Link from "next/link";
@@ -85,42 +85,24 @@ export default function CartList({ passes }: { passes: PassRow[] }) {
     });
   };
 
-
   /**
-   * DESGIN PART
+   * DESIGN PART
    */
   return (
     <div style={{ backgroundColor: '#32212C' }} className="min-h-screen pt-24 py-12 relative overflow-hidden">
-      {/* Ribbon Background - Exact match to reference */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Main flowing ribbon wave - matches the reference exactly */}
-        <div className="absolute bottom-0 left-0 w-full h-full">
-          <svg
-            viewBox="0 0 1200 600"
-            className="absolute bottom-0 left-0 w-full h-full"
-            preserveAspectRatio="none"
-          >
-            {/* Main pink ribbon layer - larger and more prominent */}
-            <path
-              d="M0,300 C150,200 350,250 500,220 C650,190 800,160 950,180 C1100,200 1150,220 1200,200 L1200,600 L0,600 Z"
-              fill="#DBAAA6"
-              opacity="0.9"
-            />
-            {/* Secondary deeper layer */}
-            <path
-              d="M0,350 C200,280 400,320 600,300 C750,280 900,260 1050,280 C1150,295 1180,310 1200,300 L1200,600 L0,600 Z"
-              fill="#D7897D"
-              opacity="1.0"
-            />
-            {/* Third layer for depth */}
-            <path
-              d="M0,400 C180,350 380,380 580,360 C720,345 860,330 1000,340 C1120,350 1180,360 1200,355 L1200,600 L0,600 Z"
-              fill="#32212C"
-              opacity="1.0"
-            />
-          </svg>
-        </div>
-      </div>
+      {/* Background with External SVG */}
+      <div 
+  className="absolute pointer-events-none"
+  style={{
+    backgroundImage: 'url(/waves.svg)',
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: '1703.5px 458.7px',
+    width: '1703.5px',
+    height: '458.7px',
+    left: '-115px',
+    top: '400px', // shifted up (was 749.4px)
+  }}
+/>
 
       <div className="container mx-auto max-w-6xl px-4 md:px-8 relative z-10">
         <div className="shadow-xl rounded-lg p-8" style={{ backgroundColor: '#32212C' }}>
