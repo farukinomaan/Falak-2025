@@ -16,6 +16,7 @@ import AddToCartButton from "@/components/cart/AddToCartButton";
 // @ts-expect-error local client component path resolution at build
 import TeamRegistrationClient from "./team-registration-client";
 import { getServiceClient } from "@/lib/actions/supabaseClient";
+import "./cluster.css";
 
 type EvtBase = {
   id: string;
@@ -29,14 +30,31 @@ type EvtBase = {
   max_team_size?: number | null;
 };
 
+// --- MOCK DATA ---
+const mockEventsData: EvtBase[] = [
+    { id: 'sp1', name: 'Football', cluster_name: 'sports', sub_cluster: 'Team Sports', venue: 'Field A', date: '2025-10-10', price: 100, max_team_size: 11, description: 'A friendly football match.' },
+    { id: 'sp2', name: 'Basketball', cluster_name: 'sports', sub_cluster: 'Team Sports', venue: 'Court 1', date: '2025-10-11', price: 100, max_team_size: 5, description: 'A competitive basketball game.' },
+    { id: 'sp3', name: 'Chess', cluster_name: 'sports', sub_cluster: 'Individual Sports', venue: 'Hall C', date: '2025-10-12', price: 50, max_team_size: 1, description: 'A battle of wits.' },
+    { id: 'cu1', name: 'Dance', cluster_name: 'cultural', sub_cluster: 'Performing Arts', venue: 'Stage 1', date: '2025-10-15', price: 75, max_team_size: 10, description: 'A beautiful dance performance.' },
+    { id: 'cu2', name: 'Singing', cluster_name: 'cultural', sub_cluster: 'Performing Arts', venue: 'Stage 2', date: '2025-10-16', price: 75, max_team_size: 1, description: 'A solo singing competition.' },
+    { id: 'cu3', name: 'Painting', cluster_name: 'cultural', sub_cluster: 'Fine Arts', venue: 'Art Room', date: '2025-10-17', price: 60, max_team_size: 1, description: 'Express yourself with colors.' },
+];
+
+const mockPassesData = [{id: 'pass1', event_id: 'sp1'}];
+const mockUserPassIdsData = ['pass1'];
+const mockUserTeamEventIdsData = ['sp2'];
+// --- END MOCK DATA ---
+
+
 function clusterLabel(cluster: string) {
   return cluster.charAt(0).toUpperCase() + cluster.slice(1).toLowerCase();
 }
 
 // Root: list sub-clusters for a cluster (sports / cultural)
 export async function ClusterRoot({ cluster }: { cluster: string }) {
-  const res = await saListEvents();
-  const events = res.ok ? (res.data as EvtBase[]) : [];
+  // const res = await saListEvents();
+  // const events = res.ok ? (res.data as EvtBase[]) : [];
+  const events = mockEventsData;
   const filtered = events.filter((e) => (e.cluster_name || "").toLowerCase() === cluster);
   const subMap = new Map<string, { count: number }>();
   for (const e of filtered) {
@@ -48,7 +66,7 @@ export async function ClusterRoot({ cluster }: { cluster: string }) {
   const subs = Array.from(subMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   const nice = clusterLabel(cluster);
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
+    <div className="clusterContainer max-w-6xl mx-auto p-6 space-y-8">
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold">{nice} Events</h1>
         <p className="text-sm text-muted-foreground">All {nice.toLowerCase()} sub-clusters.</p>
@@ -56,18 +74,18 @@ export async function ClusterRoot({ cluster }: { cluster: string }) {
       {subs.length === 0 && (
         <p className="text-sm text-muted-foreground">No {nice.toLowerCase()} events available.</p>
       )}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-6">
         {subs.map(([slug, meta]) => (
-          <div key={slug} className="border rounded-lg p-4 flex flex-col justify-between">
+          <div key={slug} className="clusterCard border rounded-lg p-4 flex flex-col justify-between">
             <div>
               <h3 className="text-lg font-medium mb-2 break-words">{slug}</h3>
-              <p className="text-xs text-muted-foreground flex items-center gap-2">
-                <span className="inline-block px-2 py-0.5 rounded-full bg-black text-white text-[10px] tracking-wide uppercase">{nice}</span>
+              <p className="text-muted-foreground flex items-center gap-2 cluster-meta-text">
+                <span className="inline-block px-2 py-0.5 rounded-full bg-black text-white cluster-tag">{nice}</span>
                 {meta.count} event{meta.count !== 1 && "s"}
               </p>
             </div>
             <Link
-              className="inline-block mt-4 text-sm text-white bg-black px-3 py-1 rounded self-start"
+              className="clusterButton"
               href={`/${cluster}/${encodeURIComponent(slug)}`}
             >
               View {slug}
@@ -75,20 +93,27 @@ export async function ClusterRoot({ cluster }: { cluster: string }) {
           </div>
         ))}
       </div>
+      <img src="/wave2.svg" className="waveImage" alt="" />
     </div>
   );
 }
 
 // Category page for a cluster
 export async function ClusterCategory({ cluster, category }: { cluster: string; category: string }) {
-  const session = await getServerSession(authOptions);
-  const userId = (session as { user?: { id?: string } } | null)?.user?.id;
-  const [ownedRes, eventsRes, passesRes, teamEvtRes] = await Promise.all([
-    userId ? saListUserPassIds(userId) : Promise.resolve({ ok: true as const, data: [] as string[] }),
-    saListEvents(),
-    saListPasses(),
-    userId ? saListUserTeamEventIds(userId) : Promise.resolve({ ok: true as const, data: [] as string[] }),
-  ]);
+  // const session = await getServerSession(authOptions);
+  // const userId = (session as { user?: { id?: string } } | null)?.user?.id;
+  const userId = 'mock-user-id';
+  // const [ownedRes, eventsRes, passesRes, teamEvtRes] = await Promise.all([
+  //   userId ? saListUserPassIds(userId) : Promise.resolve({ ok: true as const, data: [] as string[] }),
+  //   saListEvents(),
+  //   saListPasses(),
+  //   userId ? saListUserTeamEventIds(userId) : Promise.resolve({ ok: true as const, data: [] as string[] }),
+  // ]);
+  const ownedRes = { ok: true, data: mockUserPassIdsData };
+  const eventsRes = { ok: true, data: mockEventsData };
+  const passesRes = { ok: true, data: mockPassesData };
+  const teamEvtRes = { ok: true, data: mockUserTeamEventIdsData };
+
   const ownedPassIds = new Set<string>(ownedRes.ok ? ownedRes.data : []);
   type PassLite = { id: string; event_id?: string | null };
   const passes = passesRes.ok ? (passesRes.data as PassLite[]) : [];
@@ -102,21 +127,21 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
   if (list.length === 0) return notFound();
   const nice = clusterLabel(cluster);
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-4">
+    <div className="clusterContainer max-w-5xl mx-auto p-6 space-y-4">
       <h1 className="text-2xl font-semibold">{category}</h1>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-6">
         {list.map((e) => {
           const owned = ownedEventIds.has(e.id) || ownedPassIds.has(e.id);
             const inTeam = teamEventIds.has(e.id);
           return (
-            <div key={e.id} className="border rounded-lg p-4 space-y-1">
+            <div key={e.id} className="clusterCard border rounded-lg p-4 space-y-1">
               <h2 className="text-lg font-medium flex items-center gap-2">
                 {e.name}
-                <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-black text-white">{nice}</span>
+                <span className="cluster-tag px-2 py-0.5 rounded-full bg-black text-white">{nice}</span>
                 {inTeam ? (
-                  <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-indigo-600 text-white">Team</span>
+                  <span className="cluster-tag px-2 py-0.5 rounded-full bg-indigo-600 text-white">Team</span>
                 ) : owned ? (
-                  <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-600 text-white">Owned</span>
+                  <span className="cluster-tag px-2 py-0.5 rounded-full bg-emerald-600 text-white">Owned</span>
                 ) : null}
               </h2>
               {e.description && (
@@ -125,17 +150,18 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
               <p className="text-sm">Venue: {e.venue}</p>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <Link
-                  className="text-sm text-white bg-black px-3 py-1 rounded"
+                  className="clusterButton"
                   href={`/${cluster}/${encodeURIComponent(category)}/${encodeURIComponent(e.id)}`}
                 >
                   {inTeam || owned ? "View" : "Details"}
                 </Link>
-                {!owned && !inTeam && <AddToCartButton passId={e.id} />}
+                {!owned && !inTeam && <AddToCartButton passId={e.id} className="clusterButton" />}
               </div>
             </div>
           );
         })}
       </div>
+      <img src="/wave2.svg" className="waveImage" alt="" />
     </div>
   );
 }
@@ -150,14 +176,23 @@ export async function ClusterEvent({
   category: string;
   slug: string;
 }) {
-  const session = await getServerSession(authOptions);
-  const userId = (session as { user?: { id?: string } } | null)?.user?.id;
-  const [ownedRes, eventsRes, passesRes, teamRes] = await Promise.all([
-    userId ? saListUserPassIds(userId) : Promise.resolve({ ok: true as const, data: [] as string[] }),
-    saListEvents(),
-    saListPasses(),
-    userId ? saGetUserTeamForEvent(userId, slug) : Promise.resolve({ ok: true as const, data: null }),
-  ]);
+  // const session = await getServerSession(authOptions);
+  // const userId = (session as { user?: { id?: string } } | null)?.user?.id;
+  const session = { user: { id: 'mock-user-id', name: 'Mock User' } };
+  const userId = session.user.id;
+
+  // const [ownedRes, eventsRes, passesRes, teamRes] = await Promise.all([
+  //   userId ? saListUserPassIds(userId) : Promise.resolve({ ok: true as const, data: [] as string[] }),
+  //   saListEvents(),
+  //   saListPasses(),
+  //   userId ? saGetUserTeamForEvent(userId, slug) : Promise.resolve({ ok: true as const, data: null }),
+  // ]);
+  const ownedRes = { ok: true, data: mockUserPassIdsData };
+  const eventsRes = { ok: true, data: mockEventsData };
+  const passesRes = { ok: true, data: mockPassesData };
+  const teamRes = { ok: true, data: slug === 'sp2' ? { team: { id: 'team1', name: 'The Winners', captainId: 'mock-user-id' }, members: [{id: 'mem1', memberId: 'mock-user-id'}, {id: 'mem2', memberId: 'another-user-id'}] } : null };
+
+
   const ownedPassIds = new Set<string>(ownedRes.ok ? ownedRes.data : []);
   type PassLite = { id: string; event_id?: string | null };
   const passes = passesRes.ok ? (passesRes.data as PassLite[]) : [];
@@ -189,7 +224,7 @@ export async function ClusterEvent({
   let memberUsersById: Map<string, { name: string | null; email: string | null }> | null = null;
   if (teamRes.ok && teamRes.data) {
     existingTeam = teamRes.data as ExistingTeamData;
-    const supabase = getServiceClient();
+    // const supabase = getServiceClient();
     const ids = existingTeam
       ? Array.from(
           new Set([
@@ -199,10 +234,14 @@ export async function ClusterEvent({
         )
       : [];
     if (ids.length) {
-      const { data: users } = await supabase
-        .from("Users")
-        .select("id, name, email")
-        .in("id", ids);
+      // const { data: users } = await supabase
+      //   .from("Users")
+      //   .select("id, name, email")
+      //   .in("id", ids);
+      const users = [
+          { id: 'mock-user-id', name: 'Mock User', email: 'mock@user.com' },
+          { id: 'another-user-id', name: 'Another User', email: 'another@user.com' },
+      ];
       memberUsersById = new Map();
       (users as Array<{ id: string; name: string | null; email: string | null }> | null)?.forEach((u) =>
         memberUsersById!.set(u.id, { name: u.name, email: u.email })
@@ -211,7 +250,7 @@ export async function ClusterEvent({
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-4">
+    <div className="clusterContainer max-w-3xl mx-auto p-6 space-y-4">
       <h1 className="text-3xl font-semibold flex items-center gap-3">
         {event.name}
         <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-black text-white">{nice}</span>
@@ -241,7 +280,7 @@ export async function ClusterEvent({
               </ul>
               <Link
                 href="/profile"
-                className="inline-block text-xs bg-black text-white px-3 py-1 rounded"
+                className="clusterButton"
               >
                 My Passes
               </Link>
@@ -258,24 +297,27 @@ export async function ClusterEvent({
             />
           );
         }
-        return <AddToCartButton passId={event.id} />;
+        return <AddToCartButton passId={event.id} className="clusterButton" />;
       })()}
+      <img src="/wave2.svg" className="waveImage" alt="" />
     </div>
   );
 }
 
 // Static params helpers
 export async function getClusterCategoryParams(cluster: string) {
-  const res = await saListEvents();
-  const events = res.ok ? (res.data as EvtBase[]) : [];
+  // const res = await saListEvents();
+  // const events = res.ok ? (res.data as EvtBase[]) : [];
+  const events = mockEventsData;
   const filtered = events.filter((e) => (e.cluster_name || "").toLowerCase() === cluster);
   const subs = Array.from(new Set(filtered.map((e) => e.sub_cluster)));
   return subs.map((s) => ({ category: s }));
 }
 
 export async function getClusterEventParams(cluster: string) {
-  const res = await saListEvents();
-  const events = res.ok ? (res.data as EvtBase[]) : [];
+  // const res = await saListEvents();
+  // const events = res.ok ? (res.data as EvtBase[]) : [];
+  const events = mockEventsData;
   const filtered = events.filter((e) => (e.cluster_name || "").toLowerCase() === cluster);
   return filtered.map((e) => ({ category: e.sub_cluster, slug: e.id }));
 }

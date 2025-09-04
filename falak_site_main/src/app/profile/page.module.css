@@ -185,7 +185,7 @@
   font-size: 2rem;
   color: #fff;
   margin-bottom: 0.5rem;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
   transition: color 0.3s, text-shadow 0.3s;
   text-align: center;
 }
@@ -193,7 +193,7 @@
 .passItem:hover h3,
 .eventItem:hover h3 {
   color: #fff;
-  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
 }
 
 .passItem p,
@@ -246,6 +246,7 @@
   font-size: 0.9rem;
   color: #5a5242;
   margin-bottom: 0.5rem;
+  text-align: center;
 }
 
 .eventContent {
@@ -399,5 +400,18 @@
 
   .waveBottomRight {
     transform: rotate(-25deg) scale(1);
+  }
+}
+
+@media (min-width: 1024px) { /* Apply to laptop screens and wider */
+  .passList {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 400px)); /* Set a max width for the columns */
+    justify-content: center; /* Center the grid items if there's extra space */
+  }
+
+  .section {
+    max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
   }
 }

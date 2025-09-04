@@ -1,0 +1,128 @@
+html {
+  background-color: #32212c !important;
+}
+
+@font-face {
+  font-family: 'Brasty Vintage';
+  src: url('/fonts/BrastyVintageRegular-ovoRz.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Abhaya Libre Medium';
+  src: url('/fonts/AbhayaLibre-Medium.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  background-color: #32212c !important;
+  width: 100vw;
+  height: 100vh;
+}
+
+.clusterContainer {
+  padding-top: 5rem;
+  font-family: 'Abhaya Libre Medium', serif;
+  color: white;
+  min-height: 100vh;
+  position: relative;
+  font-size: 1.2rem; /* Further increase base font size */
+  padding-bottom: 120px;
+  overflow-x: hidden;
+}
+
+.clusterContainer h1,
+.clusterContainer h2,
+.clusterContainer h3 {
+  font-family: 'Brasty Vintage', sans-serif;
+  color: white !important;
+  text-shadow: 3px 3px 5px #000;
+}
+
+.clusterContainer h1 {
+    font-size: 5rem; /* Further increase h1 font size */
+}
+
+.clusterContainer h2 {
+    font-size: 3rem; /* Further increase h2 font size */
+}
+
+.clusterContainer h3 {
+    font-size: 2.5rem; /* Further increase h3 font size */
+}
+
+.clusterButton, .clusterButton a {
+    font-family: 'Brasty Vintage', sans-serif;
+}
+
+.clusterCard {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  padding: 1rem 1rem 5rem 1rem; /* Further increase padding */
+  position: relative;
+  --tape-width: 250px;
+  --tape-height: 75px;
+  --tape-offset-horizontal: -100px;
+  --tape-offset-vertical: -30px;
+  z-index: 1;
+}
+
+.clusterCard * {
+    color: white !important;
+}
+
+.clusterButton {
+  background-color: #dfc08f !important;
+  color: black !important;
+  padding: 1.2rem 2.5rem; /* Increased padding */
+  border-radius: 5px;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: 2px 2px 2px #000;
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  font-size: 1rem; /* Increased font size */
+}
+
+.waveImage {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  z-index: 0;
+}
+
+.clusterCard::before,
+.clusterCard::after {
+  content: '';
+  position: absolute;
+  width: var(--tape-width);
+  height: var(--tape-height);
+  background: url('/tape.svg') no-repeat center center / contain;
+}
+
+.clusterCard::before {
+  top: var(--tape-offset-vertical);
+  right: var(--tape-offset-horizontal);
+  transform: rotate(30deg);
+}
+
+.clusterCard::after {
+  bottom: var(--tape-offset-vertical);
+  left: var(--tape-offset-horizontal);
+  transform: rotate(-30deg);
+}
+
+.cluster-meta-text {
+  font-size: 1.1rem; /* Bigger text */
+}
+
+.cluster-tag {
+  font-size: 0.9rem; /* Bigger text */
+  letter-spacing: 0.05em; /* tracking-wide */
+  text-transform: uppercase; /* uppercase */
+}
