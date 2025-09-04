@@ -76,7 +76,7 @@ body {
 .clusterButton {
   background-color: #dfc08f !important;
   color: black !important;
-  padding: 1.2rem 2.5rem; /* Increased padding */
+  padding: 1rem 2rem;
   border-radius: 5px;
   text-decoration: none;
   display: inline-block;
@@ -84,7 +84,7 @@ body {
   position: absolute;
   bottom: 1rem;
   right: 1rem;
-  font-size: 1rem; /* Increased font size */
+  font-size: 0.875rem; /* text-sm */
 }
 
 .waveImage {
