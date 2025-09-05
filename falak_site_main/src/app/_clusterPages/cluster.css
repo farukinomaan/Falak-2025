@@ -46,15 +46,15 @@ body {
 }
 
 .clusterContainer h1 {
-    font-size: 5rem; /* Further increase h1 font size */
+    font-size: 5rem;
 }
 
 .clusterContainer h2 {
-    font-size: 3rem; /* Further increase h2 font size */
+    font-size: 3rem;
 }
 
 .clusterContainer h3 {
-    font-size: 2.5rem; /* Further increase h3 font size */
+    font-size: 2.5rem;
 }
 
 .clusterButton, .clusterButton a {
@@ -63,7 +63,9 @@ body {
 
 .clusterCard {
   background-color: rgba(255, 255, 255, 0.1);
-  border: none;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 1.5rem; /* Uniform padding */
   position: relative;
   --tape-width: 250px;
@@ -71,6 +73,7 @@ body {
   --tape-offset-horizontal: -100px;
   --tape-offset-vertical: -30px;
   border-radius: 0.75rem; /* rounded-xl */
+  transform: translateZ(0);
 }
 
 .decorated-card-container .clusterCard {
@@ -79,7 +82,7 @@ body {
 
 /* For standalone cards not part of a flip animation */
 .clusterContainer > .clusterCard {
-    z-index: 2;
+    z-index: 3;
 }
 
 .clusterCard * {
@@ -112,7 +115,7 @@ body {
   left: 0;
   width: 100%;
   height: auto;
-  z-index: 0;
+  z-index: 2;
 }
 
 .clusterCard::before,
@@ -151,7 +154,7 @@ body {
   perspective: 1000px;
   cursor: pointer;
   position: relative;
-  z-index: 2;
+  z-index: 3;
 }
 
 .flip-card-inner {
@@ -232,7 +235,7 @@ body {
 .decorated-card-container {
   position: relative;
   box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 6px 6px rgba(0,0,0,0.2);
-  z-index: 2;
+  z-index: 3;
 }
 
 .decorated-card-container::before {
@@ -245,4 +248,88 @@ body {
     border: 2px solid #dfc08f;
     border-radius: 1.1rem; /* from rounded-2xl on the card */
     pointer-events: none;
+}
+
+/* Sports Page Animations */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.clusterContainer.sports .flip-card {
+  animation: card-enter 0.5s ease-out forwards;
+  opacity: 0; /* Start hidden */
+}
+
+.clusterContainer.sports .flip-card:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Form styles for dark cards */
+.clusterCard input {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+}
+
+.clusterCard input:focus {
+    outline: none !important;
+    border-color: #dfc08f !important;
+    box-shadow: 0 0 5px #dfc08f !important;
+}
+
+.clusterCard input::placeholder {
+    color: #9ca3af; /* gray-400 */
+}
+
+.clusterCard input:disabled {
+    background-color: rgba(0, 0, 0, 0.4) !important;
+    color: #6b7280 !important; /* gray-500 */
+}
+
+.clusterButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.clusterButton-form-submit {
+    position: relative !important;
+    bottom: auto !important;
+    right: auto !important;
+    width: 100%;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+@media (max-width: 640px) {
+  .clusterContainer h1 {
+    font-size: 3rem;
+  }
+  .clusterContainer h2 {
+    font-size: 2rem;
+  }
+  .clusterContainer h3 {
+    font-size: 1.75rem;
+  }
+  .decorated-card-container {
+    margin-top: 4rem;
+  }
+}
+
+
+ontainer {
+    margin-top: 4rem;
+  }
+
+.clusterContainer.cultural h1 {
+    opacity: 1 !important;
+    position: relative;
+    z-index: 10;
 }

@@ -56,14 +56,20 @@ function PageBackground({ cluster }: { cluster: string }) {
       left: 0;
       width: 100%;
       height: 100%;
-      background-size: cover;
       background-position: center center;
-      background-repeat: no-repeat;
       background-attachment: fixed;
-      z-index: 1; /* Behind wave and content */
+      z-index: 1; 
+      background-repeat: no-repeat;
+      background-size: cover;
       ${isSports
-        ? 'filter: contrast(110%) brightness(105%);'
-        : 'opacity: 0.3;'
+        ? `
+            background-image: url('/sports.svg');
+            opacity: 0.3;
+          `
+        : `
+            background-image: url('/cultural.svg');
+            opacity: 0.3;
+          `
       }
     }
   `;
@@ -96,16 +102,17 @@ export async function ClusterRoot({ cluster }: { cluster: string }) {
         
         <header className="space-y-2 text-center">
           <h1 className="text-4xl font-semibold">{nice} Events</h1>
-          <p className="text-md text-muted-foreground">All {nice.toLowerCase()} {cluster === 'sports' ? 'categories' : 'sub-clusters'}.</p>
+          <p className="text-md text-muted-foreground">All {nice.toLowerCase()} categories.</p>
         </header>
         {subs.length === 0 && (
           <p className="text-md text-muted-foreground">No {nice.toLowerCase()} events available.</p>
         )}
         <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-8">
-          {subs.map(([slug, meta]) => (
+          {subs.map(([slug, meta], index) => (
             <FlipCard
               key={slug}
               containerClassName="h-48"
+              style={{ animationDelay: `${index * 100}ms` }}
               frontClassName="clusterCard border rounded-lg p-6 flex flex-col justify-center items-center text-center"
               backClassName="clusterCard border rounded-lg p-6"
               front={

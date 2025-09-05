@@ -26,6 +26,9 @@ export function TeamRegistrationForm({ eventId, minSize = 1, captainId, captainN
   function addMember() {
     setMembers((prev) => (maxSize && prev.length >= maxSize ? prev : [...prev, ""]));
   }
+  function removeMember(i: number) {
+    setMembers((prev) => prev.filter((_, idx) => idx !== i));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -65,9 +68,9 @@ export function TeamRegistrationForm({ eventId, minSize = 1, captainId, captainN
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1 text-left">
-        <label className="text-sm font-medium">Team Name</label>
+        <label className="text-base font-medium">Team Name</label>
         <input
-          className="w-full border rounded px-3 py-2 text-sm"
+          className="w-full border rounded px-3 py-2 text-base"
           value={teamName}
           onChange={(e) => setTeamName(e.target.value)}
           placeholder="Enter team name"
@@ -75,32 +78,41 @@ export function TeamRegistrationForm({ eventId, minSize = 1, captainId, captainN
         />
       </div>
       <div className="space-y-1 text-left">
-        <label className="text-sm font-medium">Team Leader</label>
+        <label className="text-base font-medium">Team Leader</label>
         <input
-          className="w-full border rounded px-3 py-2 text-sm bg-gray-100"
+          className="w-full border rounded px-3 py-2 text-base"
           value={captainName || captainId}
           disabled
         />
       </div>
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">Team Members ({useEmails ? "Emails" : "User IDs"})</label>
+          <label className="text-base font-medium">Team Members ({useEmails ? "Emails" : "User IDs"})</label>
           <button type="button" onClick={addMember} disabled={!!maxSize && members.length >= maxSize} className="text-xs px-2 py-1 rounded bg-black text-white disabled:opacity-40">Add Member</button>
         </div>
         {members.map((m, i) => (
-          <input
-            key={i}
-            className="w-full border rounded px-3 py-2 text-sm"
-            value={m}
-            onChange={(e) => updateMember(i, e.target.value)}
-            placeholder={`Member #${i + 1} ${useEmails ? "email" : "userId"}`}
-          />
+          <div key={i} className="flex items-center gap-2">
+            <input
+              className="w-full border rounded px-3 py-2 text-base"
+              value={m}
+              onChange={(e) => updateMember(i, e.target.value)}
+              placeholder={`Member #${i + 1} ${useEmails ? "email" : "userId"}`}
+            />
+            <button
+              type="button"
+              onClick={() => removeMember(i)}
+              className="text-sm px-2 py-1 rounded bg-red-600 text-white disabled:opacity-50"
+              disabled={members.length <= minSize}
+            >
+              Remove
+            </button>
+          </div>
         ))}
       </div>
       <button
         type="submit"
         disabled={isPending}
-        className="w-full text-sm bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-2 rounded"
+        className="clusterButton clusterButton-form-submit w-full disabled:opacity-50 text-base"
       >
         {isPending ? "Registering..." : "Register"}
       </button>

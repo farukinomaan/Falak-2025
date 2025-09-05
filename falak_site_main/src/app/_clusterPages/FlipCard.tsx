@@ -1,5 +1,5 @@
 'use client';
-import { useState, MouseEvent } from 'react';
+import { useState, MouseEvent, CSSProperties } from 'react';
 
 interface FlipCardProps {
     front: React.ReactNode;
@@ -7,9 +7,10 @@ interface FlipCardProps {
     frontClassName?: string;
     backClassName?: string;
     containerClassName?: string;
+    style?: CSSProperties;
 }
 
-export default function FlipCard({ front, back, frontClassName, backClassName, containerClassName }: FlipCardProps) {
+export default function FlipCard({ front, back, frontClassName, backClassName, containerClassName, style }: FlipCardProps) {
     const [isFlipped, setIsFlipped] = useState(false);
 
     const handleCardClick = (e: MouseEvent) => {
@@ -21,7 +22,7 @@ export default function FlipCard({ front, back, frontClassName, backClassName, c
     };
 
     return (
-        <div className={`flip-card ${containerClassName || ''}`} onClick={handleCardClick}>
+        <div className={`flip-card ${containerClassName || ''}`} style={style} onClick={handleCardClick}>
             <div className={`flip-card-inner ${isFlipped ? 'is-flipped' : ''}`}>
                 <div className={`flip-card-front ${frontClassName || ''}`}>
                     {front}
