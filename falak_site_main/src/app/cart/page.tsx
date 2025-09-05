@@ -8,5 +8,5 @@ export default async function Cart() {
     const email = session?.user?.email ?? null;
     await (email ? getUserByEmail(email) : Promise.resolve({ ok: true, data: null }));
     // Always render guest-mode list; it will read localStorage client side.
-    return <CartList passes={[]} />
+    return <CartList />
 }

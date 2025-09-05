@@ -9,7 +9,7 @@ import Link from "next/link";
 import { UserMenu } from "./nav/UserMenu";
 import { DesktopNavbar } from "./nav/DesktopNavbar";
 import { MobileNavbar } from "./nav/MobileNavbar";
-import { MobileMenuDropdown } from "./nav/nav-components/MobileMenuDropdown";
+// import { MobileMenuDropdown } from "./nav/nav-components/MobileMenuDropdown";(not using)
 
 interface NavItem {
   id: string;
@@ -171,13 +171,13 @@ export default function Nav() {
         menuButtonRef={menuButtonRef} // ADDED
       />
 
-      <MobileMenuDropdown
+      {/* <MobileMenuDropdown
         isMobileMenuOpen={isMobileMenuOpen}
         menuRef={menuRef}
         mobileNavItems={mobileNavItems}
         activeSection={activeSection}
         handleItemClick={handleItemClick}
-      />
+      /> */}
     </>
   );
 }

@@ -1,3 +1,5 @@
+
+
 "use client";
 
 import React, { useMemo, useRef, useState, useEffect } from 'react';
@@ -68,13 +70,13 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
           rounded-xl shadow-lg border-2 transition-all duration-500
           ${press.className} ${show ? "translate-y-0" : "-translate-y-32"}`}
       style={{
-        backgroundColor: "rgba(25, 25, 25, 0.95)",
-        borderColor: "rgba(89, 144, 125, 0.6)",
+        backgroundColor: "rgba(50, 33, 44, 0.95)",
+        borderColor: "rgba(219, 170, 166, 0.6)",
         backdropFilter: "blur(12px)",
         minWidth: "560px",
         maxWidth: "760px",
         width: "72%",
-        boxShadow: "0 6px 28px rgba(0,0,0,0.45), 0 0 18px rgba(244, 202, 142, 0.18)",
+        boxShadow: "0 6px 28px rgba(0,0,0,0.45), 0 0 18px rgba(215, 137, 125, 0.18)",
       }}
     >
       {/* Left spinner + nav (fixed width group for symmetry) */}
@@ -90,18 +92,18 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
           <div
             className="w-full h-full rounded-full shadow-md relative transition-transform duration-500"
             style={{
-              background: "radial-gradient(circle, #59907D 0%, #191919 100%)",
-              border: "1.5px solid #D24A58",
+              background: "radial-gradient(circle, #DBAAA6 0%, #32212C 100%)",
+              border: "1.5px solid #D7897D",
               transform: `rotate(${leftAngle}deg)`
             }}
           >
             <div
               className="absolute inset-1 rounded-full border"
-              style={{ borderColor: "rgba(244, 202, 142, 0.4)" }}
+              style={{ borderColor: "rgba(219, 170, 166, 0.4)" }}
             />
             <div
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: "#F4CA8E" }}
+              style={{ backgroundColor: "#DBAAA6" }}
             />
             <div className="absolute inset-0">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-0.5 bg-orange-300 bg-opacity-50" />
@@ -138,10 +140,10 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
                 onClick={(e)=>{ e.preventDefault(); openDropdown(); }}
                 className={`group relative px-2.5 py-1 rounded-md text-xs font-bold uppercase flex items-center gap-1 transition-all duration-300 ${effectiveActiveId === item.id ? 'scale-105' : 'hover:scale-102'}`}
                 style={{
-                  backgroundColor: effectiveActiveId === item.id ? '#D24A58' : '#59907D',
-                  color: effectiveActiveId === item.id ? '#fff' : '#F4CA8E',
-                  border: `1.5px solid ${effectiveActiveId === item.id ? '#F4CA8E' : '#191919'}`,
-                  boxShadow: effectiveActiveId === item.id ? '0 0 12px rgba(210,74,88,0.6),0 2px 4px rgba(0,0,0,0.3)' : '0 1px 2px rgba(0,0,0,0.2)'
+                  backgroundColor: effectiveActiveId === item.id ? '#D7897D' : '#DBAAA6',
+                  color: effectiveActiveId === item.id ? '#fff' : '#32212C',
+                  border: `1.5px solid ${effectiveActiveId === item.id ? '#DBAAA6' : '#32212C'}`,
+                  boxShadow: effectiveActiveId === item.id ? '0 0 12px rgba(215,137,125,0.6),0 2px 4px rgba(0,0,0,0.3)' : '0 1px 2px rgba(0,0,0,0.2)'
                 }}
               >
                 <span>{item.label}</span>
@@ -150,7 +152,7 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
               {eventsOpen && (
                 <div
                   className="absolute left-0 top-full mt-2 w-44 border rounded-lg p-2 z-50"
-                  style={{background:'rgba(25,25,25,0.95)', borderColor:'rgba(89,144,125,0.6)', backdropFilter:'blur(12px)'}}
+                  style={{background:'rgba(50,33,44,0.95)', borderColor:'rgba(219,170,166,0.6)', backdropFilter:'blur(12px)'}}
                   onMouseEnter={openDropdown}
                   onMouseLeave={scheduleClose}
                 >
@@ -160,7 +162,7 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
                         key={d.id}
                         href={d.href}
                         onClick={()=>{ setActiveSection(d.id); setEventsOpen(false); }}
-                        className={`px-2 py-1 rounded text-xs font-semibold uppercase transition-colors ${pathname?.startsWith(d.href) ? 'bg-[#D24A58] text-white' : 'text-[#F4CA8E] hover:bg-[#59907D] hover:text-white'}`}
+                        className={`px-2 py-1 rounded text-xs font-semibold uppercase transition-colors ${pathname?.startsWith(d.href) ? 'bg-[#D7897D] text-white' : 'text-[#DBAAA6] hover:bg-[#DBAAA6] hover:text-[#32212C]'}`}
                         style={{fontFamily: press.style.fontFamily}}
                       >
                         {d.label}
@@ -180,10 +182,10 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
         <div
       className="relative px-5 py-2 rounded-lg flex items-center justify-center min-w-[140px]"
           style={{
-            backgroundColor: "#191919",
-            border: "1.5px solid #59907D",
+            backgroundColor: "#32212C",
+            border: "1.5px solid #DBAAA6",
             boxShadow:
-              "inset 0 2px 6px rgba(0,0,0,0.7), 0 1px 3px rgba(244,202,142,0.3)",
+              "inset 0 2px 6px rgba(0,0,0,0.7), 0 1px 3px rgba(219,170,166,0.3)",
           }}
         >
           <div className="relative">
@@ -191,8 +193,8 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
             <div
               className={`relative text-xs font-mono tracking-widest font-bold uppercase ${press.className}`}
               style={{
-                color: "#F4CA8E",
-                textShadow: "0 0 8px #F4CA8E, 0 0 12px #F4CA8E",
+                color: "#DBAAA6",
+                textShadow: "0 0 8px #DBAAA6, 0 0 12px #DBAAA6",
                 fontFamily: "monospace",
                 minWidth: "60px",
                 textAlign: "center",
@@ -240,18 +242,18 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
           <div
             className="w-full h-full rounded-full shadow-md relative transition-transform duration-500"
             style={{
-              background: "radial-gradient(circle, #59907D 0%, #191919 100%)",
-              border: "1.5px solid #D24A58",
+              background: "radial-gradient(circle, #DBAAA6 0%, #32212C 100%)",
+              border: "1.5px solid #D7897D",
               transform: `rotate(${rightAngle}deg)`
             }}
           >
             <div
               className="absolute inset-1 rounded-full border"
-              style={{ borderColor: "rgba(244, 202, 142, 0.4)" }}
+              style={{ borderColor: "rgba(219, 170, 166, 0.4)" }}
             />
             <div
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: "#F4CA8E" }}
+              style={{ backgroundColor: "#DBAAA6" }}
             />
             <div className="absolute inset-0">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-0.5 bg-orange-300 bg-opacity-50" />
