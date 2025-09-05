@@ -43,6 +43,7 @@ body {
   font-family: 'Brasty Vintage', sans-serif;
   color: white !important;
   text-shadow: 3px 3px 5px #000;
+  text-align: center;
 }
 
 .clusterContainer h1 {
@@ -250,28 +251,6 @@ body {
     pointer-events: none;
 }
 
-/* Sports Page Animations */
-@keyframes card-enter {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.clusterContainer.sports .flip-card {
-  animation: card-enter 0.5s ease-out forwards;
-  opacity: 0; /* Start hidden */
-}
-
-.clusterContainer.sports .flip-card:hover {
-  transform: scale(1.05);
-  transition: transform 0.2s ease-in-out;
-}
-
 /* Form styles for dark cards */
 .clusterCard input {
     background-color: rgba(0, 0, 0, 0.2) !important;
@@ -328,8 +307,46 @@ ontainer {
     margin-top: 4rem;
   }
 
+.clusterContainer.sports h1,
 .clusterContainer.cultural h1 {
     opacity: 1 !important;
     position: relative;
     z-index: 10;
+}
+
+.team-registration-modal {
+  position: relative;
+  background-color: #3f2e3a;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid #dfc08f;
+  border-radius: 1rem;
+}
+
+.team-reg-close-button {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 8rem;
+  height: 3.5rem;
+  background-color: #dfc08f !important;
+  color: black !important;
+  border-radius: 5px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 2px #000;
+  font-family: 'Brasty Vintage', sans-serif;
+  font-size: 1rem;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.team-reg-close-button:active {
+    transform: scale(0.98) translateY(1px);
+    box-shadow: 1px 1px 1px #000;
+}
+
+.team-registration-modal h2 {
+  text-align: left;
 }

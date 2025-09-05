@@ -2,11 +2,9 @@
 
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
-import Vinyl from './Vinyl';
 import Cassette from './Cassette';
 
 const RetroAnimations = () => {
-  const vinylRef = useRef<SVGSVGElement>(null);
   const cassetteRef = useRef<HTMLDivElement>(null);
   const tl = useRef<gsap.core.Timeline | null>(null);
 
@@ -47,33 +45,6 @@ const RetroAnimations = () => {
       }
     }
 
-    mm.add("(min-width: 768px)", () => {
-      // Desktop vinyl animation
-      if (vinylRef.current) {
-        gsap.to(vinylRef.current, {
-          rotation: 360,
-          repeat: -1,
-          duration: 10,
-          ease: 'none',
-          transformOrigin: 'center center'
-        });
-      }
-    });
-
-    mm.add("(max-width: 767px)", () => {
-      // Mobile vinyl animation
-      if (vinylRef.current) {
-        gsap.set(vinylRef.current, { scale: 1.1 });
-        gsap.to(vinylRef.current, {
-          rotation: 360,
-          repeat: -1,
-          duration: 10,
-          ease: 'none',
-          transformOrigin: 'center center'
-        });
-      }
-    });
-
     const handleScroll = () => {
       if (tl.current) {
         const scrollPosition = window.scrollY;
@@ -93,9 +64,6 @@ const RetroAnimations = () => {
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', overflow: 'hidden', zIndex: -1 }}>
-      <div style={{ position: 'absolute', bottom: '-45vmin', left: '-35vmin', width: '120vmin', height: '120vmin' }}>
-        <Vinyl ref={vinylRef} />
-      </div>
       <div ref={cassetteRef} style={{ visibility: 'hidden' }}>
         <Cassette />
       </div>

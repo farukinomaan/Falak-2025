@@ -9,6 +9,7 @@ import { listTeams } from "@/lib/actions/tables/teams";
 import { listEventsByIds } from "@/lib/actions/tables/events";
 import QrCode from "@/components/QrCode";
 import RetroAnimations from "../../components/profile/RetroAnimations";
+import { PageBackground } from "../_clusterPages/clusterPages";
 import styles from "./page.module.css";
 
 export default async function ProfilePage() {
@@ -45,6 +46,12 @@ export default async function ProfilePage() {
   const events = evRes.ok && evRes.data ? evRes.data : [];
   return (
     <>
+            <PageBackground cluster="cultural" />
+      <style>{`
+        body {
+          overflow-x: hidden;
+        }
+      `}</style>
       <div className={styles.profilePage}>
         <div className={styles.pageContent}>
         <header className={styles.header}>

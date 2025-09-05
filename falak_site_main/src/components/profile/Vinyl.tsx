@@ -43,7 +43,7 @@ const Vinyl = forwardRef<SVGSVGElement>((props, ref) => (
       textAnchor="middle"
       fill="#FFFFFF"
       fontSize="12"
-      fontFamily="'Bevan', serif"
+      fontFamily="'Brasty Vintage', serif"
       fontWeight="700"
       filter="url(#bevan-undershadow)"
     >
@@ -55,7 +55,7 @@ const Vinyl = forwardRef<SVGSVGElement>((props, ref) => (
       textAnchor="middle"
       fill="#FFFFFF"
       fontSize="10"
-      fontFamily="'Bevan', serif"
+      fontFamily="'Brasty Vintage', serif"
       fontWeight="700"
       filter="url(#bevan-undershadow)"
     >
