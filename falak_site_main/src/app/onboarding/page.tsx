@@ -70,22 +70,25 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div style={{ backgroundColor: '#32212C' }} className="min-h-screen flex items-center justify-center py-12 relative overflow-hidden">
-      {/* Background with External SVG */}
-      <div 
-  className="absolute pointer-events-none"
-  style={{
-    backgroundImage: 'url(/waves.svg)',
-    backgroundRepeat: 'no-repeat',
-    backgroundSize: '1703.5px 458.7px',
-    width: '1703.5px',
-    height: '558.7px',
-    left: '-115px',
-    top: '420px', // for bottom alignment
-  }}
-/>
+<div
+    className="min-h-screen flex items-center justify-center py-12 relative overflow-hidden before:absolute before:inset-0 before:bg-black/40 before:pointer-events-none"
+    style={{ backgroundColor: '#32212C' }}
+  >
+    {/* Background SVG */}
+    <div 
+      className="absolute pointer-events-none inset-0"
+      style={{
+        backgroundImage: 'url(/background.svg)',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'cover', // or 'contain' depending on your preference
+        backgroundPosition: 'center',
+        opacity: 0.5, // Adjust opacity so it doesn't overpower content
+        zIndex: 0, // Behind the overlay
+      }}
+    />
+    
   <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto">
-    <div className="bg-[#191919]/95 backdrop-blur-sm rounded-2xl border border-black/20 p-6 sm:p-8 md:p-10 text-neutral-50">
+    <div className="bg-[#32212C] backdrop-blur-sm rounded-2xl border border-black/20 p-6 sm:p-8 md:p-10 text-neutral-50">
       <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-4 sm:mb-6 text-center">
         Complete your registration
       </h1>
@@ -115,7 +118,7 @@ export default function OnboardingPage() {
         <Button
           type="submit"
           variant={"default"}
-          className=" disabled:bg-gray-600 bg-[#DBAAA6] w-full hover:bg-[#de8c89] text-[#32212C]"
+          className=" disabled:bg-gray-600 bg-[#de8c89] w-full hover:bg-[#DBAAA6] text-[#32212C]"
           disabled={verified}
         >
           Proceed

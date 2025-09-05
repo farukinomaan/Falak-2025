@@ -21,9 +21,12 @@ export default function GuestContactForm({standalone=true}) {
       className="space-y-4"
     >
     <div className={`
-        ${standalone ? 'max-h-screen max-w-screen bg-[#191919]/95 border backdrop-blur-sm rounded-2xl border-black/5 py-10 px-7' : 'bg-transparent'}
+        ${standalone ? 'max-h-screen max-w-screen bg-[#32212C] backdrop-blur-sm rounded-2xl border-black/5 py-10 px-7' : 'bg-transparent'}
         text-neutral-50
       `}>
+        <h1 className="text-xl sm:text-2xl md:text-3xl text-neutral-100 font-semibold mb-4 sm:mb-6 text-center">
+        Support Ticket
+      </h1>
   <p className="text-sm">
     Not registered yet? Leave us a note and we&apos;ll reach out. This doesn&apos;t create a ticket in our system.
   </p>
@@ -33,7 +36,7 @@ export default function GuestContactForm({standalone=true}) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           type="email"
-          className="w-full border rounded px-3 py-2"
+          className="w-full border-2 rounded px-3 py-2 border-[#D3877A] focus:border-[#DBAAA6]"
           placeholder="you@example.com"
           required
         />
@@ -44,7 +47,7 @@ export default function GuestContactForm({standalone=true}) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           rows={5}
-          className="w-full border rounded px-3 py-2"
+          className="w-full border-2 rounded px-3 py-2 border-[#D3877A]"
           placeholder="Type your question..."
           required
         />
@@ -52,7 +55,7 @@ export default function GuestContactForm({standalone=true}) {
       <div className="mb-0 py-5">
       <center>
         <div className="text-center">
-      <button disabled={pending} className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700 disabled:opacity-50">
+      <button disabled={pending} className="px-4 py-2 rounded bg-[#de8c89] w-full hover:bg-[#DBAAA6] text-[#32212C] disabled:opacity-50">
         Send
       </button>
       </div>

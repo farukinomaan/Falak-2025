@@ -25,22 +25,36 @@ export default async function TicketsPage() {
     redirect("/tickets?submitted=1");
   }
 
-  return (
-    <div className="bg-[url('/mobile_background.gif')] md:bg-[url('/laptop_background.gif')] bg-cover bg-center h-screen flex items-center py-4 sm:py-8 px-4">
-      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto">
-        <h1 className="text-xl sm:text-2xl md:text-3xl text-neutral-100 font-semibold mb-4 sm:mb-6 text-center">
-          Support Ticket
-        </h1>
-        {!session || !email ? (
-          <GuestContactForm/>
-        ) : !registeredUser ? (
-          <UnregisteredNotice/>
-        ) : (
-          <RegisteredTicketForm action={submit} />
-        )}
-      </div>
+return (
+  <div
+    className="min-h-screen flex items-center justify-center py-12 relative overflow-hidden before:absolute before:inset-0 before:bg-black/40 before:pointer-events-none"
+    style={{ backgroundColor: '#32212C' }}
+  >
+    {/* Background SVG */}
+    <div 
+      className="absolute pointer-events-none inset-0"
+      style={{
+        backgroundImage: 'url(/background.svg)',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'cover', // or 'contain' depending on your preference
+        backgroundPosition: 'center',
+        opacity: 0.5, // Adjust opacity so it doesn't overpower content
+        zIndex: 0, // Behind the overlay
+      }}
+    />
+    
+    <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto relative z-10">
+      {!session || !email ? (
+        <GuestContactForm/>
+      ) : !registeredUser ? (
+        <UnregisteredNotice/>
+      ) : (
+        <RegisteredTicketForm action={submit} />
+      )}
     </div>
-  );
+  </div>
+);
+
 }
 
 

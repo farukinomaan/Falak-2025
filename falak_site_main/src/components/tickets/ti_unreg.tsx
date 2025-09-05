@@ -6,7 +6,7 @@ export default function UnregisteredNotice() {
   return (
     <div className="max-h-screen 
   max-w-screen 
-  bg-[#191919]/95
+  bg-[#32212C]
   border 
   backdrop-blur-sm
   rounded-2xl 
@@ -20,7 +20,7 @@ export default function UnregisteredNotice() {
       <div className="text-center">
         <a 
           href="/onboarding" 
-          className="mb-2 mt-2 inline-block px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-gray-600 text-white text-sm sm:text-base hover:bg-gray-700 transition-colors"
+          className="mb-2 mt-2 inline-block px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-[#de8c89] w-full hover:bg-[#DBAAA6] text-[#32212C] disabled:opacity-50 transition-colors"
         >
           Complete Registration
         </a>

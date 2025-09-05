@@ -90,7 +90,7 @@ export function Msg91DirectOtpVerification({ onVerified }: Props) {
             placeholder="98xxxxxxxx"
             className="flex-1"
           />
-          <Button type="button" variant="outline" disabled={sending || cooldown>0} onClick={sendOtp}>
+          <Button type="button" variant="outline" disabled={sending || cooldown>0} onClick={sendOtp} className="bg-[#de8c89] w-full hover:bg-[#DBAAA6] text-[#32212C]">
             {sending ? "Sending..." : cooldown>0 ? `Resend (${cooldown})` : sent ? "Resend" : "Send OTP"}
           </Button>
         </div>
