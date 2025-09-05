@@ -70,7 +70,20 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="bg-[url('/bg-mob.png')] md:bg-[url('/bg.png')] bg-cover bg-center min-h-screen flex items-center py-4 sm:py-8 px-4">
+    <div style={{ backgroundColor: '#32212C' }} className="min-h-screen flex items-center justify-center py-12 relative overflow-hidden">
+      {/* Background with External SVG */}
+      <div 
+  className="absolute pointer-events-none"
+  style={{
+    backgroundImage: 'url(/waves.svg)',
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: '1703.5px 458.7px',
+    width: '1703.5px',
+    height: '558.7px',
+    left: '-115px',
+    top: '420px', // for bottom alignment
+  }}
+/>
   <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto">
     <div className="bg-[#191919]/95 backdrop-blur-sm rounded-2xl border border-black/20 p-6 sm:p-8 md:p-10 text-neutral-50">
       <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-4 sm:mb-6 text-center">
