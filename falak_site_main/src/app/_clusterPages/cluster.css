@@ -17,7 +17,11 @@ html {
 }
 
 body {
-  background-color: #32212c !important;
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-color: #32212c; /* Fallback */
   width: 100vw;
   height: 100vh;
 }
@@ -60,13 +64,22 @@ body {
 .clusterCard {
   background-color: rgba(255, 255, 255, 0.1);
   border: none;
-  padding: 1rem 1rem 5rem 1rem; /* Further increase padding */
+  padding: 1.5rem; /* Uniform padding */
   position: relative;
   --tape-width: 250px;
   --tape-height: 75px;
   --tape-offset-horizontal: -100px;
   --tape-offset-vertical: -30px;
-  z-index: 1;
+  border-radius: 0.75rem; /* rounded-xl */
+}
+
+.decorated-card-container .clusterCard {
+  padding: 1rem 1rem 5rem 1rem;
+}
+
+/* For standalone cards not part of a flip animation */
+.clusterContainer > .clusterCard {
+    z-index: 2;
 }
 
 .clusterCard * {
@@ -85,6 +98,12 @@ body {
   bottom: 1rem;
   right: 1rem;
   font-size: 0.875rem; /* text-sm */
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.clusterButton:active {
+    transform: scale(0.98) translateY(1px);
+    box-shadow: 1px 1px 1px #000;
 }
 
 .waveImage {
@@ -125,4 +144,105 @@ body {
   font-size: 0.9rem; /* Bigger text */
   letter-spacing: 0.05em; /* tracking-wide */
   text-transform: uppercase; /* uppercase */
+}
+
+.flip-card {
+  background-color: transparent;
+  perspective: 1000px;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 6px 6px rgba(0,0,0,0.2);
+}
+
+.flip-card-inner::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid #dfc08f;
+    border-radius: 0.9rem;
+    transform: translateZ(-1px);
+    pointer-events: none;
+}
+
+.flip-card-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden; /* Safari */
+  backface-visibility: hidden;
+  border-radius: 0.5rem; /* Corresponds to rounded-lg */
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 1rem;
+}
+
+.flip-card-back .clusterButton {
+    position: static;
+}
+
+.cluster-root-button {
+    padding: 1.5rem 3rem;
+    font-size: 1.5rem;
+}
+
+/* Status Tags */
+.status-tag {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 1.125rem; /* text-lg */
+    color: white !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.status-tag.owned {
+    background-color: #16a34a; /* green-600 */
+}
+.status-tag.in-team {
+    background-color: #4f46e5; /* indigo-600 */
+}
+.status-tag.available {
+    background-color: #6b7280; /* gray-500 */
+}
+
+.decorated-card-container {
+  position: relative;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 6px 6px rgba(0,0,0,0.2);
+  z-index: 2;
+}
+
+.decorated-card-container::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid #dfc08f;
+    border-radius: 1.1rem; /* from rounded-2xl on the card */
+    pointer-events: none;
 }
