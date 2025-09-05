@@ -70,10 +70,17 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto p-6 space-y-4">
-      <h1 className="text-2xl font-semibold">Complete your registration</h1>
+    <div className="bg-[url('/bg-mob.png')] md:bg-[url('/bg.png')] bg-cover bg-center min-h-screen flex items-center py-4 sm:py-8 px-4">
+  <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto">
+    <div className="bg-[#191919]/95 backdrop-blur-sm rounded-2xl border border-black/20 p-6 sm:p-8 md:p-10 text-neutral-50">
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-4 sm:mb-6 text-center">
+        Complete your registration
+      </h1>
 
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-4" onSubmit={
+        // handleSubmit
+        (e) => { e.preventDefault(); toast.info("Backend logic commented out."); }
+      }>
         <RegistrationForm
           name={name}
           setName={setName}
@@ -95,8 +102,8 @@ export default function OnboardingPage() {
         <Button
           type="submit"
           variant={"default"}
-          className=" disabled:opacity-50"
-          disabled={!verified}
+          className=" disabled:bg-gray-600 bg-[#DBAAA6] w-full hover:bg-[#de8c89] text-[#32212C]"
+          disabled={verified}
         >
           Proceed
         </Button>
@@ -104,6 +111,8 @@ export default function OnboardingPage() {
 
   {/* Invisible reCAPTCHA host (required for Firebase phone auth) */}
   <div id="recaptcha-container" />
+    </div>
+    </div>
     </div>
   );
 }

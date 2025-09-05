@@ -98,14 +98,14 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
         <label className="block text-sm font-medium">Phone (+91...)</label>
         <div className="flex gap-2">
           <Input
-            className="flex-1"
+            className="flex-1 text-black"
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="98XXXXXX01"
             required
           />
-          <Button onClick={handleSendOtp} disabled={sending} type="button" variant="outline">
+          <Button onClick={handleSendOtp} disabled={sending} type="button" variant="outline" className="text-black bg-[#DBAAA6] hover:bg-[#de8c89] disabled:bg-gray-600">
             {sending ? "Sending..." : "Send OTP"}
           </Button>
         </div>
@@ -130,12 +130,12 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
                     <InputOTPSlot index={5} />
                 </InputOTPGroup>
             </InputOTP>
-            <Button onClick={handleVerifyOtp} disabled={verifying} type="button">
+            <Button onClick={handleVerifyOtp} disabled={verifying} type="button" className="disabled:bg-gray-600 bg-[#DBAAA6] hover:bg-[#de8c89] m-2 text-black">
               {verifying ? "Verifying..." : "Verify"}
             </Button>
           </div>
         </div>
-      )}
+       )}
     </>
   );
 }
