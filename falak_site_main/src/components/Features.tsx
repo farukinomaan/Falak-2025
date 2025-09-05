@@ -2,12 +2,8 @@
 
 import { useRef, ReactNode } from "react";
 import BuyNowButton from "@/components/BuyNowButton";
-<<<<<<< HEAD
-import AddToCartButton from "@/components/cart/AddToCartButton";
-import CassettePass from "@/components/CassettePass";
-=======
 import PassAddToCartButton from "@/components/cart/PassAddToCartButton";
->>>>>>> main
+import CassettePass from "@/components/CassettePass";
 
 // -----------------------------
 // BentoTilt Component
@@ -93,56 +89,34 @@ const Features: React.FC<FeaturesProps> = ({ passes = [] }) => {
     });
   }
   return (
-    <section className="bg-[#32212C] pb-10">
+    <section className="bg-[#32212C] pb-10 relative z-10">
       <div className="container mx-auto px-3 md:px-0">
-        <div className="px-5 pt-32 pb-16">
-          <p className="special-font hero-heading text-lg text-blue-50 text-center">
-            Get your tickets now!!
-          </p>
-          <p className="max-w-md font-circular-web text-lg text-blue-50 opacity-50"></p>
+        <div className="px-5 pt-24 pb-16">
+                          <p
+                  className="text-4xl text-yellow-400 text-center font-bold uppercase tracking-wider"
+                  style={{
+                    fontFamily: "'Press Start 2P', 'ArcadeClassic', monospace",
+                    textShadow: '0 0 10px #fbbf24, 0 0 20px #f59e0b, 0 0 30px #d97706, 0 0 40px #b45309',
+                    filter: 'drop-shadow(0 0 5px #fbbf24) drop-shadow(0 0 10px #f59e0b)'
+                  }}
+                >
+                  Get your tickets now!!
+                </p>
         </div>
         
         {/* Prominent Cassette Display */}
-        <div className="flex justify-center mb-12">
+        <div className="flex justify-center items-center min-h-screen -mt-52">
           {tiles.length > 0 && tiles[0].passId && (
-            <div className="scale-125">
-              <CassettePass 
-                pass={{
-                  id: tiles[0].passId,
-                  pass_name: String(tiles[0].title),
-                  cost: tiles[0].price.replace('₹', '')
-                }} 
-              />
-            </div>
+            <CassettePass 
+              pass={{
+                id: tiles[0].passId,
+                pass_name: String(tiles[0].title),
+                description: tiles[0].description,
+                cost: tiles[0].price.replace('₹', '')
+              }} 
+            />
           )}
         </div>
-        
-        <>
-          <div>
-            <div className="grid h-[80vh] w-full grid-cols-2 grid-rows-2 gap-7 ">
-              {tiles.map((p, index) => (
-                <BentoTilt
-                  key={p.id}
-                  className={
-                    index === 0
-                      ? "bento-tilt_1 row-span-1 md:col-span-1 md:row-span-2"
-                      : index === 1
-                      ? "bento-tilt_1 row-span-1 ms-32 md:col-span-1 md:ms-0"
-                      : "bento-tilt_1 me-14 md:col-span-1 md:me-0"
-                  }
-                >
-                  <BentoCard
-                    src={p.videoSrc}
-                    title={p.title}
-                    description={p.description}
-                    price={p.price}
-                    passId={p.passId}
-                  />
-                </BentoTilt>
-              ))}
-            </div>
-          </div>
-        </>
       </div>
     </section>
   );

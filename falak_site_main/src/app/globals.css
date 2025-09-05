@@ -153,3 +153,8 @@ main {
   min-height: 100vh; 
   color: white;
 }
+
+/* Custom flip effect for cassette */
+.hover\:rotate-y-180:hover {
+  transform: rotateY(180deg);
+}

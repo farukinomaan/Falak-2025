@@ -11,12 +11,19 @@ import { useGuestCart } from "./useGuestCart";
  * - No pre-fetch probe; directly adds the pass id
  * - Keeps success toast & disabled state after adding
  */
-export default function PassAddToCartButton({ passId, className }: { passId: string; className?: string }) {
+export default function PassAddToCartButton({
+  passId,
+  className,
+}: {
+  passId: string;
+  className?: string;
+}) {
   const { add } = useGuestCart();
   const [pending, start] = useTransition();
   const [added, setAdded] = useState(false);
 
   const handleClick = () => {
+    console.log("Clicked Add to Cart for:", passId); // ✅ debug log
     if (pending || added) return;
     start(() => {
       add(passId);
@@ -31,7 +38,9 @@ export default function PassAddToCartButton({ passId, className }: { passId: str
     <button
       onClick={handleClick}
       disabled={pending || added}
-      className={className || "px-4 py-2 rounded bg-black text-white text-sm"}
+      className={
+        className || "px-4 py-2 rounded bg-black text-white text-sm"
+      }
     >
       {added ? "Added" : pending ? "Adding…" : "Add to Cart"}
     </button>

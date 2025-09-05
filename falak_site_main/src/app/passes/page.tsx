@@ -16,25 +16,25 @@ export default async function PassesPage() {
         <Features passes={passes} />
       </div>
       
-      {/* Vector images ON TOP of the purple background */}
-      <div 
-        className="absolute top-1/3 left-0 w-full h-1/2 opacity-30 z-10"
-        style={{ 
-          backgroundImage: "url('/vec5.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center bottom",
-          backgroundRepeat: "no-repeat"
-        }}
-      />
-      <div 
-        className="absolute top-2/5 left-0 w-full h-1/2 opacity-30 z-10"
-        style={{ 
-          backgroundImage: "url('/vec4.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center top",
-          backgroundRepeat: "no-repeat"
-        }}
-      />
+                  {/* Vector images ON TOP of the purple background */}
+            <div
+              className="absolute top-1/2 left-0 w-full h-3/5 z-1"
+              style={{
+                backgroundImage: "url('/vec5.png')",
+                backgroundSize: "100%",
+                backgroundPosition: "center bottom",
+                backgroundRepeat: "no-repeat"
+              }}
+            />
+            <div
+              className="absolute top-1/2 left-0 w-full h-3/5 z-1"
+              style={{
+                backgroundImage: "url('/vec4.png')",
+                backgroundSize: "100%",
+                backgroundPosition: "center bottom",
+                backgroundRepeat: "no-repeat"
+              }}
+            />
     </div>
   );
 }
