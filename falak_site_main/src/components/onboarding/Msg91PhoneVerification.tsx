@@ -250,6 +250,7 @@ export function Msg91PhoneVerification({ onVerified, withIdentifier = true }: Pr
               variant={verified ? "default" : "outline"}
               disabled={loading || verified}
               onClick={startWidget}
+              className="disabled:bg-gray-600 bg-[#DBAAA6] hover:bg-[#de8c89] m-2 text-black"
             >
               {verified ? "Verified" : loading ? "Sending..." : "Send OTP"}
             </Button>
@@ -262,6 +263,7 @@ export function Msg91PhoneVerification({ onVerified, withIdentifier = true }: Pr
           variant={verified ? "default" : "outline"}
           disabled={loading || verified || !widgetReady}
           onClick={startWidget}
+          className="disabled:bg-gray-600 bg-[#DBAAA6] hover:bg-[#de8c89] m-2 text-black"
         >
           {verified ? "Verified" : loading ? "Starting..." : widgetReady ? "Start Verification" : "Loading widget..."}
         </Button>
