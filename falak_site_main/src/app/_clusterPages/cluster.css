@@ -1,0 +1,352 @@
+html {
+  background-color: #32212c !important;
+}
+
+@font-face {
+  font-family: 'Brasty Vintage';
+  src: url('/fonts/BrastyVintageRegular-ovoRz.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Abhaya Libre Medium';
+  src: url('/fonts/AbhayaLibre-Medium.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-color: #32212c; /* Fallback */
+  width: 100vw;
+  height: 100vh;
+}
+
+.clusterContainer {
+  padding-top: 5rem;
+  font-family: 'Abhaya Libre Medium', serif;
+  color: white;
+  min-height: 100vh;
+  position: relative;
+  font-size: 1.2rem; /* Further increase base font size */
+  padding-bottom: 120px;
+  overflow-x: hidden;
+}
+
+.clusterContainer h1,
+.clusterContainer h2,
+.clusterContainer h3 {
+  font-family: 'Brasty Vintage', sans-serif;
+  color: white !important;
+  text-shadow: 3px 3px 5px #000;
+  text-align: center;
+}
+
+.clusterContainer h1 {
+    font-size: 5rem;
+}
+
+.clusterContainer h2 {
+    font-size: 3rem;
+}
+
+.clusterContainer h3 {
+    font-size: 2.5rem;
+}
+
+.clusterButton, .clusterButton a {
+    font-family: 'Brasty Vintage', sans-serif;
+}
+
+.clusterCard {
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 1.5rem; /* Uniform padding */
+  position: relative;
+  --tape-width: 250px;
+  --tape-height: 75px;
+  --tape-offset-horizontal: -100px;
+  --tape-offset-vertical: -30px;
+  border-radius: 0.75rem; /* rounded-xl */
+  transform: translateZ(0);
+}
+
+.decorated-card-container .clusterCard {
+  padding: 1rem 1rem 5rem 1rem;
+}
+
+/* For standalone cards not part of a flip animation */
+.clusterContainer > .clusterCard {
+    z-index: 3;
+}
+
+.clusterCard * {
+    color: white !important;
+}
+
+.clusterButton {
+  background-color: #dfc08f !important;
+  color: black !important;
+  padding: 1rem 2rem;
+  border-radius: 5px;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: 2px 2px 2px #000;
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  font-size: 0.875rem; /* text-sm */
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.clusterButton:active {
+    transform: scale(0.98) translateY(1px);
+    box-shadow: 1px 1px 1px #000;
+}
+
+.waveImage {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  z-index: 2;
+}
+
+.clusterCard::before,
+.clusterCard::after {
+  content: '';
+  position: absolute;
+  width: var(--tape-width);
+  height: var(--tape-height);
+  background: url('/tape.svg') no-repeat center center / contain;
+}
+
+.clusterCard::before {
+  top: var(--tape-offset-vertical);
+  right: var(--tape-offset-horizontal);
+  transform: rotate(30deg);
+}
+
+.clusterCard::after {
+  bottom: var(--tape-offset-vertical);
+  left: var(--tape-offset-horizontal);
+  transform: rotate(-30deg);
+}
+
+.cluster-meta-text {
+  font-size: 1.1rem; /* Bigger text */
+}
+
+.cluster-tag {
+  font-size: 0.9rem; /* Bigger text */
+  letter-spacing: 0.05em; /* tracking-wide */
+  text-transform: uppercase; /* uppercase */
+}
+
+.flip-card {
+  background-color: transparent;
+  perspective: 1000px;
+  cursor: pointer;
+  position: relative;
+  z-index: 3;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 6px 6px rgba(0,0,0,0.2);
+}
+
+.flip-card-inner::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid #dfc08f;
+    border-radius: 0.9rem;
+    transform: translateZ(-1px);
+    pointer-events: none;
+}
+
+.flip-card-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden; /* Safari */
+  backface-visibility: hidden;
+  border-radius: 0.5rem; /* Corresponds to rounded-lg */
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 1rem;
+}
+
+.flip-card-back .clusterButton {
+    position: static;
+}
+
+.cluster-root-button {
+    padding: 1.5rem 3rem;
+    font-size: 1.5rem;
+}
+
+/* Status Tags */
+.status-tag {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 1.125rem; /* text-lg */
+    color: white !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.status-tag.owned {
+    background-color: #16a34a; /* green-600 */
+}
+.status-tag.in-team {
+    background-color: #4f46e5; /* indigo-600 */
+}
+.status-tag.available {
+    background-color: #6b7280; /* gray-500 */
+}
+
+.decorated-card-container {
+  position: relative;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 6px 6px rgba(0,0,0,0.2);
+  z-index: 3;
+}
+
+.decorated-card-container::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid #dfc08f;
+    border-radius: 1.1rem; /* from rounded-2xl on the card */
+    pointer-events: none;
+}
+
+/* Form styles for dark cards */
+.clusterCard input {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+}
+
+.clusterCard input:focus {
+    outline: none !important;
+    border-color: #dfc08f !important;
+    box-shadow: 0 0 5px #dfc08f !important;
+}
+
+.clusterCard input::placeholder {
+    color: #9ca3af; /* gray-400 */
+}
+
+.clusterCard input:disabled {
+    background-color: rgba(0, 0, 0, 0.4) !important;
+    color: #6b7280 !important; /* gray-500 */
+}
+
+.clusterButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.clusterButton-form-submit {
+    position: relative !important;
+    bottom: auto !important;
+    right: auto !important;
+    width: 100%;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+@media (max-width: 640px) {
+  .clusterContainer h1 {
+    font-size: 3rem;
+  }
+  .clusterContainer h2 {
+    font-size: 2rem;
+  }
+  .clusterContainer h3 {
+    font-size: 1.75rem;
+  }
+  .decorated-card-container {
+    margin-top: 4rem;
+  }
+}
+
+
+ontainer {
+    margin-top: 4rem;
+  }
+
+.clusterContainer.sports h1,
+.clusterContainer.cultural h1 {
+    opacity: 1 !important;
+    position: relative;
+    z-index: 10;
+}
+
+.team-registration-modal {
+  position: relative;
+  background-color: #3f2e3a;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid #dfc08f;
+  border-radius: 1rem;
+}
+
+.team-reg-close-button {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 8rem;
+  height: 3.5rem;
+  background-color: #dfc08f !important;
+  color: black !important;
+  border-radius: 5px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 2px #000;
+  font-family: 'Brasty Vintage', sans-serif;
+  font-size: 1rem;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.team-reg-close-button:active {
+    transform: scale(0.98) translateY(1px);
+    box-shadow: 1px 1px 1px #000;
+}
+
+.team-registration-modal h2 {
+  text-align: left;
+}
