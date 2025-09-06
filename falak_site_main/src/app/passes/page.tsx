@@ -8,28 +8,42 @@ type PassCard = { id: string; pass_name: string; description?: string | null; co
 export default async function PassesPage() {
   const res = await saListProshowPasses();
   const passes: PassCard[] = res.ok ? (res.data as PassCard[]) : [];
+  
   return (
-    <>
-      <Features passes={passes} />
-      {/**
-       * The server-rendered passes are now shown inside <Features />.
-       */}
-      {false && (
-        <div className="max-w-5xl mx-auto p-6 space-y-6">
-          <h1 className="text-3xl font-semibold">Passes</h1>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {passes.map((p) => (
-              <div key={p.id} className="border rounded-lg p-4 space-y-2">
-                <h2 className="text-xl font-medium">{p.pass_name}</h2>
-                {p.description && <p className="text-sm text-gray-600">{p.description}</p>}
-                {p.cost && <p className="font-bold">₹{typeof p.cost === "number" ? p.cost : p.cost}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </>
+    <div
+      className="min-h-screen relative overflow-hidden"
+      style={{
+        // Use the provided SVG as the page background
+        backgroundImage: "url('/background%202.svg')",
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center top'
+      }}
+    >
+      {/* Main content with purple background */}
+      <div className="relative z-20">
+        <Features passes={passes} />
+      </div>
+
+      {/* Background decorative vectors (non-interactive) */}
+      <div
+        className="pointer-events-none absolute bottom-0 left-0 w-full h-[55vh] -z-10"
+        style={{
+          backgroundImage: "url('/vec5.png')",
+          backgroundSize: "100%",
+          backgroundPosition: "center bottom",
+          backgroundRepeat: "no-repeat"
+        }}
+      />
+      <div
+        className="pointer-events-none absolute bottom-0 left-0 w-full h-[60vh] -z-20"
+        style={{
+          backgroundImage: "url('/vec4.png')",
+          backgroundSize: "100%",
+          backgroundPosition: "center bottom",
+          backgroundRepeat: "no-repeat"
+        }}
+      />
+    </div>
   );
 }
-
-

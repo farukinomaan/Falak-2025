@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useState } from "react";
 import TeamRegistrationForm from "@/components/teams/TeamRegistrationForm";
 
@@ -13,40 +13,56 @@ interface Props {
 export default function TeamRegistrationClient(props: Props) {
 	const [open, setOpen] = useState(false);
 	const [teamId, setTeamId] = useState<string | null>(null);
-	if (teamId) return <p className="text-sm text-emerald-600">Team registered (ID: {teamId}). Refresh to view details.</p>;
+
+	if (teamId) {
+		return <p className="text-lg text-center text-emerald-400">Team registered (ID:{teamId}). Refresh to view details.</p>;
+	}
+
+	if (!open) {
+		return (
+			<div className="text-center">
+				<button
+					onClick={() => setOpen(true)}
+					className="clusterButton cluster-root-button"
+				>
+					Register Your Team
+				</button>
+			</div>
+		);
+	}
+
 	return (
-		<div className="space-y-3">
+		<div className="clusterCard team-registration-modal w-full max-w-2xl mx-auto p-8" style={{ minHeight: '50vh' }}>
 			<button
-				onClick={() => setOpen(true)}
-				className="inline-block text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded"
+				onClick={() => setOpen(false)}
+				className="team-reg-close-button"
 			>
-				Register Team
+				Close
 			</button>
-			{open && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-					<div className="bg-white w-full max-w-md rounded-lg p-6 space-y-4">
-						<div className="flex items-center justify-between">
-							<h2 className="text-lg font-medium">Team Registration</h2>
-							<button onClick={() => setOpen(false)} className="text-xs px-2 py-1 rounded bg-gray-200">Close</button>
-						</div>
-						<div>
-								Note: Make sure your team members have registered on the site.
-						</div>
-						<TeamRegistrationForm
-							eventId={props.eventId}
-							captainId={props.captainId}
-							captainName={props.captainName}
-							minSize={props.minSize}
-							maxSize={props.maxSize}
-							useEmails={true}
-							onSuccess={(id) => {
-								setTeamId(id);
-								setOpen(false);
-							}}
-						/>
-					</div>
+
+			{/* Header */}
+			<div className="mb-4">
+				<h2 className="text-2xl font-medium">Team Registration</h2>
+			</div>
+
+			{/* Body (scrollable) */}
+			<div className="flex-grow overflow-y-auto py-4">
+				<div className="text-base mb-4">
+					Note: Make sure your team members have registered on the site and have purchased passes for this event.
 				</div>
-			)}
+				<TeamRegistrationForm
+					eventId={props.eventId}
+					captainId={props.captainId}
+					captainName={props.captainName}
+					minSize={props.minSize}
+					maxSize={props.maxSize}
+					useEmails={true}
+					onSuccess={(id) => {
+						setTeamId(id);
+						setOpen(false);
+					}}
+				/>
+			</div>
 		</div>
 	);
 }

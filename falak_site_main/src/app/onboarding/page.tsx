@@ -70,10 +70,33 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto p-6 space-y-4">
-      <h1 className="text-2xl font-semibold">Complete your registration</h1>
+<div
+    className="min-h-screen flex items-center justify-center py-12 relative overflow-hidden before:absolute before:inset-0 before:bg-black/40 before:pointer-events-none"
+    style={{ backgroundColor: '#32212C' }}
+  >
+    {/* Background SVG */}
+    <div 
+      className="absolute pointer-events-none inset-0"
+      style={{
+        backgroundImage: 'url(/background.svg)',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'cover', // or 'contain' depending on your preference
+        backgroundPosition: 'center',
+        opacity: 0.5, // Adjust opacity so it doesn't overpower content
+        zIndex: 0, // Behind the overlay
+      }}
+    />
+    
+  <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto">
+    <div className="bg-[#32212C] backdrop-blur-sm rounded-2xl border border-black/20 p-6 sm:p-8 md:p-10 text-neutral-50">
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-4 sm:mb-6 text-center">
+        Complete your registration
+      </h1>
 
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-4" onSubmit={
+        // handleSubmit
+        (e) => { e.preventDefault(); toast.info("Backend logic commented out."); }
+      }>
         <RegistrationForm
           name={name}
           setName={setName}
@@ -95,8 +118,8 @@ export default function OnboardingPage() {
         <Button
           type="submit"
           variant={"default"}
-          className=" disabled:opacity-50"
-          disabled={!verified}
+          className=" disabled:bg-gray-600 bg-[#de8c89] w-full hover:bg-[#DBAAA6] text-[#32212C]"
+          disabled={verified}
         >
           Proceed
         </Button>
@@ -104,6 +127,8 @@ export default function OnboardingPage() {
 
   {/* Invisible reCAPTCHA host (required for Firebase phone auth) */}
   <div id="recaptcha-container" />
+    </div>
+    </div>
     </div>
   );
 }

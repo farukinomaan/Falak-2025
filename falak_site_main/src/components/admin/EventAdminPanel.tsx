@@ -34,6 +34,7 @@ type EventRow = {
   venue: string;
   cluster_name?: string | null;
   enable?: boolean | null;
+  image_url?: string | null;
 };
 
 type PassRow = {
@@ -148,6 +149,7 @@ export default function EventAdminPanel() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left border-b">
+                  <th className="p-2">Image</th>
                   <th className="p-2">Name</th>
                   <th className="p-2">Sub cluster</th>
                   <th className="p-2">Date</th>
@@ -168,7 +170,19 @@ export default function EventAdminPanel() {
                   const enabled = (e.enable ?? true) as boolean;
                   return (
                     <tr key={e.id} className="border-b">
-                      <td className="p-2">{e.id}</td>
+                      <td className="p-2">
+                        {e.image_url ? (
+                          <img 
+                            src={e.image_url} 
+                            alt={e.name} 
+                            className="w-16 h-12 object-cover rounded border"
+                          />
+                        ) : (
+                          <div className="w-16 h-12 bg-gray-200 rounded border flex items-center justify-center text-xs text-gray-500">
+                            No Image
+                          </div>
+                        )}
+                      </td>
                       <td className="p-2">{e.name}</td>
                       <td className="p-2">{e.sub_cluster}</td>
                       <td className="p-2">{dateText}</td>
@@ -251,6 +265,7 @@ type EventCreatePayload = {
   venue: string;
   cluster_name?: string | null;
   enable?: boolean;
+  image_url?: string | null;
 };
 
 type EventUpdatePayload = Partial<EventCreatePayload> & { id: string };
@@ -266,9 +281,26 @@ type EventFormState = {
   venue: string;
   cluster_name?: string | null;
   enable?: boolean;
+  image_url?: string | null;
 };
 
 function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreatePayload | EventUpdatePayload) => void }) {
+  // Load Cloudinary script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://upload-widget.cloudinary.com/global/all.js';
+    script.async = true;
+    document.head.appendChild(script);
+    
+    return () => {
+      // Cleanup script on unmount
+      const existingScript = document.querySelector('script[src="https://upload-widget.cloudinary.com/global/all.js"]');
+      if (existingScript) {
+        document.head.removeChild(existingScript);
+      }
+    };
+  }, []);
+
   const [form, setForm] = useState<EventFormState>(() => {
     const dateStr = !row?.date
       ? ""
@@ -288,6 +320,7 @@ function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreat
       venue: row?.venue || "",
       cluster_name: row?.cluster_name ?? "",
       enable: (row?.enable ?? true) as boolean,
+      image_url: row?.image_url ?? "",
     };
   });
 
@@ -308,6 +341,7 @@ function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreat
       venue: form.venue,
       cluster_name: form.cluster_name ?? null,
       enable: !!form.enable,
+      image_url: form.image_url ?? null,
     };
     const payload = form.id ? ({ id: form.id, ...payloadBase } as EventUpdatePayload) : payloadBase;
     const parsed = (form.id ? EventUpdateSchema : EventCreateSchema).safeParse(payload);
@@ -322,6 +356,15 @@ function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreat
     setErrors({});
     return parsed.data as EventCreatePayload | EventUpdatePayload;
   }
+
+  // Cloudinary upload handler
+  const handleCloudinaryUpload = (result: any) => {
+    if (result.event === "success") {
+      const imageUrl = result.info.secure_url;
+      handleChange("image_url", imageUrl);
+      toast.success("Image uploaded successfully!");
+    }
+  };
 
   return (
     <Form>
@@ -350,6 +393,61 @@ function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreat
           <FormLabel>Rules</FormLabel>
           <FormControl>
             <Input value={form.rules ?? ""} onChange={(e) => handleChange("rules", e.target.value)} />
+          </FormControl>
+        </FormItem>
+        <FormItem className="sm:col-span-2">
+          <FormLabel>Event Image</FormLabel>
+          <FormControl>
+            <div className="space-y-2">
+              {form.image_url && (
+                <div className="mb-2">
+                  <img 
+                    src={form.image_url} 
+                    alt="Event preview" 
+                    className="w-32 h-20 object-cover rounded border"
+                  />
+                </div>
+              )}
+              <div id="cloudinary-upload-widget" className="w-full">
+                <button
+                  type="button"
+                  onClick={() => {
+                    // @ts-ignore
+                    if (window.cloudinary) {
+                      // @ts-ignore
+                      window.cloudinary.createUploadWidget(
+                        {
+                          cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+                          uploadPreset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
+                          sources: ['local', 'url', 'camera'],
+                          multiple: false,
+                          cropping: true,
+                          croppingAspectRatio: 16/9,
+                          showAdvancedOptions: false,
+                          resourceType: 'image',
+                          folder: 'events'
+                        },
+                        handleCloudinaryUpload
+                      ).open();
+                    } else {
+                      toast.error("Cloudinary not loaded. Please refresh the page.");
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-dashed border-gray-300 rounded-md hover:border-gray-400 transition-colors"
+                >
+                  {form.image_url ? "Change Image" : "Upload Event Image"}
+                </button>
+              </div>
+              {form.image_url && (
+                <button
+                  type="button"
+                  onClick={() => handleChange("image_url", "")}
+                  className="text-sm text-red-600 hover:text-red-800"
+                >
+                  Remove Image
+                </button>
+              )}
+            </div>
           </FormControl>
         </FormItem>
         <FormItem>

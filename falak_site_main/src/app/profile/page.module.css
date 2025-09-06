@@ -1,0 +1,418 @@
+@import url('https://fonts.googleapis.com/css2?family=Caprasimo&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bevan&display=swap');
+
+@font-face {
+  font-family: 'Circular';
+  src: url('/fonts/circularweb-book.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'General';
+  src: url('/fonts/general.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Robert';
+  src: url('/fonts/robert-regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Zentry';
+  src: url('/fonts/zentry-regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Bohemian';
+  src: url('/fonts/bohemian.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Brasty Vintage';
+  src: url('/fonts/BrastyVintageRegular-ovoRz.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Unlock';
+  src: url('/fonts/Unlock-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Abhaya Libre Medium';
+  src: url('/fonts/AbhayaLibre-Medium.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.profilePage {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 5rem 2rem 2rem;
+  font-family: 'Robert', sans-serif;
+  color: #333;
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  background-color: transparent;
+  overflow-x: hidden;
+}
+
+.detailsColumn {
+  width: 100%;
+}
+
+.header {
+  border-bottom: 2px solid #d4cba6;
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.header h1 {
+  font-family: 'Brasty Vintage', sans-serif;
+  font-size: 4.5rem;
+  color: #fff;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+
+.header p {
+  font-family: Georgia, Garamond, serif;
+  color: #fff;
+}
+
+.section {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter:blur(2px);
+  border: 1px solid #e0daca;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.section h2 {
+  font-family: 'Brasty Vintage', sans-serif;
+  font-size: 2.5rem;
+  color: #fff;
+  -webkit-text-stroke: 2.5px #000;
+  paint-order: stroke fill;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 2rem;
+  background-color: rgba(249, 247, 240, 0.8);
+  border: 1px dashed #d4cba6;
+  border-radius: 8px;
+}
+
+.emptyState p {
+  color: #5a5242;
+  font-family: 'General', sans-serif;
+}
+
+.ctaLink {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  background-color: #72B0AB; /* New Tealish */
+  color: #fff;
+  font-family: 'Zentry', sans-serif;
+  text-decoration: none;
+  transition: background-color 0.3s;
+}
+
+.ctaLink:hover {
+  background-color: #355E58; /* New Dark Teal */
+}
+
+.passList,
+.eventList {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.passItem,
+.eventItem {
+  background: #be7373; 
+  border: 1px solid #e0daca;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s, background-color 0.3s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.passItem:hover,
+.eventItem:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(168, 92, 92, 0.2); /* New shadow */
+  border-color: #a85c5c; /* New border */
+  background-color: #c98a8a; /* New hover background */
+}
+
+.passItem h3,
+.eventItem h3 {
+  font-family: 'Unlock', serif;
+  font-size: 2rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  transition: color 0.3s, text-shadow 0.3s;
+  text-align: center;
+}
+
+.passItem:hover h3,
+.eventItem:hover h3 {
+  color: #fff;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+}
+
+.passItem p,
+.eventItem p {
+  font-family: 'Abhaya Libre Medium', sans-serif;
+  color: #fff;
+  margin: 0.5rem 0;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.passDescription,
+.eventDescription {
+  flex-grow: 1;
+}
+
+.passItem .passCost {
+  font-family: 'General', sans-serif;
+  font-weight: bold;
+  color: #B89D47; /* Gold */
+}
+
+.passDetails {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.qrContainer {
+  margin-top: 1rem;
+  background: #be7373;
+  padding: 1rem;
+  border-radius: 8px;
+  align-self: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.passItem:hover .qrContainer {
+  background-color: #c98a8a;
+}
+.eventDetails {
+  margin-top: 1.5rem;
+  border-top: 1px solid #e0daca;
+  padding-top: 1.5rem;
+}
+
+.eventMeta {
+  font-family: 'General', sans-serif;
+  font-size: 0.9rem;
+  color: #5a5242;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.eventContent {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.eventTiming {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  align-items: stretch;
+}
+
+.timingItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'General', sans-serif;
+  font-size: 1.2rem;
+  color: #fff;
+  text-align: center;
+  padding: 0 0.5rem;
+  -webkit-text-stroke: 0.5px #000;
+  paint-order: stroke fill;
+}
+
+.timingItem strong {
+  font-family: 'Zentry', sans-serif;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  font-size: 1.3rem;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
+}
+
+.timingSeparator {
+  width: 1px;
+  background-color: #e0daca;
+}
+
+.eventMeta span {
+  display: inline-block;
+  margin-right: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: #FDC1B4; /* Pinkish */
+  border: 1px solid #B89D47; /* Gold */
+  border-radius: 4px;
+  margin-bottom: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    flex-direction: column;
+  }
+
+  .detailsColumn,
+  .animationsColumn {
+    width: 100%;
+  }
+
+  .animationsColumn {
+    margin-top: 2rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header h1 {
+    font-size: 3.5rem;
+  }
+
+  .timingItem {
+    font-size: 0.8rem;
+    padding: 0 0.25rem;
+  }
+
+  .passList,
+  .eventList {
+    grid-template-columns: minmax(0, 400px);
+    justify-content: center;
+  }
+
+  .waveTopLeft {
+    width: 200vw;
+    top: 0vw;
+    left: 0vw;
+  }
+
+  .waveBottomRight {
+    width: 200vw;
+    bottom: 0vw;
+    right: 0vw;
+  }
+}
+
+.pageContent {
+  position: relative;
+  z-index: 2;
+}
+
+/* New background waves using external SVG */
+.waveImg {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 1;
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,0.25));
+  max-width: none;
+  transform-origin: center; /* keep scaling from center */
+}
+
+/* Desktop defaults */
+.waveTopLeft {
+  top: -120px;
+  left: -120px;
+  width: 900px;
+  height: auto;
+  transform: rotate(155deg) scale(1);
+}
+
+.waveBottomRight {
+  bottom: -110px;
+  right: -100px;
+  width: 900px;
+  height: auto;
+  transform: rotate(-25deg) scale(1);
+}
+
+/* Tablet adjustments */
+@media (max-width: 768px) {
+  .waveTopLeft {
+    transform: rotate(155deg) scale(1); /* slightly bigger */
+  }
+
+  .waveBottomRight {
+    transform: rotate(-25deg) scale(1);
+  }
+}
+
+/* Small mobile adjustments */
+@media (max-width: 480px) {
+  .waveTopLeft {
+    transform: rotate(155deg) scale(1); /* much bigger */
+  }
+
+  .waveBottomRight {
+    transform: rotate(-25deg) scale(1);
+  }
+}
+
+@media (min-width: 1024px) { /* Apply to laptop screens and wider */
+  .passList {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 400px)); /* Set a max width for the columns */
+    justify-content: center; /* Center the grid items if there's extra space */
+  }
+
+  .section {
+    max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

@@ -112,7 +112,7 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 html {
-  background-color: black;
+  background-color: #F2C078;
 }
 
 html, body {
@@ -122,6 +122,18 @@ html, body {
 main {
   min-height: 100vh;
 }
+
+/* Brasty Vintage custom font (ensure the file exists at /public/fonts/brasty-vintage.woff2) */
+@font-face {
+  font-family: 'Brasty Vintage';
+  src: url('/fonts/brasty-vintage.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Utility class for Brasty Vintage */
+.font-brasty { font-family: 'Brasty Vintage', 'Press Start 2P', monospace; }
 
 
 @layer base {
@@ -152,4 +164,9 @@ main {
   background-color: black;
   min-height: 100vh; 
   color: white;
+}
+
+/* Custom flip effect for cassette */
+.hover\:rotate-y-180:hover {
+  transform: rotateY(180deg);
 }

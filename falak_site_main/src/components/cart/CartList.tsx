@@ -10,9 +10,14 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { toast } from "sonner";
 
-type PassRow = { id: string; pass_name: string; description?: string | null; cost?: number | string | null };
+// PassRow now includes original_id which represents the id originally stored in localStorage.
+// When a user adds an EVENT (event_id) instead of a specific pass id, the guest cart stores the event id.
+// The /api/cart/guest_passes endpoint resolves that to a Pass row whose own id differs from the original event id.
+// For removal we must remove the ORIGINAL id from localStorage, not the resolved pass id, otherwise the item reappears.
+type PassRow = { id: string; pass_name: string; description?: string | null; cost?: number | string | null; original_id?: string };
 
-export default function CartList({ passes }: { passes: PassRow[] }) {
+// 'passes' prop no longer used after migration to entirely client-resolved guest cart; removing to avoid confusion.
+export default function CartList() {
   const { ids, remove } = useGuestCart();
   const [guestPasses, setGuestPasses] = useState<PassRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,7 +50,7 @@ export default function CartList({ passes }: { passes: PassRow[] }) {
           setGuestPasses([]);
         }
       }
-    } catch (error) {
+  } catch {
       setGuestPasses([]);
     } finally {
       setLoading(false);
@@ -76,10 +81,15 @@ export default function CartList({ passes }: { passes: PassRow[] }) {
 
   const view = useMemo(() => guestPasses, [guestPasses]);
 
-  const handleRemove = (id: string) => {
+  const handleRemove = (displayId: string, originalId?: string) => {
     start(async () => {
-      remove(id);
-      // Dispatching event to update other cart components
+      // Prefer originalId (what's actually stored) if it differs from the pass id returned by the API.
+      const target = originalId && originalId.length > 0 ? originalId : displayId;
+      remove(target);
+      // Defensive: if both ids exist & differ, remove both (harmless if one is absent)
+      if (originalId && originalId !== displayId) {
+        remove(displayId);
+      }
       window.dispatchEvent(new CustomEvent("cart:updated"));
     });
   };
@@ -167,9 +177,7 @@ export default function CartList({ passes }: { passes: PassRow[] }) {
                               )}
                               <button
                                 disabled={pending}
-                                onClick={() => handleRemove(p.id)}
-                                className="px-4 py-2 font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                                style={{ backgroundColor: '#D7897D', color: '#32212C' }}
+                                onClick={() => handleRemove(p.id)} className="px-4 py-2 font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: '#D7897D', color: '#32212C' }}
                               >
                                 Remove
                               </button>
