@@ -10,31 +10,40 @@ export default async function PassesPage() {
   const passes: PassCard[] = res.ok ? (res.data as PassCard[]) : [];
   
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div
+      className="min-h-screen relative overflow-hidden"
+      style={{
+        // Use the provided SVG as the page background
+        backgroundImage: "url('/background%202.svg')",
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center top'
+      }}
+    >
       {/* Main content with purple background */}
-      <div className="relative z-0">
+      <div className="relative z-20">
         <Features passes={passes} />
       </div>
-      
-                  {/* Vector images ON TOP of the purple background */}
-            <div
-              className="absolute top-1/2 left-0 w-full h-3/5 z-1"
-              style={{
-                backgroundImage: "url('/vec5.png')",
-                backgroundSize: "100%",
-                backgroundPosition: "center bottom",
-                backgroundRepeat: "no-repeat"
-              }}
-            />
-            <div
-              className="absolute top-1/2 left-0 w-full h-3/5 z-1"
-              style={{
-                backgroundImage: "url('/vec4.png')",
-                backgroundSize: "100%",
-                backgroundPosition: "center bottom",
-                backgroundRepeat: "no-repeat"
-              }}
-            />
+
+      {/* Background decorative vectors (non-interactive) */}
+      <div
+        className="pointer-events-none absolute bottom-0 left-0 w-full h-[55vh] -z-10"
+        style={{
+          backgroundImage: "url('/vec5.png')",
+          backgroundSize: "100%",
+          backgroundPosition: "center bottom",
+          backgroundRepeat: "no-repeat"
+        }}
+      />
+      <div
+        className="pointer-events-none absolute bottom-0 left-0 w-full h-[60vh] -z-20"
+        style={{
+          backgroundImage: "url('/vec4.png')",
+          backgroundSize: "100%",
+          backgroundPosition: "center bottom",
+          backgroundRepeat: "no-repeat"
+        }}
+      />
     </div>
   );
 }

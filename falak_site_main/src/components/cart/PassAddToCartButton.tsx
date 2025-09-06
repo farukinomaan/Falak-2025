@@ -23,14 +23,20 @@ export default function PassAddToCartButton({
   const [added, setAdded] = useState(false);
 
   const handleClick = () => {
-    console.log("Clicked Add to Cart for:", passId); // ✅ debug log
     if (pending || added) return;
+      // Debug log to verify click fires
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[PassAddToCartButton] click', { passId, pending, added });
+      }
     start(() => {
       add(passId);
       setAdded(true);
       // Notify any listeners (cart icon count, etc.)
       window.dispatchEvent(new CustomEvent("cart:updated"));
       toast.success("Added to cart");
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[PassAddToCartButton] added', { passId });
+        }
     });
   };
 
