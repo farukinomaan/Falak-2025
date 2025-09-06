@@ -1,5 +1,4 @@
 
-
 /**
  * @copyright Falak 2025 
  */
@@ -32,17 +31,17 @@ export default function CartList() {
       setLoading(false);
       return;
     }
-    
+
     setLoading(true);
     try {
       const params = new URLSearchParams({ ids: currentIds.join(",") });
       const url = `/api/cart/guest_passes?${params.toString()}`;
-      
+
       const res = await fetch(url, {
         method: "GET",
         cache: "no-store",
       });
-      
+
       if (res.ok) {
         const json = await res.json();
         if (json?.ok && Array.isArray(json.data)) {
@@ -99,20 +98,41 @@ export default function CartList() {
    * DESIGN PART
    */
   return (
-    <div style={{ backgroundColor: '#32212C' }} className="min-h-screen pt-24 py-12 relative overflow-hidden">
-      {/* Background with External SVG */}
-      <div 
-  className="absolute pointer-events-none"
-  style={{
-    backgroundImage: 'url(/waves.svg)',
-    backgroundRepeat: 'no-repeat',
-    backgroundSize: '1703.5px 458.7px',
-    width: '1703.5px',
-    height: '458.7px',
-    left: '-115px',
-    top: '400px', // shifted up (was 749.4px)
-  }}
-/>
+    // <div style={{ backgroundColor: '#32212C' }} className="min-h-screen pt-24 py-12 relative overflow-hidden bg-white/10">
+    <div
+      className="min-h-screen pt-24 py-12 relative overflow-hidden before:absolute before:inset-0 before:bg-black/30 before:pointer-events-none"
+      style={{ backgroundColor: '#32212C' }}
+    >
+      {/* Multiple Background Layers */}
+      {/* Existing waves SVG */}
+      {/* <div 
+        className="absolute pointer-events-none"
+        style={{
+          backgroundImage: 'url(/waves.svg)',
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: '1703.5px 458.7px',
+          width: '1703.5px',
+          height: '458.7px',
+          left: '-115px',
+          top: '400px',
+          zIndex: 1,
+        }}
+      /> */}
+
+      {/* New Large SVG Background */}
+      <div
+        className="absolute pointer-events-none inset-0"
+        style={{
+          backgroundImage: 'url(/background.svg)',
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: 'cover', // or 'contain' depending on your preference
+          backgroundPosition: 'center',
+
+          opacity: 0.2, // Adjust opacity so it doesn't overpower content
+          zIndex: 0, // Behind the waves
+        }}
+      />
+
 
       <div className="container mx-auto max-w-6xl px-4 md:px-8 relative z-10">
         <div className="shadow-xl rounded-lg p-8" style={{ backgroundColor: '#32212C' }}>
@@ -127,8 +147,8 @@ export default function CartList() {
               ) : view.length === 0 ? (
                 <div className="rounded-xl p-8 text-center shadow-lg border-2" style={{ borderColor: '#DBAAA6', backgroundColor: '#32212C' }}>
                   <p className="text-gray-400 text-lg mb-6 font-medium">Your cart is empty.</p>
-                  <Link 
-                    href="/passes" 
+                  <Link
+                    href="/passes"
                     className="inline-flex items-center px-8 py-4 text-white font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
                     style={{ backgroundColor: '#DBAAA6' }}
                   >
@@ -157,9 +177,7 @@ export default function CartList() {
                               )}
                               <button
                                 disabled={pending}
-                                onClick={() => handleRemove(p.id, p.original_id)}
-                                className="px-4 py-2 text-white font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                                style={{ backgroundColor: '#D7897D' }}
+                                onClick={() => handleRemove(p.id)} className="px-4 py-2 font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: '#D7897D', color: '#32212C' }}
                               >
                                 Remove
                               </button>
@@ -199,13 +217,16 @@ export default function CartList() {
                     window.location.href = "/checkout";
                   }}
                   disabled={pending}
-                  className="w-full py-4 mt-6 text-white font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: '#DBAAA6' }}
+                  className="w-full py-4 mt-6 font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: '#DBAAA6', color: '#32212C' }}
                 >
                   Continue to Checkout
                 </button>
               </div>
             </div>
+          </div>
+          <div className="mt-12 grid place-items-center">
+            <img src="/end.svg" alt="" className="w-64 h-32 object-contain" />
           </div>
         </div>
       </div>

@@ -1,5 +1,4 @@
 
-
 /**
  * @copyright Falak 2025 
  */
@@ -49,13 +48,18 @@ export default function CheckoutPage() {
 
   if (status === "loading") {
     return (
-      <div style={{ backgroundColor: '#32212C' }} className="min-h-screen py-12 px-4 md:px-8 flex items-center justify-center relative overflow-hidden">
-        {/* svg waves background*/}
+      <div style={{ backgroundColor: '#32212C' }} className="min-h-screen py-12 px-4 md:px-8 flex items-center justify-center relative overflow-hidden before:absolute before:inset-0 before:bg-black/30 before:pointer-events-none">
+        
         <div
-          className="absolute bottom-0 left-0 w-full h-[458px] pointer-events-none bg-no-repeat bg-cover"
+          className="absolute pointer-events-none inset-0"
           style={{
-            backgroundImage: "url('/waves.svg')",
-            backgroundPosition: "bottom center",
+            backgroundImage: 'url(/background.svg)',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover', // or 'contain' depending on your preference
+            backgroundPosition: 'center',
+
+            opacity: 0.2, // Adjust opacity so it doesn't overpower content
+            zIndex: 0, // Behind the waves
           }}
         />
 
@@ -68,13 +72,18 @@ export default function CheckoutPage() {
 
   if (status !== "authenticated") {
     return (
-      <div style={{ backgroundColor: '#32212C' }} className="min-h-screen py-12 px-4 md:px-8 flex flex-col items-center justify-center relative overflow-hidden">
-        {/* svg waves background */}
+      <div style={{ backgroundColor: '#32212C' }} className="min-h-screen py-12 px-4 md:px-8 flex flex-col items-center justify-center relative overflow-hidden before:absolute before:inset-0 before:bg-black/30 before:pointer-events-none">
+
         <div
-          className="absolute bottom-0 left-0 w-full h-[458px] pointer-events-none bg-no-repeat bg-cover"
+          className="absolute pointer-events-none inset-0"
           style={{
-            backgroundImage: "url('/waves.svg')",
-            backgroundPosition: "bottom center",
+            backgroundImage: 'url(/background.svg)',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover', // or 'contain' depending on your preference
+            backgroundPosition: 'center',
+
+            opacity: 0.2, // Adjust opacity so it doesn't overpower content
+            zIndex: 0, // Behind the waves
           }}
         />
 
@@ -82,8 +91,8 @@ export default function CheckoutPage() {
           <div className="text-white text-lg font-bold mb-4 font-serif">Please sign in to checkout.</div>
           <button
             onClick={() => signIn()}
-            className="w-full px-6 py-3 rounded-lg text-white font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-sans"
-            style={{ backgroundColor: '#DBAAA6' }}
+            className="w-full px-6 py-3 rounded-l font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-sans"
+            style={{ backgroundColor: '#DBAAA6' , color:'#32212C'}}
           >
             Sign In
           </button>
@@ -93,13 +102,23 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div style={{ backgroundColor: '#32212C' }} className="min-h-screen pt-24 py-12 relative overflow-hidden">
-      {/* Ribbon Background - Exact match to cart */}
+    // <div style={{ backgroundColor: '#32212C' }} className="min-h-screen pt-24 py-12 relative overflow-hidden">
+    <div
+      className="min-h-screen pt-24 py-12 relative overflow-hidden before:absolute before:inset-0 before:bg-black/30 before:pointer-events-none"
+      style={{ backgroundColor: '#32212C' }}
+    >
+      
+
       <div
-        className="absolute bottom-0 left-0 w-full h-[458px] pointer-events-none bg-no-repeat bg-cover"
+        className="absolute pointer-events-none inset-0"
         style={{
-          backgroundImage: "url('/waves.svg')",
-          backgroundPosition: "bottom center",
+          backgroundImage: 'url(/background.svg)',
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: 'cover', // or 'contain' depending on your preference
+          backgroundPosition: 'center',
+
+          opacity: 0.2, // Adjust opacity so it doesn't overpower content
+          zIndex: 0, // Behind the waves
         }}
       />
 
@@ -119,8 +138,8 @@ export default function CheckoutPage() {
                   <p className="text-gray-400 text-lg mb-6 font-medium">No items.</p>
                   <Link
                     href="/passes"
-                    className="inline-flex items-center px-8 py-4 text-white font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
-                    style={{ backgroundColor: '#DBAAA6' }}
+                    className="inline-flex items-center px-8 py-4 font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+                    style={{ backgroundColor: '#DBAAA6',color:'#32212C' }}
                   >
                     Browse passes
                   </Link>
@@ -150,17 +169,17 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex gap-4 mt-6">
                   <button
-                    className="flex-1 py-3 rounded-lg text-white font-semibold transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-sans"
+                    className="flex-1 py-3 rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-sans"
                     disabled={passes.length === 0}
                     onClick={() => window.history.back()}
-                    style={{ backgroundColor: '#D7897D' }}
+                    style={{ backgroundColor: '#D7897D', color:'#32212C' }}
                   >
                     Go back
                   </button>
                   <button
-                    className="flex-1 py-3 rounded-lg text-white font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-sans"
+                    className="flex-1 py-3 rounded-lg font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-sans"
                     disabled={passes.length === 0}
-                    style={{ backgroundColor: '#DBAAA6' }}
+                    style={{ backgroundColor: '#DBAAA6' , color:'#32212C' }}
                   >
                     Done
                   </button>
@@ -168,7 +187,11 @@ export default function CheckoutPage() {
               </div>
             </div>
           </div>
+          <div className="mt-12 grid place-items-center">
+            <img src="/end.svg" alt="" className="w-64 h-32 object-contain" />
+          </div>
         </div>
+        
       </div>
     </div>
   );
