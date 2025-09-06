@@ -26,7 +26,7 @@ export function RegistrationForm({
       <div>
         <label className="block text-sm font-medium">Full name</label>
         <input
-          className="w-full border rounded px-3 py-2"
+          className="w-full border-2 rounded px-3 py-2 border-[#D3877A] focus:border-[#DBAAA6]"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -52,7 +52,7 @@ export function RegistrationForm({
         <div>
           <label className="block text-sm font-medium">Registration number</label>
           <input
-            className="w-full border rounded px-3 py-2"
+            className="w-full border-2 rounded px-3 py-2 border-[#D3877A] focus:border-[#DBAAA6]"
             value={regNo}
             onChange={(e) => setRegNo(e.target.value)}
             required
@@ -63,7 +63,7 @@ export function RegistrationForm({
         <div>
           <label className="block text-sm font-medium">College name</label>
           <input
-            className="w-full border rounded px-3 py-2"
+            className="w-full border-2 rounded px-3 py-2 border-[#D3877A] focus:border-[#DBAAA6]"
             value={institute}
             onChange={(e) => setInstitute(e.target.value)}
             required
