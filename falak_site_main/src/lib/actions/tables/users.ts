@@ -33,6 +33,13 @@ export async function getUserByEmail(email: string) {
   return { ok: true as const, data }
 }
 
+export async function getUserByPhone(phone: string) {
+  const supabase = getServiceClient()
+  const { data, error } = await supabase.from(table).select("*").eq("phone", phone).maybeSingle()
+  if (error) return { ok: false as const, error: error.message }
+  return { ok: true as const, data }
+}
+
 export async function listUsers() {
   const supabase = getServiceClient()
   const { data, error } = await supabase.from(table).select("*").order("created_at", { ascending: false })

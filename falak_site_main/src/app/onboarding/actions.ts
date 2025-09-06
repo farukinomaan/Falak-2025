@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createUser, getUserByEmail } from "@/lib/actions";
+import { getUserByPhone, updateUser } from "@/lib/actions";
 import { UserCreateSchema } from "@/lib/actions/schemas";
 
 // Reverted schema: require verified phone directly (Firebase OTP flow)
@@ -47,10 +48,6 @@ export async function completeOnboarding(input: OnboardInput) {
     if (!existing.ok) {
       return { ok: false, message: existing.error || "Lookup error" } as const;
     }
-    if (existing.data) {
-      // Already onboarded
-      return { ok: true } as const;
-    }
 
     // Build payload matching UserCreateSchema
     const v = parsed.data;
@@ -66,6 +63,29 @@ export async function completeOnboarding(input: OnboardInput) {
       institute: v.mahe ? null : (v.institute || null),
       active: true,
     };
+
+    // If user with this email already exists, return ok
+    if (existing.data) {
+      return { ok: true } as const;
+    }
+
+    // Check if a user already exists with this phone; if so, update that record to have this email if missing
+    const byPhone = await getUserByPhone(phone);
+    if (!byPhone.ok) {
+      return { ok: false, message: byPhone.error || "Lookup error" } as const;
+    }
+    if (byPhone.data) {
+      // If this phone is already tied to a user, and that user has no email or different email, try to attach email
+      const u = byPhone.data as { id: string; email?: string | null };
+      if (!u.email || u.email !== email) {
+        const updated = await updateUser({ id: u.id, email });
+        if (!updated.ok) {
+          // Fallback: return ok to avoid blocking flow if phone is already used
+          return { ok: true } as const;
+        }
+      }
+      return { ok: true } as const;
+    }
 
     const created = await createUser(toCreate);
     if (!created.ok) {

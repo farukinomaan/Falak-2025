@@ -20,12 +20,13 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
   const [verifying, setVerifying] = useState(false);
   const [confirmed, setConfirmed] = useState<ConfirmationResult | null>(null);
   const [verified, setVerified] = useState(false);
+  const [otpRequested, setOtpRequested] = useState(false);
 
   // We rely on global window.recaptchaVerifier created by useRecaptcha hook or fallback init here
   const [resendCountdown,setResendCountdown] = useState(0);
   // Removed unused transition state
 
-  // Nigga this is how you use timer
+  // Countdown timer for resend
   useEffect(()=>{
     let timer: NodeJS.Timeout;
     if (resendCountdown >0){
@@ -50,17 +51,28 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
 
   async function handleSendOtp(e: React.FormEvent) {
     e.preventDefault();
+    if (verified) {
+      return;
+    }
     try {
       setSending(true);
+      // Basic client validation: expect 10 digits
+      const digits = phone.replace(/[^0-9]/g, "");
+      if (digits.length !== 10) {
+        toast.error("Enter a valid 10-digit phone number");
+        return;
+      }
       await ensureRecaptcha();
       const appVerifier = window.recaptchaVerifier;
       if (!appVerifier) {
         toast.error("reCAPTCHA not ready");
         return;
       }
-      const updatedPhone:string = '+91' + phone;
+      const updatedPhone:string = '+91' + digits;
       const result = await signInWithPhoneNumber(auth, updatedPhone, appVerifier);
       setConfirmed(result);
+      setOtpRequested(true);
+      setResendCountdown(30);
       toast.success("OTP sent");
     } catch (err: unknown) {
       console.error(err);
@@ -102,16 +114,17 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            disabled={verified}
             placeholder="98XXXXXX01"
             required
           />
-          <Button onClick={handleSendOtp} disabled={sending} type="button" variant="outline" className="text-black border-2 border-[#D3877A] bg-[#de8c89] hover:bg-[#DBAAA6] disabled:bg-gray-600">
+          <Button onClick={handleSendOtp} disabled={sending || verified} type="button" variant="outline" className="text-black border-2 border-[#D3877A] bg-[#de8c89] hover:bg-[#DBAAA6] disabled:bg-gray-600">
             {sending ? "Sending..." : "Send OTP"}
           </Button>
         </div>
       </div>
 
-      {confirmed && !verified && (
+      {(otpRequested && !verified) && (
         <div className="space-y-2">
           <label className="block text-sm font-medium">Enter OTP</label>
           <div className="flex justify-between">
@@ -130,9 +143,23 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
                     <InputOTPSlot index={5} />
                 </InputOTPGroup>
             </InputOTP>
-            <Button onClick={handleVerifyOtp} disabled={verifying} type="button" className="disabled:bg-gray-600 bg-[#de8c89] hover:bg-[#DBAAA6] m-2 text-black">
+            <Button onClick={handleVerifyOtp} disabled={verifying || !confirmed} type="button" className="disabled:bg-gray-600 bg-[#de8c89] hover:bg-[#DBAAA6] m-2 text-black">
               {verifying ? "Verifying..." : "Verify"}
             </Button>
+          </div>
+          <div className="text-xs text-gray-400">
+            {resendCountdown > 0 ? (
+              <span>Resend available in {resendCountdown}s</span>
+            ) : (
+              <button
+                type="button"
+                className="underline"
+                onClick={handleSendOtp}
+                disabled={sending}
+              >
+                Resend OTP
+              </button>
+            )}
           </div>
         </div>
        )}

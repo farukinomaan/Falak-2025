@@ -51,16 +51,13 @@ export default function OnboardingPage() {
       const res = await completeOnboarding(payload);
       if (res.ok) {
         toast.success("Onboarding complete");
-        // Force session refresh so needsOnboarding updates before navigating
-        // next-auth v4: call getSession via window focus hack
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new Event("focus"));
-        }
-        router.replace("/");
-        router.refresh(); // TL-DR:- Fcker aint working
-
-        // Abhi ke liye hard reload
-        window.location.reload();
+        // Let the toast show briefly, then refresh.
+        // The auth effect will redirect to home after refresh if onboarding is done.
+        setTimeout(() => {
+          if (typeof window !== 'undefined') {
+            window.location.reload();
+          }
+        }, 1200);
       } else {
         toast.error(res.message || "Failed to save");
       }
@@ -93,10 +90,7 @@ export default function OnboardingPage() {
         Complete your registration
       </h1>
 
-      <form className="space-y-4" onSubmit={
-        // handleSubmit
-        (e) => { e.preventDefault(); toast.info("Backend logic commented out."); }
-      }>
+  <form className="space-y-4" onSubmit={handleSubmit}>
         <RegistrationForm
           name={name}
           setName={setName}
@@ -119,7 +113,7 @@ export default function OnboardingPage() {
           type="submit"
           variant={"default"}
           className=" disabled:bg-gray-600 bg-[#de8c89] w-full hover:bg-[#DBAAA6] text-[#32212C]"
-          disabled={verified}
+          disabled={!verified}
         >
           Proceed
         </Button>
