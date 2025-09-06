@@ -14,14 +14,14 @@ export default async function PassesPage() {
       className="min-h-screen relative overflow-hidden"
       style={{
         // Use the provided SVG as the page background
-        backgroundImage: "url('/background%202.svg')",
+        backgroundImage: "url('/background.svg')",
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center top'
       }}
     >
       {/* Main content with purple background */}
-      <div className="relative z-20">
+      <div className="relative z-20 ">
         <Features passes={passes} />
       </div>
 

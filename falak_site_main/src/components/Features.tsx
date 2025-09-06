@@ -90,9 +90,9 @@ const Features: React.FC<FeaturesProps> = ({ passes = [] }) => {
   return (
     <section className="bg-transparent pb-10 relative z-10">
       <div className="container mx-auto px-3 md:px-0">
-        <div className="px-5 pt-36 md:pt-44 pb-16">
+        <div className="px-5 pt-30 md:pt-36 pb-16">
                           <p
-                  className="text-4xl text-yellow-400 text-center font-bold uppercase tracking-wider sm:mb-10 font-brasty"
+                  className="text-6xl text-yellow-400 text-center font-bold uppercase tracking-wider sm:mb-10 font-brasty"
                   style={{
                     // Brasty Vintage applied via font-brasty utility; keep effect styles only
                     textShadow: '0 0 10px #fbbf24, 0 0 20px #f59e0b, 0 0 30px #d97706, 0 0 40px #b45309',
