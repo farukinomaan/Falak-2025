@@ -48,8 +48,9 @@ export const EventSchema = z.object({
   created_at: timestamp.optional(),
   cluster_name: nullableText,
   enable: z.boolean().optional(),
-  max_team_size: z.number().int().positive().optional(),
-  image_url: nullableText,
+  min_team_size: numeric.optional(),
+  max_team_size: numeric.optional(),
+  cloudinary_url: nullableText,
 })
 export const EventCreateSchema = EventSchema.omit({ id: true, created_at: true })
 export const EventUpdateSchema = EventSchema.partial().extend({ id: uuid })
@@ -65,6 +66,7 @@ export const PassSchema = z.object({
   enable: z.boolean().optional(),
   description: nullableText,
   event_id: uuid.optional(),
+  mahe: z.boolean().optional(),
 })
 export const PassCreateSchema = PassSchema.omit({ id: true, edited_at: true })
 export const PassUpdateSchema = PassSchema.partial().extend({ id: uuid })

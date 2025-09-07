@@ -35,7 +35,9 @@ type EventRow = {
   venue: string;
   cluster_name?: string | null;
   enable?: boolean | null;
-  image_url?: string | null;
+  cloudinary_url?: string | null;
+  min_team_size?: number | string | null;
+  max_team_size?: number | string | null;
 };
 
 type PassRow = {
@@ -47,6 +49,7 @@ type PassRow = {
   status?: boolean | null;
   event_id?: string | null;
   quanatity?: number | string | null;
+  mahe?: boolean | null;
 };
 
 function useSearch<T>(items: T[], q: string, key: keyof T) {
@@ -63,6 +66,7 @@ export default function EventAdminPanel() {
   const [events, setEvents] = useState<EventRow[]>([]);
   const [passes, setPasses] = useState<PassRow[]>([]);
   const [openForm, setOpenForm] = useState<null | { kind: "event" | "pass"; row?: EventRow | PassRow }>(null);
+  const [showDisabledEvents, setShowDisabledEvents] = useState(false);
 
   async function refresh() {
     const [ev, ps] = await Promise.all([saListEvents(), saListPasses()]);
@@ -73,7 +77,9 @@ export default function EventAdminPanel() {
     refresh();
   }, []);
 
-  const filteredEvents = useSearch(events, q, "name");
+  const filteredEvents = useSearch(events, q, "name").filter((e) =>
+    showDisabledEvents ? true : ((e.enable ?? true) as boolean)
+  );
   const filteredPasses = useSearch(passes, q, "pass_name");
 
   async function onSubmitEvent(form: EventCreatePayload | EventUpdatePayload) {
@@ -142,6 +148,12 @@ export default function EventAdminPanel() {
         </div>
         <Input placeholder="Search by name/title" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" />
         <Button onClick={() => setOpenForm({ kind: tab === "events" ? "event" : "pass" })}>Create</Button>
+        {tab === "events" && (
+          <label className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
+            <input type="checkbox" checked={showDisabledEvents} onChange={(e) => setShowDisabledEvents(e.target.checked)} />
+            Show disabled
+          </label>
+        )}
       </div>
 
       {tab === "events" ? (
@@ -172,10 +184,12 @@ export default function EventAdminPanel() {
                   return (
                     <tr key={e.id} className="border-b">
                       <td className="p-2">
-                        {e.image_url ? (
-                          <img 
-                            src={e.image_url} 
-                            alt={e.name} 
+                        {e.cloudinary_url ? (
+                          <Image
+                            src={e.cloudinary_url}
+                            alt={e.name}
+                            width={64}
+                            height={48}
                             className="w-16 h-12 object-cover rounded border"
                           />
                         ) : (
@@ -266,7 +280,9 @@ type EventCreatePayload = {
   venue: string;
   cluster_name?: string | null;
   enable?: boolean;
-  image_url?: string | null;
+  cloudinary_url?: string | null;
+  min_team_size?: number | null;
+  max_team_size?: number | null;
 };
 
 type EventUpdatePayload = Partial<EventCreatePayload> & { id: string };
@@ -282,7 +298,9 @@ type EventFormState = {
   venue: string;
   cluster_name?: string | null;
   enable?: boolean;
-  image_url?: string | null;
+  cloudinary_url?: string | null;
+  min_team_size?: string;
+  max_team_size?: string;
 };
 
 function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreatePayload | EventUpdatePayload) => void }) {
@@ -325,7 +343,9 @@ function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreat
       venue: row?.venue || "",
       cluster_name: row?.cluster_name ?? "",
       enable: (row?.enable ?? true) as boolean,
-      image_url: row?.image_url ?? "",
+  cloudinary_url: row?.cloudinary_url ?? "",
+  min_team_size: row?.min_team_size ? String(row.min_team_size) : "",
+  max_team_size: row?.max_team_size ? String(row.max_team_size) : "",
     };
   });
 
@@ -346,7 +366,9 @@ function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreat
       venue: form.venue,
       cluster_name: form.cluster_name ?? null,
       enable: !!form.enable,
-      image_url: form.image_url ?? null,
+  cloudinary_url: form.cloudinary_url ?? null,
+  min_team_size: form.min_team_size === "" ? null : Number(form.min_team_size),
+  max_team_size: form.max_team_size === "" ? null : Number(form.max_team_size),
     };
     const payload = form.id ? ({ id: form.id, ...payloadBase } as EventUpdatePayload) : payloadBase;
     const parsed = (form.id ? EventUpdateSchema : EventCreateSchema).safeParse(payload);
@@ -373,7 +395,7 @@ function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreat
     if (result?.event === "success") {
       const imageUrl = result.info?.secure_url as string | undefined;
       if (imageUrl) {
-        handleChange("image_url", imageUrl);
+        handleChange("cloudinary_url", imageUrl);
         toast.success("Image uploaded successfully!");
       } else {
         // Silent: no URL returned
@@ -412,13 +434,13 @@ function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreat
           </FormControl>
         </FormItem>
         <FormItem className="sm:col-span-2">
-          <FormLabel>Event Image</FormLabel>
+          <FormLabel>Event Image (optional)</FormLabel>
           <FormControl>
             <div className="space-y-2">
-              {form.image_url && (
+              {form.cloudinary_url && (
                 <div className="mb-2">
                   <Image
-                    src={form.image_url}
+                    src={form.cloudinary_url}
                     alt="Event preview"
                     width={128}
                     height={80}
@@ -426,52 +448,86 @@ function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreat
                   />
                 </div>
               )}
-              <div id="cloudinary-upload-widget" className="w-full">
+
+              {/* Manual URL entry (always available) */}
+              <Input
+                placeholder="https://example.com/image.jpg"
+                value={form.cloudinary_url ?? ""}
+                onChange={(e) => handleChange("cloudinary_url", e.target.value)}
+              />
+              <div className="text-xs text-muted-foreground">Paste an image URL or use the upload widget when available.</div>
+
+              {/* Cloudinary widget button (only when configured) */}
+              {cloudEnabled ? (
+                <div id="cloudinary-upload-widget" className="w-full">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try {
+                        // @ts-expect-error Cloudinary widget is attached to window by the script tag
+                        if (window.cloudinary) {
+                          const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+                          const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+                          if (!cloudName || !uploadPreset) { toast.info("Upload unavailable: Cloudinary not configured"); return; }
+                          // @ts-expect-error Cloudinary widget typing not available
+                          window.cloudinary.createUploadWidget(
+                            {
+                              cloudName,
+                              uploadPreset,
+                              sources: ['local', 'url', 'camera'],
+                              multiple: false,
+                              cropping: true,
+                              croppingAspectRatio: 16/9,
+                              showAdvancedOptions: false,
+                              resourceType: 'image',
+                              folder: 'events'
+                            },
+                            (error: unknown, result: CloudinaryResult) => {
+                              handleCloudinaryUpload(error, result);
+                              // Cloudinary success includes secure_url at result.info.secure_url
+                              const url = result?.info?.secure_url as string | undefined;
+                              if (url) handleChange("cloudinary_url", url);
+                            }
+                          ).open();
+                        } else {
+                          toast.info("Upload widget not ready yet. Try again in a moment.");
+                        }
+                      } catch (err) {
+                        console.debug("Cloudinary open error (silenced)", err);
+                        toast.info("Upload temporarily unavailable. You can still save without an image.");
+                      }
+                    }}
+                    className="w-full px-4 py-2 border border-dashed border-gray-300 rounded-md hover:border-gray-400 transition-colors"
+                  >
+                    {form.cloudinary_url ? "Change Image (Upload)" : "Upload Event Image"}
+                  </button>
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground">Cloudinary not configured; image upload is disabled. You can still save without an image.</div>
+              )}
+
+              {form.cloudinary_url && (
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!cloudEnabled) return; // silently do nothing when disabled
-                    // @ts-expect-error Cloudinary widget is attached to window by the script tag
-                    if (window.cloudinary) {
-                      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-                      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-                      if (!cloudName || !uploadPreset) { return; }
-                      // @ts-expect-error Cloudinary widget typing not available
-                      window.cloudinary.createUploadWidget(
-                        {
-                          cloudName,
-                          uploadPreset,
-                          sources: ['local', 'url', 'camera'],
-                          multiple: false,
-                          cropping: true,
-                          croppingAspectRatio: 16/9,
-                          showAdvancedOptions: false,
-                          resourceType: 'image',
-                          folder: 'events'
-                        },
-                        handleCloudinaryUpload
-                      ).open();
-                    } else {
-                      // Silent: widget not ready
-                      console.debug("Cloudinary widget not loaded yet (silenced)");
-                    }
-                  }}
-                  disabled={!cloudEnabled}
-                  className="w-full px-4 py-2 border border-dashed border-gray-300 rounded-md hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {form.image_url ? "Change Image" : "Upload Event Image"}
-                </button>
-              </div>
-              {form.image_url && (
-                <button
-                  type="button"
-                  onClick={() => handleChange("image_url", "")}
+                  onClick={() => handleChange("cloudinary_url", "")}
                   className="text-sm text-red-600 hover:text-red-800"
                 >
                   Remove Image
                 </button>
               )}
             </div>
+          </FormControl>
+        </FormItem>
+        <FormItem>
+          <FormLabel>Min Team Size</FormLabel>
+          <FormControl>
+            <Input type="number" min={0} value={form.min_team_size ?? ""} onChange={(e) => handleChange("min_team_size", e.target.value)} />
+          </FormControl>
+        </FormItem>
+        <FormItem>
+          <FormLabel>Max Team Size</FormLabel>
+          <FormControl>
+            <Input type="number" min={0} value={form.max_team_size ?? ""} onChange={(e) => handleChange("max_team_size", e.target.value)} />
           </FormControl>
         </FormItem>
         <FormItem>
@@ -521,6 +577,7 @@ type PassCreatePayload = {
   status?: boolean;
   quanatity?: number | string | null;
   event_id?: string;
+  mahe?: boolean; // true=MAHE, false=Non-MAHE-only
 };
 
 type PassUpdatePayload = Partial<PassCreatePayload> & { id: string };
@@ -534,6 +591,7 @@ type PassFormState = {
   status?: boolean;
   quanatity?: string;
   event_id?: string;
+  nonMaheOnly?: boolean; // UI flag, maps to mahe=false when true
 };
 
 function PassForm({ row, events, onSubmit }: { row?: PassRow; events: EventRow[]; onSubmit: (v: PassCreatePayload | PassUpdatePayload) => void }) {
@@ -545,6 +603,7 @@ function PassForm({ row, events, onSubmit }: { row?: PassRow; events: EventRow[]
     enable: (row?.enable ?? row?.status ?? true) as boolean,
     event_id: (row?.event_id ?? "") || "",
     quanatity: row?.quanatity ? String(row.quanatity) : "",
+  nonMaheOnly: row?.mahe === false ? true : false,
   }));
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -561,6 +620,8 @@ function PassForm({ row, events, onSubmit }: { row?: PassRow; events: EventRow[]
       status: form.status,
       quanatity: form.quanatity === "" ? null : Number(form.quanatity),
       event_id: form.event_id || undefined,
+  // Map UI checkbox: when Non-MAHE only is checked => mahe=false, else leave undefined (default true handled by DB)
+  mahe: form.nonMaheOnly ? false : undefined,
     };
     const payload = form.id ? ({ id: form.id, ...casted } as PassUpdatePayload) : casted;
     const parsed = (form.id ? PassUpdateSchema : PassCreateSchema).safeParse(payload);
@@ -597,6 +658,16 @@ function PassForm({ row, events, onSubmit }: { row?: PassRow; events: EventRow[]
           <FormLabel>Description</FormLabel>
           <FormControl>
             <Input value={form.description ?? ""} onChange={(e) => handleChange("description", e.target.value)} />
+          </FormControl>
+        </FormItem>
+        <FormItem>
+          <FormLabel>NON-MAHE only</FormLabel>
+          <FormControl>
+            <input
+              type="checkbox"
+              checked={!!form.nonMaheOnly}
+              onChange={(e) => handleChange("nonMaheOnly", e.target.checked)}
+            />
           </FormControl>
         </FormItem>
         <FormItem>
