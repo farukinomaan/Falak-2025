@@ -1,13 +1,28 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useGuestCart } from "./useGuestCart";
 import { toast } from "sonner";
 
 export default function AddToCartButton({ passId, className }: { passId: string; className?: string }) {
-  const { add } = useGuestCart();
+  const router = useRouter();
+  const { add, ids } = useGuestCart();
   const [pending, start] = useTransition();
   const [added, setAdded] = useState(false);
+  const inCart = useMemo(() => added || (ids || []).includes(passId), [added, ids, passId]);
+  const swappedClassName = useMemo(() => {
+    const base = className || "px-4 py-2 rounded bg-black text-white";
+    let swapped = base
+      .replace(/bg-\[#D7897D\]/g, "bg-white")
+      .replace(/text-white/g, "text-\[#D7897D\]");
+    if (swapped === base) {
+      swapped = base
+        .replace(/bg-black/g, "bg-white")
+        .replace(/text-white/g, "text-black");
+    }
+    return swapped;
+  }, [className]);
 
   const confirmAndAdd = async () => {
     // Probe mapping to pass
@@ -35,7 +50,11 @@ export default function AddToCartButton({ passId, className }: { passId: string;
   };
 
   const onClick = () => {
-    if (added || pending) return;
+    if (pending) return;
+    if (inCart) {
+      router.push("/cart");
+      return;
+    }
     toast.info(
       () => (
         <div className="space-y-2">
@@ -66,8 +85,8 @@ export default function AddToCartButton({ passId, className }: { passId: string;
   };
 
   return (
-    <button onClick={onClick} disabled={pending || added} className={className || "px-4 py-2 rounded bg-black text-white"}>
-  {added ? "Added" : pending ? "Adding…" : "Add to Cart"}
+    <button onClick={onClick} disabled={pending} className={inCart ? swappedClassName : (className || "px-4 py-2 rounded bg-black text-white")}>
+      {inCart ? "Go to Cart" : pending ? "Adding…" : "Add to Cart"}
     </button>
   );
 }

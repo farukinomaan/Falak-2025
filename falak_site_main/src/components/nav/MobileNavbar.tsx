@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import Link from 'next/link';
 import { Press_Start_2P } from "next/font/google";
@@ -48,15 +46,6 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
     <>
       {/* Top Navigation Bar */}
       <div className={`fixed top-0 left-0 right-0 z-50 flex xl:hidden items-start justify-between p-4 transition-all duration-500 ${show ? 'translate-y-0' : '-translate-y-32'}`}>
-        {/* Logo container top left */}
-        <div className={`pointer-events-auto transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}>
-          <Link href="/">
-            <h1 className="special-font hero-heading text-white">
-              F<b>A</b>LAK
-            </h1>
-          </Link>
-        </div>
-
         {/* Top-right notch with display and menu */}
         <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg shadow-lg border-2 transition-all duration-500 ${press.className}`}
           style={{
@@ -66,7 +55,7 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
             boxShadow: "0 4px 16px rgba(0,0,0,0.4), 0 0 12px rgba(244, 202, 142, 0.15)",
           }}
         >
-          {/* Cyber display - smaller */}
+          {/* Cyber display */}
           <div
             className="relative px-2 py-1 rounded"
             style={{
@@ -114,7 +103,7 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
             </div>
           </div>
 
-          {/* Menu Button - smaller */}
+          {/* Menu Button */}
           <button
             ref={menuButtonRef}
             onClick={toggleMobileMenu}
@@ -129,78 +118,39 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
                 : "0 2px 6px rgba(0,0,0,0.3)",
             }}
           >
-            {/* Pulsing ring when active */}
             {isMobileMenuOpen && (
               <div
                 className="absolute inset-0 rounded-full border-2 animate-pulse opacity-75"
-                style={{
-                  borderColor: "#DBAAA6", 
-                  animationDuration: "1.5s"
-                }}
+                style={{ borderColor: "#DBAAA6", animationDuration: "1.5s" }}
               />
             )}
-
-            {/* Center dot - smaller */}
             <div
               className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 ${
                 isMobileMenuOpen ? "w-2 h-2 animate-pulse" : "w-1 h-1"
               }`}
-              style={{
-                backgroundColor: "#F4CA8E", 
-                boxShadow: isMobileMenuOpen ? "0 0 8px #F4CA8E" : "0 0 4px #F4CA8E"
-              }}
+              style={{ backgroundColor: "#F4CA8E", boxShadow: isMobileMenuOpen ? "0 0 8px #F4CA8E" : "0 0 4px #F4CA8E" }}
             />
-
-            {/* Animated lines forming menu icon - smaller */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div
-                className={`absolute w-3 h-0.5 transition-all duration-500 ${
-                  isMobileMenuOpen
-                    ? "rotate-45 opacity-100"
-                    : "rotate-0 opacity-70 -translate-y-0.5"
-                }`}
-                style={{
-                  backgroundColor: "#F4CA8E", 
-                  boxShadow: isMobileMenuOpen ? "0 0 6px rgba(244,202,142,0.8)" : "none",
-                }}
+              <div className={`absolute w-3 h-0.5 transition-all duration-500 ${isMobileMenuOpen ? "rotate-45 opacity-100" : "rotate-0 opacity-70 -translate-y-0.5"}`}
+                style={{ backgroundColor: "#F4CA8E", boxShadow: isMobileMenuOpen ? "0 0 6px rgba(244,202,142,0.8)" : "none" }}
               />
-              <div
-                className={`absolute w-3 h-0.5 transition-all duration-500 ${
-                  isMobileMenuOpen ? "opacity-0 scale-0" : "opacity-70"
-                }`}
-                style={{
-                  backgroundColor: "#F4CA8E", 
-                }}
+              <div className={`absolute w-3 h-0.5 transition-all duration-500 ${isMobileMenuOpen ? "opacity-0 scale-0" : "opacity-70"}`}
+                style={{ backgroundColor: "#F4CA8E" }}
               />
-              <div
-                className={`absolute w-3 h-0.5 transition-all duration-500 ${
-                  isMobileMenuOpen
-                    ? "-rotate-45 opacity-100"
-                    : "rotate-0 opacity-70 translate-y-0.5"
-                }`}
-                style={{
-                  backgroundColor: "#F4CA8E", 
-                  boxShadow: isMobileMenuOpen ? "0 0 6px rgba(244,202,142,0.8)" : "none",
-                }}
+              <div className={`absolute w-3 h-0.5 transition-all duration-500 ${isMobileMenuOpen ? "-rotate-45 opacity-100" : "rotate-0 opacity-70 translate-y-0.5"}`}
+                style={{ backgroundColor: "#F4CA8E", boxShadow: isMobileMenuOpen ? "0 0 6px rgba(244,202,142,0.8)" : "none" }}
               />
             </div>
-
-            {/* Rotating outer ring - smaller */}
             <div className={`absolute inset-0.5 rounded-full border border-opacity-40 ${isMobileMenuOpen ? 'animate-spin' : ''}`}
-              style={{
-                borderColor: isMobileMenuOpen ? "rgba(244,202,142,0.6)" : "rgba(244,202,142,0.4)",
-                animationDuration: "3s"
-              }}
+              style={{ borderColor: isMobileMenuOpen ? "rgba(244,202,142,0.6)" : "rgba(244,202,142,0.4)", animationDuration: "3s" }}
             />
           </button>
         </div>
       </div>
 
-      {/* Full-Screen Menu Overlay - List Layout */}
+      {/* Full-Screen Menu Overlay - Top-right Layout */}
       <div className={`fixed inset-0 z-40 xl:hidden transition-all duration-300 ${
-        isMobileMenuOpen 
-          ? 'opacity-100 pointer-events-auto' 
-          : 'opacity-0 pointer-events-none'
+        isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
       }`}>
         {/* Backdrop */}
         <div 
@@ -284,11 +234,11 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
             })}
           </div>
 
-          {/* Sign In button - separate and styled */}
+          {/* Sign In button */}
           <Link
             href="/signin"
             onClick={toggleMobileMenu}
-            className={`mt-6 px-8 py-3 rounded-lg transition-all duration-300 ${press.className} group w-full max-w-xs`}
+            className={`mt-6 px-6 py-2 rounded-lg transition-all duration-300 ${press.className} group w-full`}
             style={{
               background: 'rgba(219, 170, 166, 0.15)',
               border: '1px solid rgba(219, 170, 166, 0.4)',
@@ -296,21 +246,9 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
             }}
           >
-            {/* Hover effect */}
             <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-pink-500/5 via-orange-400/10 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
-            <div className="flex items-center justify-center gap-2">
-              <LogIn 
-                size={14}
-                style={{ color: '#DBAAA6' }}
-                className="flex-shrink-0"
-              />
-              <div
-                className="relative font-bold tracking-wider"
-                style={{ color: '#DBAAA6', fontSize: '12px' }}
-              >
-                SIGN IN
-              </div>
+            <div className="flex items-center justify-center gap-2 text-[#DBAAA6] font-bold tracking-wider text-xs">
+              <LogIn size={14} /> SIGN IN
             </div>
           </Link>
 

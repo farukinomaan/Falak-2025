@@ -80,59 +80,87 @@ const Timeline: React.FC = () => {
   const upcomingEvent = events[currentEventIndex + 1] || null;
 
   return (
-    <div className="w-full bg-[#f2eae1] py-16 flex justify-center">
+    <div className="w-full bg-transparent py-10 sm:py-16 flex justify-center px-4">
       {/* Retro arcade box */}
-      <div className="relative max-w-[900px] w-full mx-auto px-8 py-10 bg-[#7a1f1f] text-[#f2eae1] border-8 border-[#7a1f1f] shadow-[0_0_25px_#7a1f1f] rounded-lg">
+      <div className="relative w-full max-w-[900px] mx-auto px-4 sm:px-8 py-8 sm:py-10 bg-[#32212C] text-[#DBAAA6] border-4 sm:border-8 rounded-lg">
         {/* Outer glow layers */}
-        <div className="absolute -inset-2 border-4 border-[#f2eae1] rounded-lg pointer-events-none"></div>
-        <div className="absolute -inset-4 border-4 border-[#7a1f1f] rounded-lg pointer-events-none opacity-50"></div>
+        <div className="absolute -inset-1 sm:-inset-2 border-2 sm:border-4 border-[#32212C] rounded-lg pointer-events-none"></div>
+        <div className="absolute -inset-2 sm:-inset-4 border-2 sm:border-4 border-[#D7897D] rounded-lg pointer-events-none opacity-50"></div>
 
         {/* CRT scanline effect */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[length:100%_4px] pointer-events-none mix-blend-overlay"></div>
+        <div
+          className="full-overlay absolute inset-0 z-20 pointer-events-none rounded-2xl"
+          style={{
+            boxShadow: "0 0 4px 1px rgba(255, 182, 193, 0.1)",
+            border: "2px solid rgba(255, 182, 193, 0.2)",
+          }}
+        ></div>
 
         <div className="relative z-10">
-          <h2 className="retro-heading text-3xl md:text-4xl text-center mb-10 text-[#f2eae1]">
+          <h2 className="vintage-font text-2xl sm:text-3xl md:text-4xl text-center mb-6 sm:mb-10">
             FALAK '25 TIMELINE
           </h2>
 
           {/* Progress Bar */}
-          <div className="relative w-full mb-10">
-            <div className="absolute left-0 -top-6 text-[#f2eae1] font-mono text-sm animate-pulse">
+          <div className="relative w-full mb-6 sm:mb-10">
+            <div className="absolute left-0 -top-5 sm:-top-6 text-[#DBAAA6] font-mono text-xs sm:text-sm animate-pulse">
               ▶ Fest Progress...
             </div>
 
-            <div className="relative h-6 w-full bg-[#2a2a2a] rounded-sm overflow-hidden border-2 border-[#f2eae1] shadow-inner">
+            <div className="relative h-5 sm:h-6 w-full bg-[#1f1a2e]/80 rounded-sm overflow-hidden border-2 border-[#DBAAA6] shadow-inner">
               <div
-                className="absolute h-6 bg-gradient-to-r from-[#7a1f1f] via-[#a83232] to-[#7a1f1f] transition-all duration-500"
+                className="absolute h-5 sm:h-6 bg-gradient-to-r from-[#a855f7] via-[#d946ef] to-[#a855f7] transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
               <div
-                className="absolute top-0 w-3 h-6 bg-[#f2eae1] animate-bounce"
+                className="absolute top-0 w-2.5 sm:w-3 h-5 sm:h-6 bg-[#DBAAA6] animate-bounce"
                 style={{ left: `${progress}%`, transform: "translateX(-50%)" }}
               />
             </div>
 
-            <div className="absolute right-0 -top-6 text-[#f2eae1] font-mono text-xs tracking-wider">
+            <div className="absolute right-0 -top-5 sm:-top-6 text-[#DBAAA6] font-mono text-[10px] sm:text-xs tracking-wider">
               {Math.round(progress)}% Complete
             </div>
           </div>
 
           {/* Events */}
-          <div className="space-y-4 text-center">
-            {previousEvent && (
-              <p className="font-mono text-[#d9b08c] text-lg border-2 border-dashed border-[#f2eae1] rounded p-2 bg-[#2a2a2a]">
-                Previous: {previousEvent.name} at {formatTime(previousEvent.time)}
-              </p>
-            )}
-            {currentEvent && (
-              <p className="font-mono text-[#1a1a1a] text-xl border-2 border-[#1a1a1a] rounded p-3 bg-[#f2eae1] font-bold">
-                ► Current: {currentEvent.name} at {formatTime(currentEvent.time)}
-              </p>
-            )}
-            {upcomingEvent && (
-              <p className="font-mono text-[#d9b08c] text-lg border-2 border-dashed border-[#f2eae1] rounded p-2 bg-[#2a2a2a]">
-                Upcoming: {upcomingEvent.name} at {formatTime(upcomingEvent.time)}
-              </p>
+          <div className="space-y-3 sm:space-y-4 text-center">
+            {currentDate < new Date(`${events[0].date}T${events[0].time}`) ? (
+              <>
+                {/* Before fest starts */}
+                <p className="text-[#32212C] font-mono text-lg sm:text-xl border-2 border-[#2e1a47] rounded p-2 sm:p-3 bg-[#DBAAA6] font-bold">
+                  ► Current: Waiting for FALAK'25...
+                </p>
+                <p className="font-mono text-base sm:text-lg border-2 border-dashed border-[#DBAAA6] rounded p-1 sm:p-2 bg-[#1f1a2e]/80">
+                  Upcoming: Countdown to the Artist Reveal...
+                </p>
+              </>
+            ) : currentDate > endDate ? (
+              <>
+                {/* After fest ends */}
+                <p className="text-[#32212C] font-mono text-lg sm:text-xl border-2 border-[#2e1a47] rounded p-2 sm:p-3 bg-[#DBAAA6] font-bold">
+                  ► Current: FALAK'25 has ended. Thanks for joining!
+                </p>
+              </>
+            ) : (
+              <>
+                {/* During fest */}
+                {previousEvent && (
+                  <p className="font-mono text-base sm:text-lg border-2 border-dashed border-[#DBAAA6] rounded p-1 sm:p-2 bg-[#1f1a2e]/80">
+                    Previous: {previousEvent.name} at {formatTime(previousEvent.time)}
+                  </p>
+                )}
+                {currentEvent && (
+                  <p className="text-[#32212C] font-mono text-lg sm:text-xl border-2 border-[#2e1a47] rounded p-2 sm:p-3 bg-[#DBAAA6] font-bold">
+                    ► Current: {currentEvent.name} at {formatTime(currentEvent.time)}
+                  </p>
+                )}
+                {upcomingEvent && (
+                  <p className="font-mono text-base sm:text-lg border-2 border-dashed border-[#DBAAA6] rounded p-1 sm:p-2 bg-[#1f1a2e]/80">
+                    Upcoming: {upcomingEvent.name} at {formatTime(upcomingEvent.time)}
+                  </p>
+                )}
+              </>
             )}
           </div>
         </div>

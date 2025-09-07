@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 // Shared server-side helpers for Sports & Cultural event pages to avoid duplication.
 // Each function returns the JSX formerly duplicated in individual route files.
 
@@ -13,7 +14,6 @@ import {
   saGetUserTeamForEvent,
 } from "@/lib/actions/adminAggregations";
 import AddToCartButton from "@/components/cart/AddToCartButton";
-// @ts-expect-error local client component path resolution at build
 import TeamRegistrationClient from "./team-registration-client";
 import { getServiceClient } from "@/lib/actions/supabaseClient";
 import "./cluster.css";
@@ -122,7 +122,7 @@ export async function ClusterRoot({ cluster }: { cluster: string }) {
             />
           ))}
         </div>
-        <img src="/wave2.svg" className="waveImage" alt="" />
+  {/* <img src="/wave2.svg" className="waveImage" alt="" /> */}
       </div>
     </>
   );
@@ -141,12 +141,22 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
   ]);
 
   const ownedPassIds = new Set<string>(ownedRes.ok ? ownedRes.data : []);
-  type PassLite = { id: string; event_id?: string | null };
+  type PassLite = { id: string; event_id?: string | null; mahe?: boolean | null };
   const passes = passesRes.ok ? (passesRes.data as PassLite[]) : [];
   const ownedEventIds = new Set<string>();
   for (const p of passes) if (p.event_id && ownedPassIds.has(p.id)) ownedEventIds.add(p.event_id);
   const teamEventIds = new Set<string>(teamEvtRes.ok ? teamEvtRes.data : []);
   const events = eventsRes.ok ? (eventsRes.data as EvtBase[]) : [];
+
+  // Determine if user has a MAHE proshow pass (no event_id) to unlock access (except esports)
+  let userIsMahe = false;
+  if (userId) {
+    const supabase = getServiceClient();
+    const { data: userRow } = await supabase.from("Users").select("mahe").eq("id", userId).maybeSingle();
+    userIsMahe = Boolean((userRow as { mahe?: boolean } | null)?.mahe);
+  }
+  const userOwnedPasses = passes.filter(p => ownedPassIds.has(p.id));
+  const hasMaheProshow = userOwnedPasses.some(p => !p.event_id && (p.mahe === true || userIsMahe));
 
   const decodedCategory = decodeURIComponent(category);
 
@@ -167,7 +177,8 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
         <h1 className="text-3xl font-semibold">{decodedCategory}</h1>
         <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-8">
           {list.map((e) => {
-            const owned = ownedEventIds.has(e.id) || ownedPassIds.has(e.id);
+            const eligibleUniversal = hasMaheProshow && e.sub_cluster.toLowerCase() !== 'esports';
+            const owned = ownedEventIds.has(e.id) || eligibleUniversal;
             const inTeam = teamEventIds.has(e.id);
             return (
               <FlipCard
@@ -195,7 +206,7 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
             );
           })}
         </div>
-        <img src="/wave2.svg" className="waveImage" alt="" />
+  {/* <img src="/wave2.svg" className="waveImage" alt="" /> */}
       </div>
     </>
   );
@@ -223,7 +234,7 @@ export async function ClusterEvent({
 
 
   const ownedPassIds = new Set<string>(ownedRes.ok ? ownedRes.data : []);
-  type PassLite = { id: string; event_id?: string | null };
+  type PassLite = { id: string; event_id?: string | null; mahe?: boolean | null };
   const passes = passesRes.ok ? (passesRes.data as PassLite[]) : [];
   const ownedEventIds = new Set<string>();
   for (const p of passes) if (p.event_id && ownedPassIds.has(p.id)) ownedEventIds.add(p.event_id);
@@ -232,7 +243,18 @@ export async function ClusterEvent({
     (e) => e.id === slug && e.sub_cluster.toLowerCase() === decodeURIComponent(category).toLowerCase() && (e.cluster_name || "").toLowerCase() === cluster
   );
   if (!event) return notFound();
-  const owned = ownedEventIds.has(event.id) || ownedPassIds.has(event.id);
+  const nice = clusterLabel(cluster);
+  // Determine if user has a MAHE proshow pass (no event_id) to unlock access (except esports)
+  let userIsMahe = false;
+  if (userId) {
+    const supabase = getServiceClient();
+    const { data: userRow } = await supabase.from("Users").select("mahe").eq("id", userId).maybeSingle();
+    userIsMahe = Boolean((userRow as { mahe?: boolean } | null)?.mahe);
+  }
+  const userOwnedPasses = passes.filter(p => ownedPassIds.has(p.id));
+  const hasMaheProshow = userOwnedPasses.some(p => !p.event_id && (p.mahe === true || userIsMahe));
+  const eligibleUniversal = hasMaheProshow && event.sub_cluster.toLowerCase() !== 'esports';
+  const owned = ownedEventIds.has(event.id) || eligibleUniversal;
   
   const date = event.date ? new Date(event.date) : null;
   const dateStr = date?.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -247,7 +269,6 @@ export async function ClusterEvent({
     team: { id: string; name: string; captainId?: string };
     members: Array<{ id: string; memberId: string }>;
   }
-  const nice = clusterLabel(cluster);
   let existingTeam: ExistingTeamData | null = null;
   let memberUsersById: Map<string, { name: string | null; email: string | null }> | null = null;
   if (teamRes.ok && teamRes.data) {
@@ -326,7 +347,7 @@ export async function ClusterEvent({
         </div>
 
         
-        {owned && !existingTeam && (
+    {owned && !existingTeam && (
           <div className="mt-8" style={{ position: 'relative', zIndex: 5 }}>
             
             <TeamRegistrationClient
@@ -334,10 +355,11 @@ export async function ClusterEvent({
               captainId={userId || ""}
               captainName={session?.user?.name || null}
               minSize={1}
+      leaderHint={eligibleUniversal && !ownedEventIds.has(event.id)}
             />
           </div>
         )}
-        <img src="/wave2.svg" className="waveImage" alt="" />
+        {/* <img src="/wave2.svg" className="waveImage" alt="" /> */}
       </div>
     </>
   );

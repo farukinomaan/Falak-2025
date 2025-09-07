@@ -2,16 +2,27 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getUserByEmail } from "@/lib/actions/tables/users";
 import { createTicket } from "@/lib/actions/tables/tickets";
-import { ticketCategories } from "@/lib/validation/tickets";
-import GuestContactForm from "../../components/tickets/GuestContactForm";
-import RegisteredTicketForm from "../../components/tickets/ti_register"
+import RegisteredTicketForm from "../../components/tickets/ti_register";
 import UnregisteredNotice from "../../components/tickets/ti_unreg";
 import { redirect } from "next/navigation";
+import { Orbitron } from "next/font/google"; 
+import { Roboto_Mono } from "next/font/google"; 
 
-// Server component renders the right view depending on user registration
+const robotoMono = Roboto_Mono({ 
+  subsets: ["latin"], 
+  weight: ["400", "500", "700"], 
+});
+
+const orbitron = Orbitron({ 
+  subsets: ["latin"], 
+  weight: ["400", "700", "900"], 
+  variable: "--font-typewriter",
+});
+
 export default async function TicketsPage() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email ?? null;
+
   const userRes = email ? await getUserByEmail(email) : { ok: true as const, data: null };
   const registeredUser = userRes.ok ? userRes.data : null;
 
@@ -25,37 +36,40 @@ export default async function TicketsPage() {
     redirect("/tickets?submitted=1");
   }
 
-return (
+  return (
+    <div className="relative min-h-screen flex flex-col items-center justify-center
+  pt-24 sm:pt-28 md:pt-16  
+  py-6 sm:py-8 px-4 sm:px-6 md:px-8 lg:px-12"
+>
+  {/* Base background color */}
   <div
-    className="min-h-screen flex items-center justify-center py-12 relative overflow-hidden before:absolute before:inset-0 before:bg-black/40 before:pointer-events-none"
-    style={{ backgroundColor: '#32212C' }}
-  >
-    {/* Background SVG */}
-    <div 
-      className="absolute pointer-events-none inset-0"
-      style={{
-        backgroundImage: 'url(/background.svg)',
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: 'cover', // or 'contain' depending on your preference
-        backgroundPosition: 'center',
-        opacity: 0.5, // Adjust opacity so it doesn't overpower content
-        zIndex: 0, // Behind the overlay
-      }}
-    />
-    
-    <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto relative z-10">
-      {!session || !email ? (
-        <GuestContactForm/>
-      ) : !registeredUser ? (
-        <UnregisteredNotice/>
-      ) : (
-        <RegisteredTicketForm action={submit} />
-      )}
-    </div>
+    className="absolute inset-0 bg-[#32212C] z-[-3]"
+  />
+
+  {/* SVG overlay */}
+  <div
+    className="absolute inset-0 bg-cover bg-center opacity-20 z-[-2]"
+    style={{ backgroundImage: "url('/background.svg')" }}
+  />
+
+  {/* Optional dark overlay */}
+  <div className="absolute inset-0 bg-black/50 z-[-1]" />
+
+  {/* Page content */}
+  <div className="relative z-10 w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-auto">
+    <h1 className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-neutral-100 font-semibold mb-6 sm:mb-8 text-center ${orbitron.variable}`}>
+      Support Ticket
+    </h1>
+
+    {!session || !email ? (
+      <UnregisteredNotice />
+    ) : !registeredUser ? (
+      <UnregisteredNotice />
+    ) : (
+      <RegisteredTicketForm action={submit} />
+    )}
   </div>
-);
+</div>
 
+  );  
 }
-
-
-

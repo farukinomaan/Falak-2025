@@ -252,7 +252,7 @@ export default function CartList() {
             </div>
           </div>
           <div className="mt-12 grid place-items-center">
-            <img src="/end.svg" alt="" className="w-64 h-32 object-contain" />
+            <Image src="/end.svg" alt="" width={256} height={128} className="w-64 h-32 object-contain" />
           </div>
         </div>
       </div>

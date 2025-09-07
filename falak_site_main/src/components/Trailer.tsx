@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -9,12 +9,22 @@ gsap.registerPlugin(ScrollTrigger);
 const Trailer: React.FC = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const videoRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null); // correct type
+  const videoContainerRef = useRef<HTMLDivElement>(null); // for GSAP animation
   const descRef = useRef<HTMLDivElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const handlePlay = () => {
+    if (videoRef.current) {
+      videoRef.current.play();
+      setIsPlaying(true);
+    }
+  };
 
   useEffect(() => {
     if (sectionRef.current) {
       const ctx = gsap.context(() => {
+        // Animate heading
         gsap.from(headingRef.current, {
           scrollTrigger: {
             trigger: headingRef.current,
@@ -26,10 +36,11 @@ const Trailer: React.FC = () => {
           duration: 1,
           ease: "power3.out",
         });
-  
-        gsap.from(videoRef.current, {
+
+        // Animate video container
+        gsap.from(videoContainerRef.current, {
           scrollTrigger: {
-            trigger: videoRef.current,
+            trigger: videoContainerRef.current,
             start: "top 80%",
             toggleActions: "play none none reverse",
           },
@@ -38,7 +49,8 @@ const Trailer: React.FC = () => {
           duration: 1,
           ease: "power3.out",
         });
-  
+
+        // Animate description
         gsap.from(descRef.current, {
           scrollTrigger: {
             trigger: descRef.current,
@@ -51,55 +63,63 @@ const Trailer: React.FC = () => {
           ease: "power3.out",
         });
       }, sectionRef);
-  
+
       return () => ctx.revert();
     }
   }, []);
-  
 
   return (
-    <section ref={sectionRef} className="w-full bg-[#f2eae1] py-16 px-4">
+    <section ref={sectionRef} className="w-full bg-transparent py-10 sm:py-16 px-4">
       <div className="max-w-[1100px] mx-auto">
         <h2
           ref={headingRef}
-          className="text-4xl font-bold text-[#8b3e2f] mb-12 font-serif tracking-wide text-center"
+          className="vintage-font hero-heading text-3xl sm:text-4xl md:text-5xl font-bold text-[#DBAAA6] mb-8 sm:mb-12 tracking-wide text-center"
         >
-          FALAK 2025 Trailer
+          <b>FALAK 2025 Trailer</b>
         </h2>
 
-        {/* Side-by-side flex */}
-        <div className="flex flex-col md:flex-row md:items-stretch md:space-x-8">
-  {/* Video */}
-  <div
-    ref={videoRef}
-    className="w-full md:w-1/2 flex items-stretch"
-  >
-    <iframe
-      className="w-full h-full rounded-lg shadow-lg border-4 border-[#8b3e2f]"
-      src="https://www.youtube.com/embed/IYjSzDsYhgA"
-      title="FALAK 2025 Trailer"
-      frameBorder="0"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowFullScreen
-    ></iframe>
-  </div>
+        <div className="flex flex-col md:flex-row md:items-stretch md:space-x-6 lg:space-x-8 space-y-6 md:space-y-0">
+          {/* Video with custom play button */}
+          <div
+            ref={videoContainerRef}
+            className="w-full md:w-1/2 flex justify-center relative"
+          >
+            <video
+              ref={videoRef}
+              className="w-full h-auto rounded-lg shadow-lg border-4 border-[#DBAAA6]"
+              src="/videos/trailervid.mp4"
+              muted
+              loop
+              playsInline
+              controls={isPlaying} // show controls only after play
+            />
 
-  {/* Description */}
-  <div
-    ref={descRef}
-    className="w-full md:w-1/2 bg-[#f2d9b3] p-6 rounded-lg border-4 border-[#8b3e2f] shadow-lg text-[#3e2f2f] font-serif text-lg flex items-center"
-  >
-    <p>
-      Tech Solstice is the annual technical fest of{" "}
-      <span className="font-bold">Manipal Institute of Technology, Bangalore</span>, 
-      uniting innovation, creativity, and cutting-edge technology. Featuring an 
-      exciting lineup of hackathons, competitions, robotics challenges, workshops, 
-      and speaker sessions, it provides a dynamic platform for students to showcase 
-      their skills, collaborate, and explore emerging tech trends. Get ready for an 
-      immersive experience of learning, competing, and networking at Tech Solstice!
-    </p>
-  </div>
-</div>
+            {!isPlaying && (
+              <button
+                onClick={handlePlay}
+                className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg"
+              >
+                <span className="w-16 h-16 bg-[#DBAAA6] text-[#32212C] rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition">
+                  ▶
+                </span>
+              </button>
+            )}
+          </div>
+
+          {/* Description */}
+          <div
+            ref={descRef}
+            className="w-full md:w-1/2 bg-[#32212C] p-4 sm:p-6 rounded-lg border-4 border-[#DBAAA6] shadow-lg text-[#DBAAA6] font-serif text-base sm:text-lg flex items-center"
+          >
+            <p>
+              Falak, the annual sports and cultural fest of{" "}
+              <span className="font-bold">MIT Bengaluru</span>, is a grand celebration of creativity and talent. 
+              It showcases vibrant performances in dance, music, and drama, filling the campus with energy and enthusiasm. 
+              Along with various competitions, it offers students a platform to express themselves, interact with peers, and create cherished memories, 
+              making it one of the most awaited events of the year.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   );
