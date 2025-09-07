@@ -7,11 +7,24 @@ import GuestContactForm from "../../components/tickets/GuestContactForm";
 import RegisteredTicketForm from "../../components/tickets/ti_register"
 import UnregisteredNotice from "../../components/tickets/ti_unreg";
 import { redirect } from "next/navigation";
+import { Orbitron } from "next/font/google"; 
+import { Roboto_Mono } from "next/font/google"; 
+const robotoMono = Roboto_Mono({ 
+  subsets: ["latin"], 
+  weight: ["400", "500", "700"], 
+});
+
+const orbitron = Orbitron({ 
+  subsets: ["latin"], 
+  weight: ["400", "700", "900"], 
+  variable: "--font-typewriter",
+});
 
 // Server component renders the right view depending on user registration
 export default async function TicketsPage() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email ?? null;
+
   const userRes = email ? await getUserByEmail(email) : { ok: true as const, data: null };
   const registeredUser = userRes.ok ? userRes.data : null;
 
@@ -56,6 +69,4 @@ return (
 );
 
 }
-
-
 

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -45,7 +46,19 @@ export default function RootLayout({
           {/* Central navigation with right user menu */}
           <Navbar />
 
-          <main className="flex-1 w-full min-h-screen ">{children}</main>
+          {/* Fixed Logo */}
+          <div className="fixed top-4 left-4 z-50">
+            <Image
+              src="/images/logo.png"
+              alt="Falak Logo"
+              width={320}
+              height={320}
+              className="-ml-6 -mb-7 -mt-13"
+              priority
+            />
+          </div>
+
+          <main className="flex-1 w-full min-h-screen">{children}</main>
           <NavProgress />
           <Toaster richColors position="bottom-right" />
         </ClientProviders>

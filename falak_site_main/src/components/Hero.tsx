@@ -10,8 +10,6 @@ gsap.registerPlugin(ScrollTrigger);
 
 const Hero: React.FC = () => {
   const [currentIndex] = useState<number>(1);
-
-  // Video ref
   const mainVideoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
@@ -32,7 +30,7 @@ const Hero: React.FC = () => {
     });
   }, []);
 
-  const getVideoSrc = (index: number): string => `/videos/newafter.mp4`;
+  const getVideoSrc = (index: number): string => `/videos/bh.mp4`;
 
   const prefersReducedMotion =
     typeof window !== "undefined" &&
@@ -40,14 +38,13 @@ const Hero: React.FC = () => {
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   return (
-    <div className="relative h-dvh w-screen overflow-x-hidden bg-[#f2eae1]">
+    <div className="relative h-[100dvh] w-screen overflow-x-hidden bg-transparent">
       <div
         id="video-frame"
-        className="relative z-10 h-dvh w-screen overflow-hidden rounded-lg bg-blue-75"
+        className="relative z-10 h-[100dvh] w-screen overflow-hidden rounded-lg bg-blue-75"
         style={{ willChange: "transform" }}
       >
         <div>
-          {/* Main Background Video */}
           {!prefersReducedMotion ? (
             <video
               ref={mainVideoRef}
@@ -58,13 +55,12 @@ const Hero: React.FC = () => {
               preload="auto"
               playsInline
               poster="/window.svg"
-              className="absolute left-0 top-0 size-full object-cover object-center"
+              className="absolute left-0 top-0 w-full h-full object-cover object-center"
               onLoadedData={(e) => {
                 (e.currentTarget as HTMLVideoElement).classList.remove("opacity-0");
               }}
             />
           ) : (
-            // Reduced motion fallback image
             <Image
               src="/window.svg"
               alt="Falak hero"
@@ -77,47 +73,50 @@ const Hero: React.FC = () => {
         </div>
 
         {/* Foreground Text */}
-        <h1 className="special-font hero-heading absolute bottom-5 right-5 z-40 text-white">
-          F<b>A</b>LAK
+        <h1 className="special-font hero-heading absolute bottom-5 right-5 z-40 text-[#DBAAA6] text-xl sm:text-2xl md:text-3xl">
+          <b>JOIN US</b>
         </h1>
 
         {/* Overlay Content */}
-        <div className="absolute left-0 -top-5 z-40 size-full">
-          <div className="mt-24 px-5 sm:px-10">
-            <h1 className="special-font hero-heading text-white"><b>Join us</b></h1>
+<div className="absolute inset-0 z-40 flex items-start justify-start">
+  <div className="mt-20 sm:mt-22 px-2 sm:px-2 flex flex-col items-start">
+    {/* Heading */}
+    <h3
+      className="special-font hero-heading text-white mb-2 text-lg sm:text-xl md:text-2xl ml-2 sm:ml-11"
+    >
+      {/* optional heading content */}
+    </h3>
 
-            {/* <p className="mb-5 max-w-64 font-robert-regular text-blue-100">
-              Where Talent Meets Passion <br /> The Ultimate Fest Experience
-            </p> */}
+    {/* Button */}
+    <Link href="/passes">
+      <Button
+        id=""
+        title="Get your passes now"
+        containerClass="
+          bg-[#DBAAA6]
+          text-[#1A0E07]
+          font-extrabold uppercase tracking-wide
+          px-4 sm:px-6 py-2 sm:py-3 rounded-md
+          border-2 border-[#1A0E07]
+          shadow-[4px_4px_0px_0px_rgba(26,14,7,1)]
+          hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none
+          transition-all duration-150
+          ml-2 sm:ml-10
+          text-sm sm:text-base md:text-lg
+        "
+      />
+    </Link>
+  </div>
+</div>
 
-<Link href="/passes">
-  <Button
-    id=""
-    title="Get your passes now"
-    containerClass="
-      bg-[#ebded1]   /* deep burnt orange */
-      text-[#1A0E07] /* almost black espresso */
-      font-extrabold uppercase tracking-wide
-      px-6 py-3 rounded-md
-      border-2 border-[#1A0E07]
-      shadow-[4px_4px_0px_0px_rgba(26,14,7,1)]
-      hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none
-      transition-all duration-150
-    "
-  />
-</Link>
-
-          </div>
-        </div>
       </div>
 
       {/* Background Text */}
-      <h1 className="special-font hero-heading absolute bottom-5 right-5 text-[#7a1f1f]">
-        F<b>A</b>LAK
+      <h1 className="special-font hero-heading absolute bottom-5 right-5 text-[#D7897D] text-xl sm:text-2xl md:text-3xl">
+        <b>JOIN US</b>
       </h1>
     </div>
   );
 };
 
 export default Hero;
-
