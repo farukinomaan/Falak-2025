@@ -17,7 +17,7 @@ const Vinyl = forwardRef<SVGSVGElement>((props, ref) => (
         <stop offset="100%" stopColor="#000" stopOpacity="0" />
       </radialGradient>
       <filter id="bevan-undershadow" x="-20%" y="-20%" width="140%" height="140%">
-        <feDropShadow dx="0" dy="2" stdDeviation="0" floodColor="#000000" floodOpacity="1" />
+        <feDropShadow dx="0" dy="2" stdDeviation="0" floodColor="#FFFFFF" floodOpacity="1" />
       </filter>
     </defs>
     <circle cx="100" cy="100" r="98" fill="#1A1A1A" />
@@ -39,13 +39,13 @@ const Vinyl = forwardRef<SVGSVGElement>((props, ref) => (
     <circle cx="100" cy="100" r="10" fill="#F5F2E8" />
     <text
       x="100"
-      y="95"
+      y="100"
       textAnchor="middle"
-      fill="#FFFFFF"
+      fill="black"
       fontSize="12"
       fontFamily="'Brasty Vintage', serif"
       fontWeight="700"
-      filter="url(#bevan-undershadow)"
+      // filter="url(#bevan-undershadow)"
     >
       FALAK
     </text>
@@ -53,11 +53,11 @@ const Vinyl = forwardRef<SVGSVGElement>((props, ref) => (
       x="100"
       y="110"
       textAnchor="middle"
-      fill="#FFFFFF"
+      fill="black"
       fontSize="10"
       fontFamily="'Brasty Vintage', serif"
       fontWeight="700"
-      filter="url(#bevan-undershadow)"
+      // filter="url(#bevan-undershadow)"
     >
       2025
     </text>

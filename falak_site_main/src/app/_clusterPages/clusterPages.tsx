@@ -122,7 +122,7 @@ export async function ClusterRoot({ cluster }: { cluster: string }) {
             />
           ))}
         </div>
-  <img src="/wave2.svg" className="waveImage" alt="" />
+  {/* <img src="/wave2.svg" className="waveImage" alt="" /> */}
       </div>
     </>
   );
@@ -206,7 +206,7 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
             );
           })}
         </div>
-  <img src="/wave2.svg" className="waveImage" alt="" />
+  {/* <img src="/wave2.svg" className="waveImage" alt="" /> */}
       </div>
     </>
   );
@@ -358,7 +358,7 @@ export async function ClusterEvent({
             />
           </div>
         )}
-        <img src="/wave2.svg" className="waveImage" alt="" />
+        {/* <img src="/wave2.svg" className="waveImage" alt="" /> */}
       </div>
     </>
   );

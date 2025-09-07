@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 const sponsors = [
   {
@@ -9,10 +9,25 @@ const sponsors = [
     logo: "/sponsors/unstop.png",
     url: "https://unstop.com/",
   },
-  // add more later
+  {
+    name: "Findoc",
+    logo: "/sponsors/findoc.jpeg",
+    url: "https://findoc.com/", // replace with actual URL
+  },
 ];
 
 const Sponsor: React.FC = () => {
+  const [repeatCount, setRepeatCount] = useState(3);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setRepeatCount(window.innerWidth < 768 ? 1 : 3); // 1 repetition for mobile
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <section className="w-full bg-[#32212C]/90 py-16 overflow-hidden border-t-4 border-[#DBAAA6]">
       <div className="max-w-[1100px] mx-auto text-center mb-10 px-4">
@@ -24,7 +39,7 @@ const Sponsor: React.FC = () => {
       {/* Marquee wrapper */}
       <div className="relative w-full overflow-hidden">
         <div className="flex whitespace-nowrap animate-marquee min-w-full">
-          {Array(3) // duplicate to fill width
+          {Array(repeatCount)
             .fill(null)
             .flatMap(() => sponsors)
             .map((sponsor, index) => (
