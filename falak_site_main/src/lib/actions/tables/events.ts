@@ -28,7 +28,11 @@ export async function getEventById(id: string) {
 
 export async function listEvents() {
   const supabase = getServiceClient()
-  const { data, error } = await supabase.from(table).select("*").order("created_at", { ascending: false })
+  const { data, error } = await supabase
+    .from(table)
+    .select("*")
+    .eq("enable", true)
+    .order("created_at", { ascending: false })
   if (error) return { ok: false as const, error: error.message }
   return { ok: true as const, data }
 }
@@ -36,7 +40,11 @@ export async function listEvents() {
 export async function listEventsByIds(ids: string[]) {
   if (!Array.isArray(ids) || ids.length === 0) return { ok: true as const, data: [] as Event[] };
   const supabase = getServiceClient()
-  const { data, error } = await supabase.from(table).select("*").in("id", ids)
+  const { data, error } = await supabase
+    .from(table)
+    .select("*")
+    .in("id", ids)
+    .eq("enable", true)
   if (error) return { ok: false as const, error: error.message }
   return { ok: true as const, data }
 }

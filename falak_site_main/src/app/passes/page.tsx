@@ -10,6 +10,9 @@ export const revalidate = 60;
 
 type PassCard = { id: string; pass_name: string; description?: string | null; cost?: number | string | null };
 
+// Toggle when passes go live
+const PASSES_SALES_ACTIVE = false;
+
 export default async function PassesPage() {
   const res = await saListProshowPasses();
   const passes: PassCard[] = res.ok ? (res.data as PassCard[]) : [];
@@ -39,10 +42,19 @@ export default async function PassesPage() {
   backgroundColor: '#32212C',
       }}
     >
-      {/* Main content with purple background */}
-      <div className="relative z-20 ">
-        <Features passes={passes} isMahe={isMahe} />
-      </div>
+      {/* Passes COMING SOON overlay; keep data fetching for later */}
+      {PASSES_SALES_ACTIVE ? (
+        // TODO: When passes go live, remove this condition and render Features below
+        <div className="relative z-20 ">
+          <Features passes={passes} isMahe={isMahe} />
+        </div>
+      ) : (
+        <div className="relative z-20 flex items-center justify-center min-h-[70vh] px-4">
+          <h1 className="text-center text-5xl md:text-7xl font-semibold tracking-wide">
+            COMING SOOOOOooooo.......
+          </h1>
+        </div>
+      )}
 
       {/* Dim the background slightly without affecting foreground */}
       <div
@@ -50,7 +62,7 @@ export default async function PassesPage() {
         aria-hidden
       />
 
-      {/* Decorative wave background replacing vectors */}
+      {/* Decorative wave background replacing vectors, blurred in COMING SOON mode */}
       <div
         className="pointer-events-none absolute bottom-0 left-0 w-full h-[60vh] -z-10"
         style={{
@@ -58,7 +70,8 @@ export default async function PassesPage() {
           backgroundSize: "cover",
           backgroundPosition: "center bottom",
           backgroundRepeat: "no-repeat",
-          opacity: 0.9
+          opacity: 0.9,
+          filter: PASSES_SALES_ACTIVE ? undefined : 'blur(3px)'
         }}
       />
 

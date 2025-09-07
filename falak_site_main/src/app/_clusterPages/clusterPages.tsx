@@ -19,6 +19,10 @@ import "./cluster.css";
 import FlipCard from "./FlipCard";
 import CulturalAnimations from "@/components/CulturalAnimations";
 
+// Toggle when events go live
+// NOTE: Keep data fetching intact below; we short-circuit rendering only.
+const EVENTS_SALES_ACTIVE = false;
+
 type EvtBase = {
   id: string;
   name: string;
@@ -221,15 +225,34 @@ export async function ClusterEvent({
   category: string;
   slug: string;
 }) {
-  // Backend logic re-enabled
+  // Keep backend calls (will be used when enabling event detail)
   const session = await getServerSession(authOptions);
   const userId = (session as { user?: { id?: string } } | null)?.user?.id;
+  // Keeping these fetches for when events go live
   const [ownedRes, eventsRes, passesRes, teamRes] = await Promise.all([
     userId ? saListUserPassIds(userId) : Promise.resolve({ ok: true as const, data: [] as string[] }),
     saListEvents(),
     saListPasses(),
     userId ? saGetUserTeamForEvent(userId, slug) : Promise.resolve({ ok: true as const, data: null }),
   ]);
+
+  // COMING SOON MODE for event details
+  if (!EVENTS_SALES_ACTIVE) {
+    return (
+      <>
+        {cluster === 'cultural' && <CulturalAnimations />}
+        <PageBackground cluster={cluster} />
+        <div className={`clusterContainer max-w-3xl mx-auto p-6 md:p-10 ${cluster}`}>
+          <div className="clusterCard rounded-2xl p-10 flex items-center justify-center min-h-[40vh]">
+            <h1 className="text-4xl md:text-6xl font-semibold text-center tracking-wide">
+              COMING SOOOoooo.......n
+            </h1>
+          </div>
+          {/* TODO: When events go live, remove the Coming Soon block above and restore the full event detail UI. */}
+        </div>
+      </>
+    );
+  }
 
 
   const ownedPassIds = new Set<string>(ownedRes.ok ? ownedRes.data : []);
