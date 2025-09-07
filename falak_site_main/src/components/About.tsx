@@ -76,37 +76,42 @@ export default function About() {
       },
     });
   
-    reels.forEach((inner) => {
-      const outer = inner.parentElement as HTMLElement;
-      const frameH = outer.offsetHeight || 0;
-      const totalFrames = inner.childElementCount;
-      const distance = -frameH * (totalFrames - 1);
-  
-      if (totalFrames > 1) {
-        timeline.to(
-          inner,
-          {
-            y: distance,
-            duration: 0.6 + Math.random() * 0.4,
-            ease: "back.out(1.4)",
-          },
-          Math.random() * 0.3
-        );
-      }
-    });
-  
-    gsap.from([subtitleRef.current, textRef.current], {
-      y: 50,
-      opacity: 0,
-      scale: 0.95,
-      duration: 1.6,
-      ease: "power4.out",
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top 75%",
-        once: true,
+    // GSAP animation for reels (title) remains the same
+reels.forEach((inner) => {
+  const outer = inner.parentElement as HTMLElement;
+  const frameH = outer.offsetHeight || 0;
+  const totalFrames = inner.childElementCount;
+  const distance = -frameH * (totalFrames - 1);
+
+  if (totalFrames > 1) {
+    timeline.to(
+      inner,
+      {
+        y: distance,
+        duration: 0.6 + Math.random() * 0.4,
+        ease: "back.out(1.4)",
       },
-    });
+      Math.random() * 0.3
+    );
+  }
+});
+
+// GSAP animation for subtitle & text
+gsap.set([subtitleRef.current, textRef.current], { opacity: 0, y: 50, scale: 0.95 });
+
+gsap.to([subtitleRef.current, textRef.current], {
+  y: 0,
+  opacity: 1,
+  scale: 1,
+  duration: 1.6,
+  ease: "power4.out",
+  scrollTrigger: {
+    trigger: sectionRef.current,
+    start: "top 75%",
+    once: false, // <--- changed from true
+  },
+});
+
   }, []);
   
   

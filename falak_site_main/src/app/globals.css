@@ -143,8 +143,11 @@ html {
 }
 
 html, body {
-  height: 100%;
+  overflow-x: hidden;
+  height: auto; /* let content decide height */
+  min-height: 100%;
 }
+
 
 main {
   min-height: 100vh;
@@ -209,13 +212,15 @@ main {
 }
 @keyframes marquee {
   0% {
-    transform: translateX(100%);
+    transform: translateX(0%);
   }
   100% {
-    transform: translateX(-100%);
+    transform: translateX(-50%);
   }
 }
 
 .animate-marquee {
+  display: flex;
   animation: marquee 15s linear infinite;
+  width: max-content;
 }

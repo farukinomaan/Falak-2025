@@ -8,12 +8,12 @@ import { ticketCategories } from "@/lib/validation/tickets";
 export default function RegisteredTicketForm({ action }: { action: (fd: FormData) => Promise<void> }) {
   return (
     <div className="bg-[#32212C] backdrop-blur-sm rounded-2xl border-2 border-black/95 p-4 sm:p-6 md:p-8">
-      <h1 className="text-xl sm:text-2xl md:text-3xl text-neutral-100 font-semibold mb-4 sm:mb-6 text-center">
+      <h1 className="font-unlock text-xl sm:text-2xl md:text-3xl text-neutral-100 font-semibold mb-4 sm:mb-6 text-center">
         Support Ticket
       </h1>
       <form action={action} className="space-y-4 sm:space-y-6">
         <div className="space-y-2">
-          <label className="block text-sm sm:text-base font-medium text-neutral-50">
+          <label className="abhaya-font block text-xl sm:text-base font-large text-neutral-50">
             Category
           </label>
           <select 
@@ -29,7 +29,7 @@ export default function RegisteredTicketForm({ action }: { action: (fd: FormData
         </div>
         
         <div className="space-y-2">
-          <label className="block text-sm sm:text-base font-medium text-neutral-50 ">
+          <label className="abhaya-font block text-xl sm:text-base font-large text-neutral-50 ">
             Problem
           </label>
           <textarea

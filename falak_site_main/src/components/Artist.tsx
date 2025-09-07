@@ -6,13 +6,16 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
+
 const Artist: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(0);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
     handleResize();
     window.addEventListener("resize", handleResize);
+    setWindowWidth(window.innerWidth);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -107,10 +110,14 @@ const Artist: React.FC = () => {
       ></div>
 
       {/* Heading */}
-      <h2 className="
-        vintage-font text-center px-4 text-3xl sm:text-4xl md:text-5xl text-[#DBAAA6] z-50
-        mt-17 md:absolute md:top-14 md:left-1/2 md:-translate-x-1/2
-      ">
+      <h2 className="vintage-font text-center px-4 text-3xl sm:text-4xl md:text-5xl text-[#DBAAA6] z-50"
+  style={{
+    marginTop:
+      windowWidth >= 768 && windowWidth < 1024
+        ? "3rem"
+        : "4rem"
+  }}
+>
         MEET THE ARTIST
       </h2>
 

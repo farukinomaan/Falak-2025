@@ -11,17 +11,17 @@ const sponsors = [
   },
   {
     name: "Findoc",
-    logo: "/sponsors/findoc.jpeg",
-    url: "https://findoc.com/", // replace with actual URL
+    logo: "/sponsors/findoc.png",
+    url: "https://findoc.com/",
   },
 ];
 
 const Sponsor: React.FC = () => {
-  const [repeatCount, setRepeatCount] = useState(3);
+  const [repeatCount, setRepeatCount] = useState(2); // at least 2 for seamless loop
 
   useEffect(() => {
     const handleResize = () => {
-      setRepeatCount(window.innerWidth < 768 ? 1 : 3); // 1 repetition for mobile
+      setRepeatCount(window.innerWidth < 768 ? 2 : 4); 
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -38,7 +38,7 @@ const Sponsor: React.FC = () => {
 
       {/* Marquee wrapper */}
       <div className="relative w-full overflow-hidden">
-        <div className="flex whitespace-nowrap animate-marquee min-w-full">
+        <div className="flex whitespace-nowrap animate-marquee">
           {Array(repeatCount)
             .fill(null)
             .flatMap(() => sponsors)
