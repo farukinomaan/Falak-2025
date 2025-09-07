@@ -7,6 +7,7 @@ import { listPassesByIds } from "@/lib/actions/tables/pass";
 import { listTeamMembersByMemberId } from "@/lib/actions/tables/teamMembers";
 import { listTeams } from "@/lib/actions/tables/teams";
 import { listEventsByIds } from "@/lib/actions/tables/events";
+import Link from "next/link";
 import QrCode from "@/components/QrCode";
 import Image from "next/image";
 import RetroAnimations from "../../components/profile/RetroAnimations";
@@ -106,35 +107,41 @@ export default async function ProfilePage() {
                 <EmptyState message="You haven’t registered for any events yet." ctaHref="/sports_events" ctaLabel="Explore Events" />
               ) : (
                 <ul className={styles.eventList}>
-                  {events.map((e) => (
-                    <li key={e.id} className={styles.eventItem}>
-                      <div className={styles.eventContent}>
-                        <h3>{e.name}</h3>
-                        <div className={styles.eventMeta}>
-                          <span>{e.sub_cluster}</span>
-                        </div>
-                        <p className={styles.eventDescription}>{e.description || ""}</p>
-                      </div>
-                      <div className={styles.eventDetails}>
-                        <div className={styles.eventTiming}>
-                          <div className={styles.timingItem}>
-                            <strong>Venue</strong>
-                            <span>{e.venue}</span>
+                  {events.map((e) => {
+                    const cluster = (e.cluster_name || "").toLowerCase().includes("sport") ? "sports" : "cultural";
+                    const href = `/${cluster}/${encodeURIComponent(e.sub_cluster)}/${encodeURIComponent(e.id)}`;
+                    return (
+                      <li key={e.id} className={styles.eventItem}>
+                        <Link href={href} className={styles.eventLink}>
+                          <div className={styles.eventContent}>
+                            <h3>{e.name}</h3>
+                            <div className={styles.eventMeta}>
+                              <span>{e.sub_cluster}</span>
+                            </div>
+                            <p className={styles.eventDescription}>{e.description || ""}</p>
                           </div>
-                          <div className={styles.timingSeparator}></div>
-                          <div className={styles.timingItem}>
-                            <strong>Time</strong>
-                            <span>{e.time}</span>
+                          <div className={styles.eventDetails}>
+                            <div className={styles.eventTiming}>
+                              <div className={styles.timingItem}>
+                                <strong>Venue</strong>
+                                <span>{e.venue}</span>
+                              </div>
+                              <div className={styles.timingSeparator}></div>
+                              <div className={styles.timingItem}>
+                                <strong>Time</strong>
+                                <span>{e.time}</span>
+                              </div>
+                              <div className={styles.timingSeparator}></div>
+                              <div className={styles.timingItem}>
+                                <strong>Date</strong>
+                                <span>{new Date(String(e.date)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                              </div>
+                            </div>
                           </div>
-                          <div className={styles.timingSeparator}></div>
-                          <div className={styles.timingItem}>
-                            <strong>Date</strong>
-                            <span>{new Date(String(e.date)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </section>
