@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useGuestCart } from "./useGuestCart";
+import { useSession, signIn } from "next-auth/react";
 
 /**
  * A simplified Add to Cart button variant for the `/passes` page.
@@ -23,6 +24,7 @@ export default function PassAddToCartButton({
   const { add, ids } = useGuestCart();
   const [pending, start] = useTransition();
   const [added, setAdded] = useState(false);
+  const { status } = useSession();
   const inCart = useMemo(() => added || (ids || []).includes(passId), [added, ids, passId]);
 
   const swappedClassName = useMemo(() => {
@@ -42,6 +44,11 @@ export default function PassAddToCartButton({
 
   const handleClick = () => {
     if (pending) return;
+    if (!inCart && status !== "authenticated") {
+      toast.info("Sign in to continue");
+      signIn();
+      return;
+    }
     if (inCart) {
       router.push("/cart");
       return;

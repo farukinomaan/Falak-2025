@@ -4,12 +4,14 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useGuestCart } from "./useGuestCart";
 import { toast } from "sonner";
+import { useSession, signIn } from "next-auth/react";
 
 export default function AddToCartButton({ passId, className }: { passId: string; className?: string }) {
   const router = useRouter();
   const { add, ids } = useGuestCart();
   const [pending, start] = useTransition();
   const [added, setAdded] = useState(false);
+  const { status } = useSession();
   const inCart = useMemo(() => added || (ids || []).includes(passId), [added, ids, passId]);
   const swappedClassName = useMemo(() => {
     const base = className || "px-4 py-2 rounded bg-black text-white";
@@ -51,6 +53,12 @@ export default function AddToCartButton({ passId, className }: { passId: string;
 
   const onClick = () => {
     if (pending) return;
+    // Require sign-in only when trying to add (not for "Go to Cart")
+    if (!inCart && status !== "authenticated") {
+      toast.info("Sign in to continue");
+      signIn();
+      return;
+    }
     if (inCart) {
       router.push("/cart");
       return;

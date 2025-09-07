@@ -54,9 +54,11 @@ export function RegistrationForm({
           <input
             className="w-full border-2 rounded px-3 py-2 border-[#D3877A] focus:border-[#DBAAA6]"
             value={regNo}
-            onChange={(e) => setRegNo(e.target.value)}
+            onChange={(e) => setRegNo(e.target.value.replace(/[^0-9]/g, ""))}
+            inputMode="numeric"
+            pattern="[0-9]*"
             required
-            placeholder="e.g. MAHE123..."
+            placeholder="2358....."
           />
         </div>
       ) : (
