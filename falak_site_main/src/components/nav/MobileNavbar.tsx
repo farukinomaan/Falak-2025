@@ -3,9 +3,21 @@
 import React from 'react';
 import Link from 'next/link';
 import { Press_Start_2P } from "next/font/google";
-import { Home, CreditCard, Ticket, Trophy, Music, ShoppingCart, LogIn } from 'lucide-react';
+import { Home, CreditCard, Ticket, Trophy, Music, ShoppingCart, LogIn , MessageSquareDashed} from 'lucide-react';
 
 const press = Press_Start_2P({ weight: "400", subsets: ["latin"] });
+
+// Icon mapping for display
+const iconMap: Record<string, React.ComponentType<any>> = {
+  'HOME': Home,
+  'FALAK': Home,
+  'CULTURAL': Music,
+  'SPORTS': Trophy,
+  'PASSES': Ticket,
+  'SUPPORT': MessageSquareDashed,
+  'TICKETS': MessageSquareDashed,
+  'CART': ShoppingCart
+};
 
 interface MobileNavbarProps {
   show: boolean;
@@ -22,12 +34,13 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
   activeSection, 
   menuButtonRef 
 }) => {
+  // Change the /tickets to /support after the file name change
   const menuItems = [
-    { name: 'FALAK', href: '/', icon: Home },
+    { name: 'HOME', href: '/', icon: Home },
     { name: 'CULTURAL', href: '/cultural', icon: Music },
     { name: 'SPORTS', href: '/sports', icon: Trophy },
-    { name: 'PASSES', href: '/passes', icon: CreditCard },
-    { name: 'TICKETS', href: '/tickets', icon: Ticket },
+    { name: 'PASSES', href: '/passes', icon: Ticket },
+    { name: 'SUPPORT', href: '/tickets', icon: MessageSquareDashed },
     { name: 'CART', href: '/cart', icon: ShoppingCart }
   ];
 
@@ -57,7 +70,7 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
           <div
             className="relative px-2 py-1 rounded"
             style={{
-              backgroundColor: "#32212C", 
+              backgroundColor: "#000000", 
               border: "1px solid #DBAAA6", 
               boxShadow:
                 "inset 0 1px 4px rgba(0,0,0,0.7), 0 1px 2px rgba(244,202,142,0.3)",
@@ -65,18 +78,29 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
           >
             <div className="relative">
               <div className="absolute inset-0 rounded bg-orange-300 opacity-20 blur-sm"></div>
-              <div
-                className={`relative font-mono tracking-wider font-bold uppercase ${press.className}`}
-                style={{
-                  color: "#F4CA8E", 
-                  textShadow: "0 0 6px #F4CA8E, 0 0 8px #F4CA8E",
-                  fontFamily: "monospace",
-                  fontSize: "10px",
-                  minWidth: "40px",
-                  textAlign: "center",
-                }}
-              >
-                {activeSection.toUpperCase()}
+              <div className="relative flex items-center justify-center">
+                {activeSection && iconMap[activeSection.toUpperCase()] ? (
+                  React.createElement(iconMap[activeSection.toUpperCase()], {
+                    size: 14,
+                    style: {
+                      color: "#F4CA8E",
+                      filter: "drop-shadow(0 0 4px #F4CA8E)"
+                    }
+                  })
+                ) : (
+                  <div
+                    className={`relative font-mono tracking-wider font-bold uppercase ${press.className}`}
+                    style={{
+                      color: "#F4CA8E", 
+                      fontFamily: "monospace",
+                      fontSize: "10px",
+                      minWidth: "40px",
+                      textAlign: "center",
+                    }}
+                  >
+                    {activeSection.toUpperCase()}
+                  </div>
+                )}
               </div>
               <div className="absolute inset-0 pointer-events-none">
                 <div
@@ -209,9 +233,10 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
                     border: '1px solid rgba(219, 170, 166, 0.3)',
                     backdropFilter: 'blur(8px)',
                     animationDelay: `${index * 80}ms`,
-                    boxShadow: isActive 
-                      ? '0 4px 16px rgba(244, 202, 142, 0.3)' 
-                      : '0 2px 8px rgba(0, 0, 0, 0.2)'
+                    boxShadow: 
+                    // isActive 
+                    //   ? '0 4px 16px rgba(244, 202, 142, 0.3)' 
+                       '0 2px 8px rgba(0, 0, 0, 0.2)'
                   }}
                 >
                   {/* Subtle hover glow */}
@@ -224,8 +249,8 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
                       <IconComponent 
                         size={16}
                         style={{
-                          color: isActive ? '#F4CA8E' : '#DBAAA6',
-                          filter: isActive ? 'drop-shadow(0 0 4px #F4CA8E)' : 'none',
+                          color: isActive ? '#DBAAA6' : '#DBAAA6',
+                          // filter: isActive ? 'drop-shadow(0 0 4px #F4CA8E)' : 'none',
                         }}
                         className="flex-shrink-0 transition-all duration-300"
                       />
@@ -234,8 +259,8 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
                       <div
                         className="relative font-bold tracking-wider transition-all duration-300"
                         style={{
-                          color: isActive ? '#F4CA8E' : '#DBAAA6',
-                          textShadow: isActive ? '0 0 8px #F4CA8E' : 'none',
+                          color: isActive ? '#DBAAA6' : '#DBAAA6',
+                          // textShadow: isActive ? '0 0 8px #F4CA8E' : 'none',
                           fontSize: '14px'
                         }}
                       >
@@ -244,7 +269,7 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
                     </div>
 
                     {/* Active indicator dot */}
-                    {isActive && (
+                    {/* {isActive && (
                       <div 
                         className="w-3 h-3 rounded-full animate-pulse flex-shrink-0"
                         style={{
@@ -252,7 +277,7 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
                           boxShadow: '0 0 8px rgba(244, 202, 142, 0.8)'
                         }}
                       />
-                    )}
+                    )} */}
                   </div>
                 </Link>
               );
@@ -289,7 +314,7 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
             </div>
           </Link>
 
-          {/* Close hint */}
+          {/* FOOTER*/}
           <div className="absolute bottom-8 text-center">
             <div 
               className={`text-xs opacity-50 ${press.className}`}

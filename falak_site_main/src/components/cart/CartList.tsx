@@ -1,4 +1,5 @@
 
+
 /**
  * @copyright Falak 2025 
  */
@@ -10,14 +11,9 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { toast } from "sonner";
 
-// PassRow now includes original_id which represents the id originally stored in localStorage.
-// When a user adds an EVENT (event_id) instead of a specific pass id, the guest cart stores the event id.
-// The /api/cart/guest_passes endpoint resolves that to a Pass row whose own id differs from the original event id.
-// For removal we must remove the ORIGINAL id from localStorage, not the resolved pass id, otherwise the item reappears.
-type PassRow = { id: string; pass_name: string; description?: string | null; cost?: number | string | null; original_id?: string };
+type PassRow = { id: string; pass_name: string; description?: string | null; cost?: number | string | null };
 
-// 'passes' prop no longer used after migration to entirely client-resolved guest cart; removing to avoid confusion.
-export default function CartList() {
+export default function CartList({ passes }: { passes: PassRow[] }) {
   const { ids, remove } = useGuestCart();
   const [guestPasses, setGuestPasses] = useState<PassRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,7 +46,7 @@ export default function CartList() {
           setGuestPasses([]);
         }
       }
-  } catch {
+    } catch (error) {
       setGuestPasses([]);
     } finally {
       setLoading(false);
@@ -81,15 +77,10 @@ export default function CartList() {
 
   const view = useMemo(() => guestPasses, [guestPasses]);
 
-  const handleRemove = (displayId: string, originalId?: string) => {
+  const handleRemove = (id: string) => {
     start(async () => {
-      // Prefer originalId (what's actually stored) if it differs from the pass id returned by the API.
-      const target = originalId && originalId.length > 0 ? originalId : displayId;
-      remove(target);
-      // Defensive: if both ids exist & differ, remove both (harmless if one is absent)
-      if (originalId && originalId !== displayId) {
-        remove(displayId);
-      }
+      remove(id);
+      // Dispatching event to update other cart components
       window.dispatchEvent(new CustomEvent("cart:updated"));
     });
   };
@@ -123,7 +114,7 @@ export default function CartList() {
       <div
         className="absolute pointer-events-none inset-0"
         style={{
-          backgroundImage: 'url(/background.svg)',
+          backgroundImage: 'url(/background.svg)', //animated svg is active
           backgroundRepeat: 'no-repeat',
           backgroundSize: 'cover', // or 'contain' depending on your preference
           backgroundPosition: 'center',
@@ -149,8 +140,8 @@ export default function CartList() {
                   <p className="text-gray-400 text-lg mb-6 font-medium">Your cart is empty.</p>
                   <Link
                     href="/passes"
-                    className="inline-flex items-center px-8 py-4 text-white font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
-                    style={{ backgroundColor: '#DBAAA6' }}
+                    className="inline-flex items-center px-8 py-4 font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+                    style={{ backgroundColor: '#DBAAA6', color:'#32212C' }}
                   >
                     Browse Passes
                   </Link>
@@ -177,7 +168,9 @@ export default function CartList() {
                               )}
                               <button
                                 disabled={pending}
-                                onClick={() => handleRemove(p.id)} className="px-4 py-2 font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: '#D7897D', color: '#32212C' }}
+                                onClick={() => handleRemove(p.id)}
+                                className="px-4 py-2 font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                                style={{ backgroundColor: '#D7897D', color: '#32212C' }}
                               >
                                 Remove
                               </button>

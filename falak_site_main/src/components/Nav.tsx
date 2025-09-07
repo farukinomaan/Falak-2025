@@ -69,10 +69,11 @@ export default function Nav() {
 
   // Desktop primary items (Sports & Cultural moved under Events dropdown)
   const navItems: NavItem[] = useMemo(() => ([
-    { id: "FALAK", label: "FALAK", href: "/" },
+    //note: didnt changed id 
+    { id: "FALAK", label: "Home", href: "/" }, 
     { id: "events", label: "Events", href: "/events" },
     { id: "passes", label: "Passes", href: "/passes" },
-    { id: "tickets", label: "Tickets", href: "/tickets" },
+    { id: "tickets", label: "Support", href: "/tickets" },
   ]), []);
 
   // Extended candidates for mobile & active detection (not all appear in desktop spinner cycle)
@@ -181,3 +182,4 @@ export default function Nav() {
     </>
   );
 }
+
