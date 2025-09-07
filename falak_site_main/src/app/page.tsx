@@ -1,11 +1,9 @@
-import Link from "next/link";
 import Hero from "@/components/Hero";
 import Head from "next/head";
 import Artist from "@/components/Artist";
 import Timeline from "@/components/Timeline";
 import Trailer from "@/components/Trailer";
 import Footer from "@/components/Footer";
-import Image from "next/image";
 import { Orbitron } from "next/font/google";
 import About from "@/components/About";
 import Sponsor from "@/components/Sponsor";

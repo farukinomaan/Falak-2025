@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { UserMenu } from "./nav/UserMenu";
 import { DesktopNavbar } from "./nav/DesktopNavbar";
@@ -20,7 +20,6 @@ interface NavItem {
 
 export default function Nav({ isMenuOpen, setIsMenuOpen }: NavProps) {
   const [activeSection, setActiveSection] = useState<string>("events");
-  const router = useRouter();
   const pathname = usePathname();
   const [internalMenuOpen, setInternalMenuOpen] = useState<boolean>(false);
   const [show, setShow] = useState(true);
@@ -107,14 +106,7 @@ export default function Nav({ isMenuOpen, setIsMenuOpen }: NavProps) {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  const handleItemClick = (itemId: string): void => {
-    const target = navItems.find((n) => n.id === itemId);
-    if (target) {
-      setActiveSection(itemId);
-      router.push(target.href);
-    }
-    setMobileMenuOpen(false);
-  };
+  // Legacy handler kept for reference; current buttons use link navigation.
 
   return (
     <>

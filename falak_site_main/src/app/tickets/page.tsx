@@ -6,12 +6,6 @@ import RegisteredTicketForm from "../../components/tickets/ti_register";
 import UnregisteredNotice from "../../components/tickets/ti_unreg";
 import { redirect } from "next/navigation";
 import { Orbitron } from "next/font/google"; 
-import { Roboto_Mono } from "next/font/google"; 
-
-const robotoMono = Roboto_Mono({ 
-  subsets: ["latin"], 
-  weight: ["400", "500", "700"], 
-});
 
 const orbitron = Orbitron({ 
   subsets: ["latin"], 

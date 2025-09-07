@@ -1,7 +1,7 @@
 "use client";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/all";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Button from "./Button";
@@ -9,7 +9,6 @@ import Button from "./Button";
 gsap.registerPlugin(ScrollTrigger);
 
 const Hero: React.FC = () => {
-  const [currentIndex] = useState<number>(1);
   const mainVideoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
@@ -30,7 +29,7 @@ const Hero: React.FC = () => {
     });
   }, []);
 
-  const getVideoSrc = (index: number): string => `/videos/bh.mp4`;
+  const getVideoSrc = (): string => `/videos/bh.mp4`;
 
   const prefersReducedMotion =
     typeof window !== "undefined" &&
@@ -49,7 +48,7 @@ const Hero: React.FC = () => {
           {!prefersReducedMotion ? (
             <video
               ref={mainVideoRef}
-              src={getVideoSrc(currentIndex)}
+              src={getVideoSrc()}
               autoPlay
               loop
               muted
