@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 // Shared server-side helpers for Sports & Cultural event pages to avoid duplication.
 // Each function returns the JSX formerly duplicated in individual route files.
 
@@ -48,7 +47,8 @@ export function PageBackground({ cluster }: { cluster: string }) {
       height: 100%;
       background-position: center center;
       background-attachment: fixed;
-      z-index: 1; 
+  z-index: 1; 
+  pointer-events: none; /* Don't block clicks */
       background-repeat: no-repeat;
       background-size: cover;
       ${isSports
@@ -168,7 +168,6 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
 
   if (list.length === 0) return notFound();
 
-  const nice = clusterLabel(cluster);
   return (
     <>
       {cluster === 'cultural' && <CulturalAnimations />}
@@ -318,10 +317,15 @@ export async function ClusterEvent({
             </div>
             {(() => {
               if (existingTeam) {
+                const capId = existingTeam.team.captainId;
+                const capInfo = capId ? memberUsersById?.get(capId) : undefined;
                 return (
                   <div className="space-y-3 border rounded-lg p-4 bg-black/20">
                     <h2 className="text-xl font-medium">Your Team</h2>
                     <p className="text-md">Name: {existingTeam.team.name}</p>
+                    {capInfo && (
+                      <p className="text-md">Captain: {capInfo.name || capInfo.email || capId}</p>
+                    )}
                     <p className="text-md">Members ({existingTeam.members.length}):</p>
                     <ul className="list-disc list-inside text-md space-y-1">
                       {existingTeam.members.map((m) => {

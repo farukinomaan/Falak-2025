@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import AdminManage from "@/components/admin/AdminManage";
 import { getRoleForEmail } from "@/lib/actions/adminAggregations";
+import { PageBackground } from "../_clusterPages/clusterPages";
 
 export default async function AdminManagePage() {
   const session = await getServerSession(authOptions);
@@ -13,6 +14,12 @@ export default async function AdminManagePage() {
     // No role -> redirect home
     redirect("/");
   }
-  return <AdminManage role={role} />;
+  return (
+    <>
+      {/* Match profile page background */}
+      <PageBackground cluster="cultural" />
+      <AdminManage role={role} />
+    </>
+  );
 }
 

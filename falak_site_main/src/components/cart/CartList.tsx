@@ -149,7 +149,7 @@ export default function CartList() {
       <div
         className="absolute pointer-events-none inset-0"
         style={{
-          backgroundImage: 'url(/background.svg)', //animated svg is active
+          backgroundImage: 'url(/bg.svg)', //animated svg is active
           backgroundRepeat: 'no-repeat',
           backgroundSize: 'cover', // or 'contain' depending on your preference
           backgroundPosition: 'center',
