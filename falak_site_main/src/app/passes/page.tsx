@@ -1,4 +1,5 @@
 import Features from "@/components/Features";
+import Vinyl from "@/components/profile/Vinyl";
 import { saListProshowPasses } from "@/lib/actions/adminAggregations";
 
 export const revalidate = 60;
@@ -13,11 +14,12 @@ export default async function PassesPage() {
     <div
       className="min-h-screen relative overflow-hidden"
       style={{
-        // Use the provided SVG as the page background
-        backgroundImage: "url('/background.svg')",
-        backgroundSize: 'cover',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center top'
+  // Use the cultural events background and shift vinyl to bottom-right
+  backgroundImage: "url('/cultural.svg')",
+  backgroundSize: 'cover',
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right bottom',
+  backgroundAttachment: 'fixed'
       }}
     >
       {/* Main content with purple background */}
@@ -25,25 +27,34 @@ export default async function PassesPage() {
         <Features passes={passes} />
       </div>
 
-      {/* Background decorative vectors (non-interactive) */}
+      {/* Dim the background slightly without affecting foreground */}
       <div
-        className="pointer-events-none absolute bottom-0 left-0 w-full h-[55vh] -z-10"
+        className="pointer-events-none absolute inset-0 bg-black/50 z-10"
+        aria-hidden
+      />
+
+      {/* Decorative wave background replacing vectors */}
+      <div
+        className="pointer-events-none absolute bottom-0 left-0 w-full h-[60vh] -z-10"
         style={{
-          backgroundImage: "url('/vec5.png')",
-          backgroundSize: "100%",
+          backgroundImage: "url('/wave2.svg')",
+          backgroundSize: "cover",
           backgroundPosition: "center bottom",
-          backgroundRepeat: "no-repeat"
+          backgroundRepeat: "no-repeat",
+          opacity: 0.9
         }}
       />
+
+      {/* Decorative vinyl in bottom-right corner */}
       <div
-        className="pointer-events-none absolute bottom-0 left-0 w-full h-[60vh] -z-20"
-        style={{
-          backgroundImage: "url('/vec4.png')",
-          backgroundSize: "100%",
-          backgroundPosition: "center bottom",
-          backgroundRepeat: "no-repeat"
-        }}
-      />
+        className="pointer-events-none absolute right-2 bottom-2 sm:right-6 sm:bottom-6 md:right-10 md:bottom-10 -z-5"
+        aria-hidden
+        style={{ filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.5))' }}
+      >
+        <div className="w-28 h-28 sm:w-40 sm:h-40 md:w-52 md:h-52 opacity-90">
+          <Vinyl />
+        </div>
+      </div>
     </div>
   );
 }
