@@ -65,10 +65,10 @@ export const BentoCard: React.FC<BentoCardProps> = ({ title, description, price,
   );
 };
 type FeaturePass = { id: string; pass_name: string; description?: string | null; cost?: number | string | null };
-interface FeaturesProps { passes?: FeaturePass[] }
+interface FeaturesProps { passes?: FeaturePass[]; isMahe?: boolean }
 type Tile = { id: string; title: string; description?: string; price: string; videoSrc: string; passId?: string };
 
-const Features: React.FC<FeaturesProps> = ({ passes = [] }) => {
+const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false }) => {
   // Normalize data: enforce exactly 3 tiles to match 2x2 grid with first spanning 2 rows
   const normalized: Tile[] = (passes || []).map((p) => ({
     id: p.id,
@@ -113,6 +113,7 @@ const Features: React.FC<FeaturesProps> = ({ passes = [] }) => {
                     description: tile.description,
                     cost: tile.price.replace('₹', '')
                   }} 
+                  isMahe={isMahe}
                 />
               )}
             </div>

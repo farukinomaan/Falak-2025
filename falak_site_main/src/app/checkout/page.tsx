@@ -10,13 +10,13 @@ import { useEffect, useMemo, useState } from "react";
 import CheckoutGrid from "@/components/cart/CheckoutGrid";
 import { useSession, signIn } from "next-auth/react";
 import Link from "next/link";
-import { toast } from "sonner";
+import Image from "next/image";
 
 type Row = { id: string; pass_name: string; description?: string | null; cost?: number | string | null };
 
 export default function CheckoutPage() {
   const { status } = useSession();
-  const { ids, clear } = useGuestCart();
+  const { ids } = useGuestCart();
   const [passes, setPasses] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -29,8 +29,33 @@ export default function CheckoutPage() {
           const params = new URLSearchParams({ ids: ids.join(",") });
           const res = await fetch(`/api/cart/guest_passes?${params.toString()}`, { cache: "no-store", signal: controller.signal });
           const json = await res.json().catch(() => null);
-          if (res.ok && json?.ok && Array.isArray(json.data)) setPasses(json.data);
-          else setPasses([]);
+          type RowWithEvent = Row & { event_id?: string | null };
+          let rows = res.ok && json?.ok && Array.isArray(json.data) ? (json.data as RowWithEvent[]) : [];
+          // Remove items already owned by the user (by passId or event_id)
+          try {
+            const ownRes = await fetch("/api/me/owned", { cache: "no-store", signal: controller.signal });
+            const ownJson = await ownRes.json().catch(() => null);
+            if (ownRes.ok && ownJson?.ok) {
+              const ownedPassIds: string[] = Array.isArray(ownJson.passIds) ? ownJson.passIds : [];
+              const ownedEventIds: string[] = Array.isArray(ownJson.eventIds) ? ownJson.eventIds : [];
+              if (ownedPassIds.length || ownedEventIds.length) {
+                const ownedSet = new Set<string>([...ownedPassIds, ...ownedEventIds]);
+                // rows may contain id or event_id as match
+                rows = rows.filter((r: RowWithEvent) => !ownedSet.has(r.id) && (!r.event_id || !ownedSet.has(r.event_id)));
+                // Also prune localStorage ids to avoid re-adding
+                try {
+                  const raw = localStorage.getItem("guest_cart_pass_ids");
+                  const cur = raw ? (JSON.parse(raw) as string[]) : [];
+                  const next = cur.filter((x) => !ownedSet.has(x));
+                  if (next.length !== cur.length) {
+                    localStorage.setItem("guest_cart_pass_ids", JSON.stringify(next));
+                    window.dispatchEvent(new CustomEvent("cart:updated"));
+                  }
+                } catch {}
+              }
+            }
+          } catch {}
+          setPasses(rows);
         } catch {
           setPasses([]);
         } finally {
@@ -188,7 +213,7 @@ export default function CheckoutPage() {
             </div>
           </div>
           <div className="mt-12 grid place-items-center">
-            <img src="/end.svg" alt="" className="w-64 h-32 object-contain" />
+            <Image src="/end.svg" alt="" width={256} height={128} className="w-64 h-32 object-contain" />
           </div>
         </div>
         

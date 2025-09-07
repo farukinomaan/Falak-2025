@@ -1,6 +1,7 @@
 "use client";
 
 import PassAddToCartButton from "@/components/cart/PassAddToCartButton";
+import Link from "next/link";
 import React, { useState, useCallback, useEffect } from "react";
 
 interface CassettePassProps {
@@ -10,9 +11,10 @@ interface CassettePassProps {
     description?: string | null;
     cost?: number | string | null;
   };
+  isMahe?: boolean;
 }
 
-export default function CassettePass({ pass }: CassettePassProps) {
+export default function CassettePass({ pass, isMahe = false }: CassettePassProps) {
   // Flip state
   const [flipped, setFlipped] = useState(false);
   const [introDone, setIntroDone] = useState(false);
@@ -84,18 +86,36 @@ export default function CassettePass({ pass }: CassettePassProps) {
       {/* Keep the Add to Cart button outside the rotating 3D plane so it never tilts */}
       {!flipped && (
         <div className="absolute bottom-4 xs:bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 z-50" onClick={stop}>
-          <PassAddToCartButton
-            passId={pass.id}
-            className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-[#D7897D] text-white font-semibold shadow-lg hover:bg-[#c97b70] transition-colors duration-200 text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D7897D]"
-          />
+          {isMahe ? (
+            <Link
+              href="https://payment.manipal.edu"
+              className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-white text-[#D7897D] font-semibold shadow-lg hover:bg-gray-100 transition-colors duration-200 text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D7897D]"
+            >
+              Buy Now
+            </Link>
+          ) : (
+            <PassAddToCartButton
+              passId={pass.id}
+              className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-[#D7897D] text-white font-semibold shadow-lg hover:bg-[#c97b70] transition-colors duration-200 text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D7897D]"
+            />
+          )}
         </div>
       )}
       {flipped && (
         <div className="absolute bottom-4 xs:bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 z-50" onClick={stop}>
-          <PassAddToCartButton
-            passId={pass.id}
-            className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-[#D7897D] text-white font-semibold shadow-lg hover:bg-[#c97b70] transition-colors duration-200 text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D7897D]"
-          />
+          {isMahe ? (
+            <Link
+              href="https://payment.manipal.edu"
+              className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-white text-[#D7897D] font-semibold shadow-lg hover:bg-gray-100 transition-colors duration-200 text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D7897D]"
+            >
+              Buy Now
+            </Link>
+          ) : (
+            <PassAddToCartButton
+              passId={pass.id}
+              className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-[#D7897D] text-white font-semibold shadow-lg hover:bg-[#c97b70] transition-colors duration-200 text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D7897D]"
+            />
+          )}
         </div>
       )}
       <style jsx>{`

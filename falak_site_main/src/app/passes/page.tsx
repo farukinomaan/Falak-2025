@@ -1,6 +1,10 @@
 import Features from "@/components/Features";
 import Vinyl from "@/components/profile/Vinyl";
 import { saListProshowPasses } from "@/lib/actions/adminAggregations";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getUserByEmail } from "@/lib/actions";
+import type { User } from "@/lib/actions";
 
 export const revalidate = 60;
 
@@ -9,6 +13,18 @@ type PassCard = { id: string; pass_name: string; description?: string | null; co
 export default async function PassesPage() {
   const res = await saListProshowPasses();
   const passes: PassCard[] = res.ok ? (res.data as PassCard[]) : [];
+  // Determine if current user is MAHE
+  const session = await getServerSession(authOptions);
+  let isMahe = false;
+  if (session?.user?.email) {
+    try {
+      const u = await getUserByEmail(session.user.email);
+      if (u.ok && u.data) {
+        const user = u.data as User;
+        isMahe = Boolean(user.mahe);
+      }
+    } catch {}
+  }
   
   return (
     <div
@@ -24,7 +40,7 @@ export default async function PassesPage() {
     >
       {/* Main content with purple background */}
       <div className="relative z-20 ">
-        <Features passes={passes} />
+        <Features passes={passes} isMahe={isMahe} />
       </div>
 
       {/* Dim the background slightly without affecting foreground */}

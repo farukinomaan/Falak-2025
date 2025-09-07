@@ -347,7 +347,7 @@ export async function ClusterEvent({
         </div>
 
         
-        {owned && !existingTeam && (
+    {owned && !existingTeam && (
           <div className="mt-8" style={{ position: 'relative', zIndex: 5 }}>
             
             <TeamRegistrationClient
@@ -355,6 +355,7 @@ export async function ClusterEvent({
               captainId={userId || ""}
               captainName={session?.user?.name || null}
               minSize={1}
+      leaderHint={eligibleUniversal && !ownedEventIds.has(event.id)}
             />
           </div>
         )}

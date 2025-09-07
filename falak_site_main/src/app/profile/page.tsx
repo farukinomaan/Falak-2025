@@ -8,9 +8,11 @@ import { listTeamMembersByMemberId } from "@/lib/actions/tables/teamMembers";
 import { listTeams } from "@/lib/actions/tables/teams";
 import { listEventsByIds } from "@/lib/actions/tables/events";
 import QrCode from "@/components/QrCode";
+import Image from "next/image";
 import RetroAnimations from "../../components/profile/RetroAnimations";
 import { PageBackground } from "../_clusterPages/clusterPages";
 import styles from "./page.module.css";
+import LogoutButton from "@/components/auth/LogoutButton";
 
 export default async function ProfilePage() {
    const session = await getServerSession(authOptions);
@@ -140,8 +142,12 @@ export default async function ProfilePage() {
         </div>
         <RetroAnimations />
         </div>
-        <img src="/wave.svg" alt="decorative wave" className={`${styles.waveImg} ${styles.waveTopLeft}`} />
-        <img src="/wave.svg" alt="decorative wave" className={`${styles.waveImg} ${styles.waveBottomRight}`} />
+        {/* Logout button fixed at bottom-right */}
+        <div className="right-6 bottom-6 z-50">
+          <LogoutButton />
+        </div>
+  <Image src="/wave.svg" alt="decorative wave" width={400} height={200} className={`${styles.waveImg} ${styles.waveTopLeft}`} />
+  <Image src="/wave.svg" alt="decorative wave" width={400} height={200} className={`${styles.waveImg} ${styles.waveBottomRight}`} />
       </div>
     </>
   );
