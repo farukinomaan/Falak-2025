@@ -1,19 +1,23 @@
-
-
 /**
  * @copyright Falak 2025 
  */
 
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useGuestCart } from "./useGuestCart";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { toast } from "sonner";
 
-type PassRow = { id: string; pass_name: string; description?: string | null; cost?: number | string | null };
+// PassRow now includes original_id which represents the id originally stored in localStorage.
+// When a user adds an EVENT (event_id) instead of a specific pass id, the guest cart stores the event id.
+// The /api/cart/guest_passes endpoint resolves that to a Pass row whose own id differs from the original event id.
+// For removal we must remove the ORIGINAL id from localStorage, not the resolved pass id, otherwise the item reappears.
+type PassRow = { id: string; pass_name: string; description?: string | null; cost?: number | string | null; original_id?: string; event_id?: string | null };
 
-export default function CartList({ passes }: { passes: PassRow[] }) {
+// 'passes' prop no longer used after migration to entirely client-resolved guest cart; removing to avoid confusion.
+export default function CartList() {
   const { ids, remove } = useGuestCart();
   const [guestPasses, setGuestPasses] = useState<PassRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,13 +44,38 @@ export default function CartList({ passes }: { passes: PassRow[] }) {
 
       if (res.ok) {
         const json = await res.json();
+        let rows: PassRow[] = [];
         if (json?.ok && Array.isArray(json.data)) {
-          setGuestPasses(json.data);
-        } else {
-          setGuestPasses([]);
+          rows = json.data as PassRow[];
         }
+        // If signed in, fetch owned passes and filter them out from both
+        // the in-memory list and localStorage ids.
+        try {
+          const ownRes = await fetch("/api/me/owned", { cache: "no-store" });
+          const ownJson = await ownRes.json().catch(() => null);
+          if (ownRes.ok && ownJson?.ok) {
+            const ownedPassIds: string[] = Array.isArray(ownJson.passIds) ? ownJson.passIds : [];
+            const ownedEventIds: string[] = Array.isArray(ownJson.eventIds) ? ownJson.eventIds : [];
+            if (ownedPassIds.length || ownedEventIds.length) {
+              const ownedSet = new Set<string>([...ownedPassIds, ...ownedEventIds]);
+              const filtered = rows.filter((r: PassRow) => !ownedSet.has(r.id) && (!r.event_id || !ownedSet.has(r.event_id)));
+              // Also remove any owned ids from localStorage source of truth
+              try {
+                const raw = localStorage.getItem("guest_cart_pass_ids");
+                const cur = raw ? (JSON.parse(raw) as string[]) : [];
+                const next = cur.filter((x) => !ownedSet.has(x));
+                if (next.length !== cur.length) {
+                  localStorage.setItem("guest_cart_pass_ids", JSON.stringify(next));
+                  window.dispatchEvent(new CustomEvent("cart:updated"));
+                }
+              } catch {}
+              rows = filtered as PassRow[];
+            }
+          }
+        } catch {}
+        setGuestPasses(rows);
       }
-    } catch (error) {
+  } catch {
       setGuestPasses([]);
     } finally {
       setLoading(false);
@@ -77,11 +106,17 @@ export default function CartList({ passes }: { passes: PassRow[] }) {
 
   const view = useMemo(() => guestPasses, [guestPasses]);
 
-  const handleRemove = (id: string) => {
+  const handleRemove = (displayId: string, originalId?: string) => {
     start(async () => {
-      remove(id);
-      // Dispatching event to update other cart components
+      // Prefer originalId (what's actually stored) if it differs from the pass id returned by the API.
+      const target = originalId && originalId.length > 0 ? originalId : displayId;
+      remove(target);
+      // Defensive: if both ids exist & differ, remove both (harmless if one is absent)
+      if (originalId && originalId !== displayId) {
+        remove(displayId);
+      }
       window.dispatchEvent(new CustomEvent("cart:updated"));
+  toast.success("Removed from cart");
     });
   };
 
@@ -168,9 +203,7 @@ export default function CartList({ passes }: { passes: PassRow[] }) {
                               )}
                               <button
                                 disabled={pending}
-                                onClick={() => handleRemove(p.id)}
-                                className="px-4 py-2 font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                                style={{ backgroundColor: '#D7897D', color: '#32212C' }}
+                                onClick={() => handleRemove(p.id, p.original_id)} className="px-4 py-2 font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: '#D7897D', color: '#32212C' }}
                               >
                                 Remove
                               </button>
