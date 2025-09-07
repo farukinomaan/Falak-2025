@@ -89,7 +89,7 @@ export async function ClusterRoot({ cluster }: { cluster: string }) {
         
         <header className="space-y-2 text-center">
           <h1 className="text-4xl font-semibold">{nice} Events</h1>
-          <p className="text-md text-muted-foreground">All {nice.toLowerCase()} categories.</p>
+          {/* <p className="text-md text-muted-foreground">All {nice.toLowerCase()} categories.</p> */}
         </header>
         {subs.length === 0 && (
           <p className="text-md text-muted-foreground">No {nice.toLowerCase()} events available.</p>

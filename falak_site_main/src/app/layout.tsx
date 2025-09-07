@@ -11,6 +11,7 @@ import { Toaster } from "sonner";
 import NavProgress from "@/components/NavProgress";
 import Navbar from "@/components/Nav";
 import { useState } from "react";
+import Link from "next/link"; 
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,21 +54,24 @@ export default function RootLayout({
           <Navbar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
 
           {/* Fixed Logo */}
-          <div
-            className={`fixed -top-6 right-0 z-[9999] xl:left-4 xl:top-[-3.5rem] xl:right-auto transition-all duration-300${
-              isMenuOpen ? "opacity-0 pointer-events-none" : "opacity-100"
-            }`}
-            style={{ transform: "translateZ(0)" }}
-          >
-            <Image
-              src="/images/logo.png"
-              alt="Falak Logo"
-              width={400}
-              height={320}
-              className="w-[200px] h-[120px] xl:w-[300px] xl:h-[200px]"
-              priority
-            />
-          </div>
+<div
+  className={`fixed -top-6 right-0 z-[9999] xl:left-4 xl:top-[-3.5rem] xl:right-auto transition-all duration-300${
+    isMenuOpen ? "opacity-0 pointer-events-none" : "opacity-100"
+  }`}
+  style={{ transform: "translateZ(0)" }}
+>
+  <Link href="/" aria-label="Go to homepage">
+    <Image
+      src="/images/logo.png"
+      alt="Falak Logo"
+      width={400}
+      height={320}
+      className="w-[200px] h-[120px] xl:w-[300px] xl:h-[200px] cursor-pointer"
+      priority
+    />
+  </Link>
+</div>
+
 
           <main className="flex-1 w-full min-h-screen">{children}</main>
           <NavProgress />

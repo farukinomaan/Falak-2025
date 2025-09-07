@@ -49,7 +49,7 @@ export default async function TicketsPage() {
   {/* SVG overlay */}
   <div
     className="absolute inset-0 bg-cover bg-center opacity-20 z-[-2]"
-    style={{ backgroundImage: "url('/background.svg')" }}
+    style={{ backgroundImage: "url('/bg.svg')" }}
   />
 
   {/* Optional dark overlay */}

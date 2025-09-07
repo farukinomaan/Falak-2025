@@ -170,7 +170,7 @@ main {
 
 
 @layer base {
-  * {
+  :where(button, input, textarea, select) {
     @apply border-border outline-ring/50;
   }
   body {
@@ -223,4 +223,22 @@ main {
   display: flex;
   animation: marquee 15s linear infinite;
   width: max-content;
+}
+
+.button-shadow-border {
+  border: 2px solid #1a0e07;
+  border-bottom: 6px solid #1a0e07;
+  border-right: 6px solid #1a0e07;
+}
+
+.button-shadow-border:hover {
+  transform: translate(2px, 2px);
+  border-bottom: 4px solid #1a0e07;
+  border-right: 4px solid #1a0e07;
+}
+
+.button-shadow-border:active {
+  transform: translate(4px, 4px);
+  border-bottom: 2px solid #1a0e07;
+  border-right: 2px solid #1a0e07;
 }

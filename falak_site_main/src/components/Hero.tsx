@@ -42,7 +42,7 @@ const Hero: React.FC = () => {
   <div
     id="video-frame"
     className="relative z-10 h-[100dvh] w-full overflow-hidden rounded-lg bg-blue-75"
-    style={{ willChange: "transform" }}
+    style={{ willChange: "transform", pointerEvents: "none"}}
   >
 
         <div>
@@ -68,44 +68,47 @@ const Hero: React.FC = () => {
               fill
               priority
               sizes="100vw"
-              className="absolute left-0 top-0 object-cover object-center"
+              className="absolute left-0 top-0 object-cover object-center pointer-events-none"
             />
           )}
         </div>
 
         {/* Foreground Text */}
-        <h1 className="vintage-font absolute bottom-5 right-5 z-40 text-[#DBAAA6] sm:text-2xl md:text-5xl">
+        <h1 className="vintage-font absolute bottom-5 right-5 z-40 text-[#DBAAA6] sm:text-2xl md:text-5xl pointer-events-none">
           <b>JOIN US</b>
         </h1>
 
         {/* Overlay Content */}
 {/* Overlay Content */}
-<div className="absolute top-20 left-2 sm:top-22 sm:left-10 z-[50] flex flex-col items-start space-y-4">
+<div className="absolute top-20 left-2 sm:top-22 sm:left-10 z-[999] flex flex-col items-start space-y-4 pointer-events-auto">
   <h3 className="vintage-font text-white text-lg sm:text-xl md:text-2xl">
     {/* optional heading content */}
   </h3>
 
-  <Link href="/passes">
-    <Button
-      title="Get your passes now"
-      containerClass="
-        bg-[#DBAAA6]
-        text-[#1A0E07]
-        uppercase tracking-wide
-        rounded-md
-        vintage-font
-        border-2 border-[#1A0E07]
-        shadow-[4px_4px_0px_0px_rgba(26,14,7,1)]
-        text-sm sm:text-base md:text-lg
-      "
-    />
-  </Link>
+  <div className="absolute top-7 left-2 sm:top-7 sm:left-9 z-[60] pointer-events-auto flex flex-col items-start space-y-4">
+    <Link href="/passes" className="pointer-events-auto">
+      <Button
+        title="Get your passes now"
+        containerClass="
+          bg-[#DBAAA6]
+          text-[#1A0E07]
+          uppercase tracking-wide
+          rounded-md
+          vintage-font
+          text-sm sm:text-base md:text-lg
+          button-shadow-border
+          whitespace-nowrap
+        "
+      />
+    </Link>
+  </div>
 </div>
+
 
       </div>
 
       {/* Background Text */}
-      <h1 className="vintage-font absolute bottom-5 right-5 text-[#D7897D] sm:text-2xl md:text-5xl z-[10]">
+      <h1 className="vintage-font absolute bottom-5 right-5 text-[#D7897D] sm:text-2xl md:text-5xl z-[10] pointer-events-none">
         <b>JOIN US</b>
       </h1>
     </div>
