@@ -78,7 +78,7 @@ export default function CheckoutPage() {
         <div
           className="absolute pointer-events-none inset-0"
           style={{
-            backgroundImage: 'url(/background.svg)',
+            backgroundImage: 'url(/bg.svg)', //change background to bg
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover', // or 'contain' depending on your preference
             backgroundPosition: 'center',
