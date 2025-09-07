@@ -18,12 +18,13 @@ const OnboardSchema = z
   })
   .superRefine((val, ctx) => {
     if (val.mahe) {
-      if (!val.regNo || val.regNo.trim().length < 2) {
-        ctx.addIssue({ code: "custom", path: ["regNo"], message: "Registration number is required for MAHE" });
+      const digits = (val.regNo || '').replace(/[^0-9]/g, '');
+      if (digits.length !== 9) {
+        ctx.addIssue({ code: 'custom', path: ['regNo'], message: 'Registration number must be exactly 9 digits' });
       }
     } else {
       if (!val.institute || val.institute.trim().length < 2) {
-        ctx.addIssue({ code: "custom", path: ["institute"], message: "College name is required for Non-MAHE" });
+        ctx.addIssue({ code: 'custom', path: ['institute'], message: 'College name is required for Non-MAHE' });
       }
     }
   });
@@ -59,7 +60,7 @@ export async function completeOnboarding(input: OnboardInput) {
   phone,
       email,
       mahe: v.mahe,
-      reg_no: v.mahe ? (v.regNo || "") : null,
+  reg_no: v.mahe ? (v.regNo || "") : null,
       institute: v.mahe ? null : (v.institute || null),
       active: true,
     };

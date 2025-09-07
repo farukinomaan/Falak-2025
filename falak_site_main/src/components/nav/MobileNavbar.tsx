@@ -1,12 +1,15 @@
+"use client";
+
 import React from 'react';
 import Link from 'next/link';
+import { signIn } from 'next-auth/react';
 import { Press_Start_2P } from "next/font/google";
-import { Home, CreditCard, Ticket, Trophy, Music, ShoppingCart, LogIn , MessageSquareDashed} from 'lucide-react';
+import { Home, Ticket, Trophy, Music, ShoppingCart, LogIn , MessageSquareDashed, type LucideIcon } from 'lucide-react';
 
 const press = Press_Start_2P({ weight: "400", subsets: ["latin"] });
 
 // Icon mapping for display
-const iconMap: Record<string, React.ComponentType<any>> = {
+const iconMap: Record<string, LucideIcon> = {
   'HOME': Home,
   'FALAK': Home,
   'CULTURAL': Music,
@@ -235,10 +238,9 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
           </div>
 
           {/* Sign In button */}
-          <Link
-            href="/signin"
-            onClick={toggleMobileMenu}
-            className={`mt-6 px-6 py-2 rounded-lg transition-all duration-300 ${press.className} group w-full`}
+          <button
+            onClick={() => { signIn(); toggleMobileMenu(); }}
+            className={`relative mt-6 px-6 py-2 rounded-lg transition-all duration-300 ${press.className} group w-full`}
             style={{
               background: 'rgba(219, 170, 166, 0.15)',
               border: '1px solid rgba(219, 170, 166, 0.4)',
@@ -250,7 +252,7 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
             <div className="flex items-center justify-center gap-2 text-[#DBAAA6] font-bold tracking-wider text-xs">
               <LogIn size={14} /> SIGN IN
             </div>
-          </Link>
+          </button>
 
           {/* FOOTER*/}
           <div className="absolute bottom-8 text-center">

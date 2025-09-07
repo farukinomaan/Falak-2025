@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { completeOnboarding } from "./actions";
@@ -24,7 +24,6 @@ export default function OnboardingPage() {
   useRecaptcha();
 
   useEffect(() => {
-    if (status === "unauthenticated") signIn("google");
     if (status === "authenticated" && !(session as { needsOnboarding?: boolean }).needsOnboarding) {
       router.replace("/");
     }
@@ -44,6 +43,14 @@ export default function OnboardingPage() {
       toast.warning("Registration number is required for MAHE");
       setSubmitting(false);
       return;
+    }
+    if (mahe) {
+      const digits = regNo.replace(/[^0-9]/g, "");
+      if (digits.length !== 9) {
+        toast.warning("Registration number must be exactly 9 digits");
+        setSubmitting(false);
+        return;
+      }
     }
     try {
       const payload = {
@@ -71,6 +78,23 @@ export default function OnboardingPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center py-12 relative overflow-hidden before:absolute before:inset-0 before:bg-black/40 before:pointer-events-none"
+        style={{ backgroundColor: '#32212C' }}
+      >
+        <div className="w-full max-w-sm mx-auto">
+          <div className="bg-[#32212C] backdrop-blur-sm rounded-2xl border border-black/20 p-6 text-neutral-50 text-center space-y-4">
+            <h1 className="text-2xl font-semibold">Sign in required</h1>
+            <p className="text-sm text-neutral-300">Please sign in to complete onboarding.</p>
+            <Button onClick={() => signIn()} className="bg-[#de8c89] hover:bg-[#DBAAA6] text-[#32212C] w-full">Sign in</Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -102,7 +126,7 @@ export default function OnboardingPage() {
           name={name}
           setName={setName}
           regNo={regNo}
-          setRegNo={setRegNo}
+          setRegNo={(v: string) => setRegNo(v.replace(/[^0-9]/g, "").slice(0, 9))}
           mahe={mahe}
           setMahe={setMahe}
           institute={institute}
@@ -125,6 +149,12 @@ export default function OnboardingPage() {
         >
           {submitting ? "Processing..." : "Proceed"}
         </Button>
+
+        <div className="flex justify-end pt-2">
+          <Button type="button" variant="ghost" size="sm" onClick={() => signOut()} className="text-neutral-300 hover:text-white">
+            Logout
+          </Button>
+        </div>
       </form>
 
   {/* Invisible reCAPTCHA host (required for Firebase phone auth) */}
