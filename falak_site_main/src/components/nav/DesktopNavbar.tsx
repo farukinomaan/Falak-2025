@@ -4,7 +4,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Press_Start_2P } from "next/font/google";
-import { Home, Music, Trophy, Ticket, ShoppingCart, MessageSquareDashed } from 'lucide-react';
+import { Home, Music, Trophy, Ticket, ShoppingCart, MessageSquareDashed, type LucideIcon } from 'lucide-react';
 import { RetroButton } from './nav-components/RetroButton';
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -14,7 +14,7 @@ import { ChevronRight } from "lucide-react";
 const press = Press_Start_2P({ weight: "400", subsets: ["latin"] });
 
 // Icon mapping for center display
-const iconMap: Record<string, React.ComponentType<any>> = {
+const iconMap: Record<string, LucideIcon> = {
   'home': Home,
   'events': Music,
   'sports': Trophy,
@@ -40,12 +40,12 @@ interface DesktopNavbarProps {
   rollPrev: () => void;
 }
 
-export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, setActiveSection, rollNext, rollPrev }) => {
+export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, setActiveSection }) => {
   const router = useRouter();
   const pathname = usePathname();
   // Spinner rotation state (persistent incremental rotation each click)
-  const [leftAngle, setLeftAngle] = useState(0);
-  const [rightAngle, setRightAngle] = useState(0);
+  // const [leftAngle, setLeftAngle] = useState(0);
+  // const [rightAngle, setRightAngle] = useState(0);
   const leftItems = navItems.slice(0, 2);
   const rightItems = navItems.slice(2, 4);
 
@@ -60,7 +60,7 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
     closeTimer.current = setTimeout(() => { setEventsOpen(false); }, 160);
   };
   useEffect(()=>()=>{ if (closeTimer.current) clearTimeout(closeTimer.current); },[]);
-  const eventsItem = navItems.find(n => n.id === 'events');
+  // const eventsItem = navItems.find(n => n.id === 'events');
   const dropdownItems = [
     { id: 'sports', label: 'Sports', href: '/sports' },
     { id: 'cultural', label: 'Cultural', href: '/cultural' }
@@ -97,7 +97,6 @@ const matched = useMemo(() => {
 }, [pathname, navItems]);
 
   const effectiveActiveId = matched ? matched.id : undefined;
-  const centerLabel = matched ? matched.label.toUpperCase() : "-------";
 
   return (
     <nav

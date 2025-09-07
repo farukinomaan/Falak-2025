@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
         {/* Fest Info */}
         <div className="col-span-2 md:col-span-1 flex flex-col items-center md:items-start text-center md:text-left">
           <h2 className="vintage-font text-2xl sm:text-3xl tracking-widest">
-            FALAK'25
+            FALAK&#39;25
           </h2>
           <p className="abhaya-font text-[#2e1a47]/90 mt-3 text-sm sm:text-base font-mono leading-relaxed whitespace-pre-line">
             Manipal Institute of Technology{"\n"}Yelahanka, Bengaluru{"\n"}

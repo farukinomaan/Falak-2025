@@ -6,18 +6,19 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Stable constants used by the animation builder
+const LINES = ["own it.", "play it.", "win it."] as const;
+const ANIMATED_LETTERS: readonly string[][] = [
+  ["w", "i", "t"], // Line 1
+  ["p", "e", "a", "t"], // Line 2
+  ["w", "i", "t"], // Line 3
+];
+
 export default function About() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
-
-  const lines = ["own it.", "play it.", "win it."];
-  const animatedLetters = [
-    ["w", "i", "t"],      // Line 1
-    ["p", "e", "a", "t"], // Line 2
-    ["w", "i", "t"],      // Line 3
-  ];
 
   useEffect(() => {
     const container = containerRef.current;
@@ -27,7 +28,7 @@ export default function About() {
     container.innerHTML = "";
   
     // Build letters
-    lines.forEach((line, lineIndex) => {
+  LINES.forEach((line, lineIndex) => {
       const lineWrapper = document.createElement("div");
       lineWrapper.className =
         "flex justify-center gap-1 font-extrabold text-[clamp(2rem,5vw,3.5rem)] sm:text-[clamp(2.5rem,6vw,4rem)] md:text-[clamp(3rem,7vw,4.5rem)] vintage-font";
@@ -43,7 +44,7 @@ export default function About() {
         const inner = document.createElement("span");
         inner.className = "block will-change-transform";
   
-        const shouldAnimate = animatedLetters[lineIndex].includes(char.toLowerCase());
+  const shouldAnimate = ANIMATED_LETTERS[lineIndex].includes(char.toLowerCase());
         if (shouldAnimate && char.trim() !== "") {
           const frames = 3 + Math.floor(Math.random() * 3);
           for (let i = 0; i < frames; i++) {
@@ -131,7 +132,7 @@ gsap.to([subtitleRef.current, textRef.current], {
           ref={subtitleRef}
           className="vintage-font text-base sm:text-lg md:text-xl font-light text-[#D7897D] mb-6 sm:mb-8 md:mb-10"
         >
-          <span className="font-bold">FALAK'25</span> - The Ultimate Sports & Cultural Fest of Our College
+          <span className="font-bold">FALAK&#39;25</span> - The Ultimate Sports & Cultural Fest of Our College
         </p>
 
         <div

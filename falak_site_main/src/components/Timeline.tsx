@@ -98,7 +98,7 @@ const Timeline: React.FC = () => {
 
         <div className="relative z-10">
           <h2 className="vintage-font text-2xl sm:text-3xl md:text-4xl text-center mb-6 sm:mb-10">
-            FALAK '25 TIMELINE
+            FALAK &#39;25 TIMELINE
           </h2>
 
           {/* Progress Bar */}
@@ -129,7 +129,7 @@ const Timeline: React.FC = () => {
               <>
                 {/* Before fest starts */}
                 <p className="text-[#32212C] font-mono text-lg sm:text-xl border-2 border-[#2e1a47] rounded p-2 sm:p-3 bg-[#DBAAA6] font-bold">
-                  ► Current: Waiting for FALAK'25...
+                  ► Current: Waiting for FALAK&#39;25...
                 </p>
                 <p className="font-mono text-base sm:text-lg border-2 border-dashed border-[#DBAAA6] rounded p-1 sm:p-2 bg-[#1f1a2e]/80">
                   Upcoming: Countdown to the Artist Reveal...
@@ -139,7 +139,7 @@ const Timeline: React.FC = () => {
               <>
                 {/* After fest ends */}
                 <p className="text-[#32212C] font-mono text-lg sm:text-xl border-2 border-[#2e1a47] rounded p-2 sm:p-3 bg-[#DBAAA6] font-bold">
-                  ► Current: FALAK'25 has ended. Thanks for joining!
+                  ► Current: FALAK&#39;25 has ended. Thanks for joining!
                 </p>
               </>
             ) : (

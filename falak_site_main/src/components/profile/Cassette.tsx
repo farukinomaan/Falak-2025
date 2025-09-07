@@ -44,7 +44,7 @@ const Cassette = forwardRef<HTMLDivElement>((props, ref) => (
         fontWeight="700"
         filter="url(#bevan-undershadow)"
       >
-        FALAK '25
+        FALAK &#39;25
       </text>
 
       {/* Window */}
