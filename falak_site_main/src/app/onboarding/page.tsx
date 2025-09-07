@@ -20,6 +20,7 @@ export default function OnboardingPage() {
   const [institute, setInstitute] = useState("");
   const [verified, setVerified] = useState(false);
   const [phone, setPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   useRecaptcha();
 
   useEffect(() => {
@@ -31,13 +32,17 @@ export default function OnboardingPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-  if (!verified) { toast.warning("Verify phone first"); return; }
+    if (submitting) return;
+    setSubmitting(true);
+    if (!verified) { toast.warning("Verify phone first"); setSubmitting(false); return; }
     if (!mahe && !institute.trim()) {
       toast.warning("Please enter your college name");
+      setSubmitting(false);
       return;
     }
     if (mahe && !regNo.trim()) {
       toast.warning("Registration number is required for MAHE");
+      setSubmitting(false);
       return;
     }
     try {
@@ -45,7 +50,7 @@ export default function OnboardingPage() {
         name,
   phone: "+91" + phone.replace(/[^0-9]/g, ""),
         mahe,
-        regNo: mahe ? regNo : null,
+  regNo: mahe ? regNo.replace(/[^0-9]/g, "") : null,
         institute: mahe ? null : institute.trim(),
       };
       const res = await completeOnboarding(payload);
@@ -63,6 +68,8 @@ export default function OnboardingPage() {
       }
     } catch {
       toast.error("Unexpected error");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -113,9 +120,10 @@ export default function OnboardingPage() {
           type="submit"
           variant={"default"}
           className=" disabled:bg-gray-600 bg-[#de8c89] w-full hover:bg-[#DBAAA6] text-[#32212C]"
-          disabled={!verified}
+          disabled={!verified || submitting}
+          aria-busy={submitting}
         >
-          Proceed
+          {submitting ? "Processing..." : "Proceed"}
         </Button>
       </form>
 
