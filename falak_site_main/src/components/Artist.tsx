@@ -141,7 +141,7 @@ const Artist: React.FC = () => {
       : " opacity-0 absolute md:top-1/2 md:right-[10%] md:-translate-y-1/2 w-[470px] h-[350px]")
   }
 >
-  <h3 className="text-xl sm:text-2xl md:text-3xl font-semibold text-[#32212C] mb-2 sm:mb-4">
+  <h3 className="vintage-font text-xl sm:text-2xl md:text-3xl font-semibold text-[#32212C] mb-2 sm:mb-4">
     About the Artist
   </h3>
   <p className="abhaya-font text-sm sm:text-base md:text-lg leading-relaxed text-[#32212C]">

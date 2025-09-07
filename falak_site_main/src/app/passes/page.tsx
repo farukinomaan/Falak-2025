@@ -35,7 +35,8 @@ export default async function PassesPage() {
   backgroundSize: 'cover',
   backgroundRepeat: 'no-repeat',
   backgroundPosition: 'right bottom',
-  backgroundAttachment: 'fixed'
+  backgroundAttachment: 'fixed',
+  backgroundColor: '#32212C',
       }}
     >
       {/* Main content with purple background */}
@@ -45,7 +46,7 @@ export default async function PassesPage() {
 
       {/* Dim the background slightly without affecting foreground */}
       <div
-        className="pointer-events-none absolute inset-0 bg-black/50 z-10"
+        className="pointer-events-none absolute inset-0  z-10 opacity-40 bg-black"
         aria-hidden
       />
 

@@ -30,7 +30,7 @@ export default function About() {
     lines.forEach((line, lineIndex) => {
       const lineWrapper = document.createElement("div");
       lineWrapper.className =
-        "flex justify-center gap-1 font-extrabold text-[clamp(2rem,5vw,3.5rem)] sm:text-[clamp(2.5rem,6vw,4rem)] md:text-[clamp(3rem,7vw,4.5rem)]";
+        "flex justify-center gap-1 font-extrabold text-[clamp(2rem,5vw,3.5rem)] sm:text-[clamp(2.5rem,6vw,4rem)] md:text-[clamp(3rem,7vw,4.5rem)] vintage-font";
   
       line.split("").forEach((char) => {
         const outer = document.createElement("span");
