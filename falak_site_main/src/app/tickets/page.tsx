@@ -57,7 +57,7 @@ export default async function TicketsPage() {
 
   {/* Page content */}
   <div className="relative z-10 w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-auto">
-    <h1 className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-neutral-100 font-semibold mb-6 sm:mb-8 text-center ${orbitron.variable}`}>
+    <h1 className={`vintage-font text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-neutral-100 font-semibold mb-6 sm:mb-8 text-center ${orbitron.variable}`}>
       Support Ticket
     </h1>
 
