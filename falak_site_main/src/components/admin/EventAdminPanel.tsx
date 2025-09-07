@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -285,8 +286,12 @@ type EventFormState = {
 };
 
 function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreatePayload | EventUpdatePayload) => void }) {
-  // Load Cloudinary script
+  // Feature flag: only enable Cloudinary if env vars are present
+  const cloudEnabled = useMemo(() => Boolean(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET), []);
+
+  // Load Cloudinary script (only when enabled)
   useEffect(() => {
+    if (!cloudEnabled) return;
     const script = document.createElement('script');
     script.src = 'https://upload-widget.cloudinary.com/global/all.js';
     script.async = true;
@@ -299,7 +304,7 @@ function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreat
         document.head.removeChild(existingScript);
       }
     };
-  }, []);
+  }, [cloudEnabled]);
 
   const [form, setForm] = useState<EventFormState>(() => {
     const dateStr = !row?.date
@@ -357,12 +362,23 @@ function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreat
     return parsed.data as EventCreatePayload | EventUpdatePayload;
   }
 
-  // Cloudinary upload handler
-  const handleCloudinaryUpload = (result: any) => {
-    if (result.event === "success") {
-      const imageUrl = result.info.secure_url;
-      handleChange("image_url", imageUrl);
-      toast.success("Image uploaded successfully!");
+  // Cloudinary upload handler (signature is (error, result))
+  type CloudinaryResult = { event?: string; info?: { secure_url?: string } } | undefined;
+  const handleCloudinaryUpload = (error: unknown, result: CloudinaryResult) => {
+    // Silenced errors for now; allow event creation without image
+    if (error) {
+      console.debug("Cloudinary upload error (silenced)", error);
+      return;
+    }
+    if (result?.event === "success") {
+      const imageUrl = result.info?.secure_url as string | undefined;
+      if (imageUrl) {
+        handleChange("image_url", imageUrl);
+        toast.success("Image uploaded successfully!");
+      } else {
+        // Silent: no URL returned
+        console.debug("Cloudinary upload success but no URL returned (silenced)");
+      }
     }
   };
 
@@ -401,9 +417,11 @@ function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreat
             <div className="space-y-2">
               {form.image_url && (
                 <div className="mb-2">
-                  <img 
-                    src={form.image_url} 
-                    alt="Event preview" 
+                  <Image
+                    src={form.image_url}
+                    alt="Event preview"
+                    width={128}
+                    height={80}
                     className="w-32 h-20 object-cover rounded border"
                   />
                 </div>
@@ -412,13 +430,17 @@ function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreat
                 <button
                   type="button"
                   onClick={() => {
-                    // @ts-ignore
+                    if (!cloudEnabled) return; // silently do nothing when disabled
+                    // @ts-expect-error Cloudinary widget is attached to window by the script tag
                     if (window.cloudinary) {
-                      // @ts-ignore
+                      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+                      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+                      if (!cloudName || !uploadPreset) { return; }
+                      // @ts-expect-error Cloudinary widget typing not available
                       window.cloudinary.createUploadWidget(
                         {
-                          cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-                          uploadPreset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
+                          cloudName,
+                          uploadPreset,
                           sources: ['local', 'url', 'camera'],
                           multiple: false,
                           cropping: true,
@@ -430,10 +452,12 @@ function EventForm({ row, onSubmit }: { row?: EventRow; onSubmit: (v: EventCreat
                         handleCloudinaryUpload
                       ).open();
                     } else {
-                      toast.error("Cloudinary not loaded. Please refresh the page.");
+                      // Silent: widget not ready
+                      console.debug("Cloudinary widget not loaded yet (silenced)");
                     }
                   }}
-                  className="w-full px-4 py-2 border border-dashed border-gray-300 rounded-md hover:border-gray-400 transition-colors"
+                  disabled={!cloudEnabled}
+                  className="w-full px-4 py-2 border border-dashed border-gray-300 rounded-md hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {form.image_url ? "Change Image" : "Upload Event Image"}
                 </button>
