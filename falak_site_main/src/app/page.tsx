@@ -38,7 +38,7 @@ export default function Home() {
       {/* SVG background */}
       <div
         className="fixed top-0 left-0 w-full h-full z-[-2] bg-cover bg-center opacity-20"
-        style={{ backgroundImage: "url('/background.svg')" }}
+        style={{ backgroundImage: "url('/bg.svg')" }}
       />
 
       {/* Black overlay */}
