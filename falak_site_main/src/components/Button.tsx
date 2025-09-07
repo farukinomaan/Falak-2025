@@ -1,38 +1,37 @@
 import clsx from "clsx";
 
-// Define the interface for the props
 interface ButtonProps {
-  id: string;
+  id?: string;
   title: string;
-  rightIcon?: React.ReactNode;  // Type for React elements, `rightIcon` is optional
-  leftIcon?: React.ReactNode;   // Type for React elements, `leftIcon` is optional
-  containerClass?: string;      // Optional additional class for container styling
+  rightIcon?: React.ReactNode;
+  leftIcon?: React.ReactNode;
+  containerClass?: string;
+  onClick?: () => void;
 }
 
-const Button: React.FC<ButtonProps> = ({ id, title, rightIcon, leftIcon, containerClass = "" }) => {
+const Button: React.FC<ButtonProps> = ({
+  id,
+  title,
+  rightIcon,
+  leftIcon,
+  containerClass = "",
+  onClick,
+}) => {
   return (
     <button
       id={id}
+      onClick={onClick}
       className={clsx(
-        "group relative z-10 w-fit cursor-pointer overflow-hidden",
+        // Make the whole button area interactive
+        "relative z-10 inline-flex items-center justify-center gap-2 px-6 py-3 font-bold uppercase tracking-wide cursor-pointer select-none transition-transform duration-200 ease-in-out transform hover:scale-105 active:scale-95",
         containerClass
       )}
     >
-      {leftIcon}
-
-      <span className="relative inline-flex overflow-hidden font-general text-xs uppercase font-bold">
-        <div className="translate-y-0 skew-y-0 transition duration-500 group-hover:translate-y-[-160%] group-hover:skew-y-8">
-          {title}
-        </div>
-        <div className="absolute translate-y-[164%] skew-y-8 transition duration-500 group-hover:translate-y-0 group-hover:skew-y-0">
-          {title}
-        </div>
-      </span>
-
-      {rightIcon}
+      {leftIcon && <span>{leftIcon}</span>}
+      <span>{title}</span>
+      {rightIcon && <span>{rightIcon}</span>}
     </button>
   );
 };
-
 
 export default Button;
