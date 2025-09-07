@@ -1,7 +1,32 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-/* Unlock font for data text */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Special+Elite&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Unlock&display=swap');
+@font-face {
+  font-family: 'Brasty Vintage';
+  src: url('/fonts/BrastyVintageRegular-ovoRz.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Abhaya Libre Medium';
+  src: url('/fonts/AbhayaLibre-Medium.ttf') format('truetype');
+  font-weight: 500; /* Medium weight */
+  font-style: normal;
+}
+
+.abhaya-font {
+  font-family: 'Abhaya Libre Medium', serif;
+}
+
+.font-roboto-mono {
+  font-family: 'Roboto Mono', monospace;
+}
+.font-orbitron {
+  font-family: 'Orbitron', sans-serif;
+}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -146,11 +171,12 @@ main {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    background: transparent !important;
+    color: var(--foreground);
   }
 }
 .hero-bg {
-  @apply bg-black;
+  @apply bg-transparent;
 }
 .special-font b {
   font-family: "Zentry";
@@ -174,4 +200,22 @@ main {
 /* Custom flip effect for cassette */
 .hover\:rotate-y-180:hover {
   transform: rotateY(180deg);
+}
+.font-orbitron-important {
+  font-family: 'Orbitron', sans-serif !important;
+}
+.vintage-font {
+  font-family: 'Brasty Vintage', cursive, serif;
+}
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 15s linear infinite;
 }

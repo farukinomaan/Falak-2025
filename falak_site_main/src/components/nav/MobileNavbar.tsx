@@ -14,7 +14,6 @@ interface MobileNavbarProps {
   activeSection: string;
   menuButtonRef: React.RefObject<HTMLButtonElement | null>;
 }
-
 export const MobileNavbar: React.FC<MobileNavbarProps> = ({ 
   show, 
   isMobileMenuOpen, 
@@ -36,13 +35,13 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
       {/* Top Navigation Bar */}
       <div className={`fixed top-0 left-0 right-0 z-50 flex xl:hidden items-start justify-between p-4 transition-all duration-500 ${show ? 'translate-y-0' : '-translate-y-32'}`}>
         {/* Logo container top left */}
-        <div className={`pointer-events-auto transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}>
+        {/* <div className={`pointer-events-auto transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}>
           <Link href="/">
             <h1 className="special-font hero-heading text-white">
               F<b>A</b>LAK
             </h1>
           </Link>
-        </div>
+        </div> */}
 
         {/* Top-right notch with display and menu */}
         <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg shadow-lg border-2 transition-all duration-500 ${press.className}`}

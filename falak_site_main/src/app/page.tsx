@@ -5,48 +5,60 @@ import Artist from "@/components/Artist";
 import Timeline from "@/components/Timeline";
 import Trailer from "@/components/Trailer";
 import Footer from "@/components/Footer";
+import Image from "next/image";
+import { Orbitron } from "next/font/google";
+import About from "@/components/About";
+import Sponsor from "@/components/Sponsor";
+
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  weight: ["400", "700", "900"],
+});
 
 export default function Home() {
   return (
-    <>
+    <div className={orbitron.className}>
       <Head>
-        {/* Home-only preload for first hero video */}
-        <Head>
-  <link
-    rel="preload"
-    as="video"
-    href="/videos/newafter.mp4"
-    type="video/mp4"
-    crossOrigin="anonymous"
-  />
-</Head>
-
+        <link
+          rel="preload"
+          as="video"
+          href="/videos/nbg.mp4"
+          type="video/mp4"
+          crossOrigin="anonymous"
+        />
       </Head>
-      <div className="home-page">
+
+      {/* Background Layers */}
+      {/* Base background color */}
+      <div
+        className="fixed top-0 left-0 w-full h-full z-[-3]"
+        style={{ backgroundColor: "#32212C" }}
+      />
+
+      {/* SVG background */}
+      <div
+        className="fixed top-0 left-0 w-full h-full z-[-2] bg-cover bg-center opacity-20"
+        style={{ backgroundImage: "url('/background.svg')" }}
+      />
+
+      {/* Black overlay */}
+      <div className="fixed top-0 left-0 w-full h-full bg-black/30 z-[-1]" />
+
+      {/* Grain Overlay (optional) */}
+      {/* <div className="grain-overlay"></div> */}
+
+      
+
+      {/* Page content */}
+      <div className="relative z-10">
         <Hero />
+        <About />
         <Artist />
         <Timeline />
         <Trailer />
+        <Sponsor />
         <Footer />
-        {/* <div className="max-w-4xl mx-auto p-8 space-y-6 text-white">
-          <h1 className="text-4xl font-bold">Falak Cultural Fest</h1>
-          <p className="text-white">Welcome! Explore events and get your passes.</p>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Link className="border rounded p-4" href="/passes">
-              Passes
-            </Link>
-            <Link className="border rounded p-4" href="/cultural_events">
-              Cultural Events
-            </Link>
-            <Link className="border rounded p-4" href="/sports_events">
-              Sports Events
-            </Link>
-            <Link className="border rounded p-4" href="/tickets">
-              Tickets
-            </Link>
-          </div>
-        </div> */}
       </div>
-    </>
+    </div>
   );
 }

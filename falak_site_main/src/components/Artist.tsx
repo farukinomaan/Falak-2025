@@ -1,127 +1,154 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import gsap from "gsap";
-import { SplitText } from "gsap/all";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-gsap.registerPlugin(ScrollTrigger, SplitText);
+gsap.registerPlugin(ScrollTrigger);
 
 const Artist: React.FC = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
   useEffect(() => {
-    const firstMsgSplit = SplitText.create(".first-message", { type: "words" });
-    const secMsgSplit = SplitText.create(".second-message", { type: "words" });
-
-    gsap.to(firstMsgSplit.words, {
-      color: "#faeade",
-      ease: "power1.in",
-      stagger: 1,
-      scrollTrigger: {
-        trigger: ".message-content",
-        start: "top center",
-        end: "30% center",
-        scrub: true,
-      },
-    });
-
-    gsap.to(secMsgSplit.words, {
-      color: "#faeade",
-      ease: "power1.in",
-      stagger: 1,
-      scrollTrigger: {
-        trigger: ".second-message",
-        start: "top center",
-        end: "bottom center",
-        scrub: true,
-      },
-    });
-
-    // TV reveal animation
-    gsap.fromTo(
-      ".artist-overlay",
-      {
-        clipPath: "inset(0% 0% 0% 0%)", 
-      },
-      {
-        clipPath: "inset(50% 0% 50% 0%)", 
-        duration: 2,
-        ease: "power2.inOut",
-        scrollTrigger: {
-          trigger: ".message-content",
-          start: "top center",
-          toggleActions: "play none none none",
-          once: true,
-        },
-      }
-    );
-    
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: ".artist-section",
+          start: "top top",
+          end: "150% top",
+          scrub: true,
+          pin: true,
+        },
+      });
+
+      if (isMobile) {
+        tl.fromTo(
+          ".tv-wrapper",
+          { scale: 0.6, rotateY: 40, rotateX: 10 },
+          { scale: 1, rotateY: 0, rotateX: 0, ease: "power2.inOut" }
+        );
+        tl.fromTo(
+          ".full-overlay",
+          { scale: 0.6, opacity: 1 },
+          { scale: 1, opacity: 1, ease: "power2.inOut" },
+          0
+        );
+        tl.fromTo(
+          ".artist-description",
+          { autoAlpha: 0, y: 60 },
+          { autoAlpha: 1, y: 0, duration: 0.8, ease: "power2.out" },
+          "-=0.3"
+        );
+      } else {
+        tl.fromTo(
+          ".tv-wrapper",
+          {
+            scale: 0.6,
+            rotateY: 40,
+            rotateX: 10,
+            xPercent: -50,
+            yPercent: -50,
+            top: "50%",
+            left: "50%",
+            position: "absolute",
+            zIndex: 30,
+          },
+          {
+            scale: 1,
+            rotateY: 0,
+            rotateX: 0,
+            xPercent: -120,
+            yPercent: -50,
+            top: "50%",
+            left: "50%",
+            ease: "power2.inOut",
+          }
+        );
+        tl.fromTo(
+          ".full-overlay",
+          { scale: 0.6, opacity: 1 },
+          { scale: 1, opacity: 1, ease: "power2.inOut" },
+          0
+        );
+        tl.fromTo(
+          ".artist-description",
+          { autoAlpha: 0, x: 100 },
+          { autoAlpha: 1, x: 0, duration: 0.8, ease: "power2.out" },
+          "-=0.3"
+        );
+      }
+    });
+
+    return () => ctx.revert();
+  }, [isMobile]);
 
   return (
     <section
-      className="message-content relative w-full min-h-screen overflow-hidden"
-      style={{ backgroundColor: "#f2eae1" }}
-    >
-      {/* Left Film Reel */}
-      <img
-        src="/images/s22.png"
-        alt="Film Reel Left"
-        className="hidden md:block absolute inset-y-0 left-310 h-full object-cover z-0"
-      />
-
-      {/* Right Film Reel */}
-      <img
-        src="/images/s11.png"
-        alt="Film Reel Right"
-        className="hidden md:block absolute inset-y-0 right-310 h-full object-cover z-0"
-      />
-
+    className={`artist-section relative w-full bg-transparent
+    ${isMobile
+      ? "h-screen flex flex-col items-center justify-start pt-16" // Added pt-16 and justify-start to shift down
+      : "min-h-screen flex flex-col items-center justify-center md:block"}
+  `}
+  style={{ perspective: "1500px" }}
+>
+      {/* Fullscreen Overlay */}
       <div
-        className="container mx-auto flex flex-col items-center py-0 relative z-10"
-        style={{ fontFamily: "'Orbitron', sans-serif" }}
-      >
-        {/* Title */}
-        <div className="msg-wrapper text-center space-y-8">
-          <img
-            src="/images/art.png"
-            alt="Meet the Artist"
-            className="mx-auto w-auto max-w-full h-16 md:h-24 object-contain"
-          />
-        </div>
+        className="
+          full-overlay
+          absolute bg-[#32212C]/90 z-20 pointer-events-none rounded-2xl border border-[#DBAAA6]
+          top-[13%] left-[6%] right-[6%] bottom-[10%]"
+      ></div>
 
-        {/* Frame + Artist */}
-        <div className="relative flex justify-center items-center w-full mt-6">
-          <div className="message-content-box relative max-w-3xl w-full shadow-lg z-10">
-            {/* Frame */}
-            <img
-              src="/images/frame.png"
-              alt="TV Frame"
-              className="w-full h-auto object-contain relative z-20"
-            />
+      {/* Heading */}
+      <h2 className="
+        vintage-font text-center px-4 text-3xl sm:text-4xl md:text-5xl text-[#DBAAA6] z-50
+        mt-17 md:absolute md:top-14 md:left-1/2 md:-translate-x-1/2
+      ">
+        MEET THE ARTIST
+      </h2>
 
-            {/* Artist inside frame */}
-            <div className="absolute inset-0 flex justify-center items-center z-10 overflow-hidden">
-              <div className="relative w-[85%] h-auto flex justify-center items-center">
-                <img
-                  src="/images/artist.png"
-                  alt="Artist"
-                  className="tv-screen w-full h-auto object-contain"
-                />
-                {/* Overlay that reveals */}
-                <div className="artist-overlay absolute inset-0 bg-black z-30"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* TV + Description */}
+      <div className="flex flex-col items-center gap-6 w-full max-w-[600px] mx-auto md:block">
+        {/* TV */}
+<div
+  className={`
+    tv-wrapper 
+    w-full aspect-[16/11] 
+    ${isMobile ? "max-w-[80vw]" : "max-w-[500px]"}
+    border-4 border-[#D7897D] rounded-2xl
+    bg-[#32212C] shadow-lg flex items-center justify-center z-30 mx-auto
+    ${isMobile ? "relative mt-12" : "md:relative md:left-0 mb-6 md:mb-0"}
+  `}
+>
+  <h3 className="vintage-font text-2xl sm:text-3xl md:text-4xl font-bold text-[#DBAAA6] tracking-widest text-center px-2">
+    The Big Reveal Awaits
+  </h3>
+</div>
 
-        {/* Paper Torn Description */}
-        <div className="mt-0 max-w-2xl w-full text-center">
-          <img
-            src="/images/des.png"
-            alt="Artist Description"
-            className="mx-auto w-full h-[250px] object-contain"
-          />
-        </div>
+{/* Description */}
+<div
+  className={
+    "artist-description z-40 bg-[#DBAAA6] border-2 border-[#32212C] rounded-xl flex flex-col justify-center items-center p-4 sm:p-6 text-center" +
+    (isMobile
+      ? " relative w-full max-w-[80vw] mx-auto mt-8"
+      : " opacity-0 absolute md:top-1/2 md:right-[10%] md:-translate-y-1/2 w-[470px] h-[350px]")
+  }
+>
+  <h3 className="text-xl sm:text-2xl md:text-3xl font-semibold text-[#32212C] mb-2 sm:mb-4">
+    About the Artist
+  </h3>
+  <p className="abhaya-font text-sm sm:text-base md:text-lg leading-relaxed text-[#32212C]">
+    Stay tuned to find out
+  </p>
+</div>
+
       </div>
     </section>
   );
