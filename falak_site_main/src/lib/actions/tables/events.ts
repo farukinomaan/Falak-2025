@@ -37,6 +37,17 @@ export async function listEvents() {
   return { ok: true as const, data }
 }
 
+// Admin-only: list all events irrespective of enable
+export async function listAllEventsRaw() {
+  const supabase = getServiceClient()
+  const { data, error } = await supabase
+    .from(table)
+    .select("*")
+    .order("created_at", { ascending: false })
+  if (error) return { ok: false as const, error: error.message }
+  return { ok: true as const, data }
+}
+
 export async function listEventsByIds(ids: string[]) {
   if (!Array.isArray(ids) || ids.length === 0) return { ok: true as const, data: [] as Event[] };
   const supabase = getServiceClient()

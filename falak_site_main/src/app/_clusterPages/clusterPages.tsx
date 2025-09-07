@@ -33,6 +33,7 @@ type EvtBase = {
   date?: string | Date | null;
   price?: number | string | null;
   max_team_size?: number | null;
+  enable?: boolean | null;
 };
 
 function clusterLabel(cluster: string) {
@@ -75,7 +76,9 @@ export async function ClusterRoot({ cluster }: { cluster: string }) {
   const res = await saListEvents();
   const events = res.ok ? (res.data as EvtBase[]) : [];
 
-  const filtered = events.filter((e) => (e.cluster_name || "").toLowerCase() === cluster);
+  const filtered = events
+    .filter((e) => (e.cluster_name || "").toLowerCase() === cluster)
+    .filter((e) => (e.enable ?? true) as boolean);
   const subMap = new Map<string, { count: number }>();
   for (const e of filtered) {
     const sub = e.sub_cluster;
@@ -150,7 +153,7 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
   const ownedEventIds = new Set<string>();
   for (const p of passes) if (p.event_id && ownedPassIds.has(p.id)) ownedEventIds.add(p.event_id);
   const teamEventIds = new Set<string>(teamEvtRes.ok ? teamEvtRes.data : []);
-  const events = eventsRes.ok ? (eventsRes.data as EvtBase[]) : [];
+  const events = eventsRes.ok ? ((eventsRes.data as EvtBase[]) || []).filter((e) => (e.enable ?? true) as boolean) : [];
 
   // Determine if user has a MAHE proshow pass (no event_id) to unlock access (except esports)
   let userIsMahe = false;

@@ -14,6 +14,7 @@ import {
   updateEvent as _updateEvent,
   deleteEvent as _deleteEvent,
   listEvents as _listEvents,
+  listAllEventsRaw as _listAllEventsRaw,
 } from "./tables/events";
 import {
   createPass as _createPass,
@@ -21,6 +22,7 @@ import {
   deletePass as _deletePass,
   listPasses as _listPasses,
   listPassesWithoutEvent as _listPassesWithoutEvent,
+  listAllPassesRaw as _listAllPassesRaw,
 } from "./tables/pass";
 import { createUserPass as _createUserPass } from "./tables/userPasses";
 // (Team create/list functions imported on demand elsewhere if needed)
@@ -28,6 +30,10 @@ import { createUserPass as _createUserPass } from "./tables/userPasses";
 // Wrapper Server Actions for Events
 export async function saListEvents() {
   return _listEvents();
+}
+// Admin: get all events (enabled and disabled)
+export async function saListAllEvents() {
+  return _listAllEventsRaw();
 }
 export async function saCreateEvent(input: z.infer<typeof EventCreateSchema>) {
   return _createEvent(input);
@@ -42,6 +48,10 @@ export async function saDeleteEvent(id: string) {
 // Wrapper Server Actions for Passes
 export async function saListPasses() {
   return _listPasses();
+}
+// Admin: get all passes (enabled and disabled)
+export async function saListAllPasses() {
+  return _listAllPassesRaw();
 }
 export async function saListProshowPasses() {
   return _listPassesWithoutEvent();

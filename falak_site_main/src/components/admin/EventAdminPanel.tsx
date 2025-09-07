@@ -13,11 +13,11 @@ import {
   PassUpdateSchema,
 } from "@/lib/actions/schemas";
 import {
-  saListEvents,
+  saListAllEvents,
   saCreateEvent,
   saUpdateEvent,
   saDeleteEvent,
-  saListPasses,
+  saListAllPasses,
   saCreatePass,
   saUpdatePass,
   saDeletePass,
@@ -69,7 +69,8 @@ export default function EventAdminPanel() {
   const [showDisabledEvents, setShowDisabledEvents] = useState(false);
 
   async function refresh() {
-    const [ev, ps] = await Promise.all([saListEvents(), saListPasses()]);
+    // Use admin lists to include disabled entries; UI toggle controls visibility
+    const [ev, ps] = await Promise.all([saListAllEvents(), saListAllPasses()]);
     if (ev.ok) setEvents((ev.data as EventRow[]) || []);
     if (ps.ok) setPasses((ps.data as PassRow[]) || []);
   }

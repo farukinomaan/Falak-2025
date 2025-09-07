@@ -28,7 +28,22 @@ export async function getPassById(id: string) {
 
 export async function listPasses() {
   const supabase = getServiceClient()
-  const { data, error } = await supabase.from(table).select("*").order("edited_at", { ascending: false })
+  const { data, error } = await supabase
+    .from(table)
+    .select("*")
+    .eq("enable", true)
+    .order("edited_at", { ascending: false })
+  if (error) return { ok: false as const, error: error.message }
+  return { ok: true as const, data }
+}
+
+// Admin-only: list all passes irrespective of enable
+export async function listAllPassesRaw() {
+  const supabase = getServiceClient()
+  const { data, error } = await supabase
+    .from(table)
+    .select("*")
+    .order("edited_at", { ascending: false })
   if (error) return { ok: false as const, error: error.message }
   return { ok: true as const, data }
 }
@@ -39,6 +54,7 @@ export async function listPassesWithoutEvent() {
     .from(table)
     .select("*")
     .is("event_id", null)
+  .eq("enable", true)
     .order("edited_at", { ascending: false })
   if (error) return { ok: false as const, error: error.message }
   return { ok: true as const, data }
@@ -47,7 +63,11 @@ export async function listPassesWithoutEvent() {
 export async function listPassesByIds(ids: string[]) {
   if (!Array.isArray(ids) || ids.length === 0) return { ok: true as const, data: [] as Pass[] };
   const supabase = getServiceClient()
-  const { data, error } = await supabase.from(table).select("*").in("id", ids)
+  const { data, error } = await supabase
+    .from(table)
+    .select("*")
+    .in("id", ids)
+    .eq("enable", true)
   if (error) return { ok: false as const, error: error.message }
   return { ok: true as const, data }
 }

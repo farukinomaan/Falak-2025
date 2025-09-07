@@ -8,7 +8,14 @@ import type { User } from "@/lib/actions";
 
 export const revalidate = 60;
 
-type PassCard = { id: string; pass_name: string; description?: string | null; cost?: number | string | null };
+type PassCard = {
+  id: string;
+  pass_name: string;
+  description?: string | null;
+  cost?: number | string | null;
+  event_id?: string | null;
+  mahe?: boolean | null; // true=MAHE pass, false=Non-MAHE only, undefined => open
+};
 
 // Toggle when passes go live
 const PASSES_SALES_ACTIVE = false;
@@ -28,6 +35,18 @@ export default async function PassesPage() {
       }
     } catch {}
   }
+
+  // When passes go live, use this filtered list
+  // Visibility rules:
+  // - Only enabled passes are fetched at the API level.
+  // - If user.mahe === true => hide passes where pass.mahe === false (Non-MAHE only)
+  // - If user.mahe === false => hide passes where event_id is null AND pass.mahe === true (MAHE-only proshow)
+  // - If unauthenticated/unregistered => show all
+  const filteredPasses: PassCard[] = (() => {
+    if (!session?.user?.email) return passes; // guest: show all
+    if (isMahe) return passes.filter((p) => p.mahe !== false);
+    return passes.filter((p) => !(p.event_id == null && p.mahe === true));
+  })();
   
   return (
     <div
@@ -46,13 +65,20 @@ export default async function PassesPage() {
       {PASSES_SALES_ACTIVE ? (
         // TODO: When passes go live, remove this condition and render Features below
         <div className="relative z-20 ">
-          <Features passes={passes} isMahe={isMahe} />
+      {/* Switch to filteredPasses to enforce MAHE visibility rules */}
+      <Features passes={filteredPasses} isMahe={isMahe} />
         </div>
       ) : (
         <div className="relative z-20 flex items-center justify-center min-h-[70vh] px-4">
-          <h1 className="text-center text-5xl md:text-7xl font-semibold tracking-wide">
-            COMING SOOOOOooooo.......
-          </h1>
+          <div className="w-full max-w-2xl">
+            <div className="rounded-3xl border border-white/15 bg-white/5 backdrop-blur-xl shadow-2xl px-6 py-10 sm:px-10">
+              <div className="text-center space-y-3">
+                <span className="inline-block text-xs uppercase tracking-wider px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/80">Passes</span>
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-wide text-[#de8c89]">COMING SOON</h1>
+                <p className="text-white/70">Proshow and event passes will be available here soon.</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
