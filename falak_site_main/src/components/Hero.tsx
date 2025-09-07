@@ -38,12 +38,13 @@ const Hero: React.FC = () => {
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   return (
-    <div className="relative h-[100dvh] w-screen overflow-x-hidden bg-transparent">
-      <div
-        id="video-frame"
-        className="relative z-10 h-[100dvh] w-screen overflow-hidden rounded-lg bg-blue-75"
-        style={{ willChange: "transform" }}
-      >
+    <div className="relative h-[100dvh] w-full overflow-hidden bg-transparent">
+  <div
+    id="video-frame"
+    className="relative z-10 h-[100dvh] w-full overflow-hidden rounded-lg bg-blue-75"
+    style={{ willChange: "transform" }}
+  >
+
         <div>
           {!prefersReducedMotion ? (
             <video
@@ -73,7 +74,7 @@ const Hero: React.FC = () => {
         </div>
 
         {/* Foreground Text */}
-        <h1 className="vintage-font absolute bottom-5 right-5 z-40 text-[#DBAAA6] text-xl sm:text-2xl md:text-5xl">
+        <h1 className="vintage-font absolute bottom-5 right-5 z-40 text-[#DBAAA6] sm:text-2xl md:text-5xl">
           <b>JOIN US</b>
         </h1>
 

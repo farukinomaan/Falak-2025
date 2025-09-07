@@ -54,7 +54,7 @@ export default function RootLayout({
 
           {/* Fixed Logo */}
           <div
-            className={`fixed -top-5 right-10 z-[9999] xl:left-4 xl:top-[-3.5rem] xl:right-auto transition-all duration-300 ${
+            className={`fixed -top-6 right-0 z-[9999] xl:left-4 xl:top-[-3.5rem] xl:right-auto transition-all duration-300${
               isMenuOpen ? "opacity-0 pointer-events-none" : "opacity-100"
             }`}
             style={{ transform: "translateZ(0)" }}

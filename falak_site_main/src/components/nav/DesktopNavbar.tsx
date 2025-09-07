@@ -100,8 +100,9 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
     <nav
       role="navigation"
       className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden xl:flex items-stretch justify-center gap-3 px-3 py-2
-          rounded-xl shadow-lg border-2 transition-all duration-500
-          ${press.className} ${show ? "translate-y-0" : "-translate-y-32"}`}
+      rounded-3xl shadow-lg border-2 transition-all duration-500
+      ${press.className} ${show ? "translate-y-0" : "-translate-y-32"}`}
+
       style={{
         backgroundColor: "rgba(50, 33, 44, 0.95)",
         borderColor: "rgba(219, 170, 166, 0.6)",

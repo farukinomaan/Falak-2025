@@ -143,8 +143,11 @@ html {
 }
 
 html, body {
-  height: 100%;
+  overflow-x: hidden;
+  height: auto; /* let content decide height */
+  min-height: 100%;
 }
+
 
 main {
   min-height: 100vh;

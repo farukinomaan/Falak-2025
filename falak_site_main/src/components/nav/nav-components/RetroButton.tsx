@@ -25,7 +25,7 @@ export const RetroButton: React.FC<RetroButtonProps> = ({ item, isActive, onClic
   const isMobile = size === 'sm';
   const paddingClass = isMobile ? 'px-2.5 py-1' : 'p-3';
   const textClass = isMobile ? 'text-xs' : 'text-xs';
-  const roundedClass = isMobile ? 'rounded-md' : 'rounded-lg';
+  const roundedClass = isMobile ? 'rounded-lg' : 'rounded-2xl';
   const borderSize = isMobile ? '1.5px' : '2px';
   const activeScale = isMobile ? 'scale-105' : 'scale-105';
   
