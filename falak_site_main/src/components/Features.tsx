@@ -95,7 +95,7 @@ const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false }) => {
       <div className="container mx-auto px-3 md:px-0">
         <div className="px-5 pt-28 md:pt-36 pb-8">
           <p
-            className="text-5xl md:text-6xl lg:text-8xl text-white text-center font-bold uppercase tracking-wider sm:mb-10 font-brasty"
+            className="text-5xl md:text-6xl lg:text-5xl text-white text-center font-bold uppercase tracking-wider sm:mb-10 font-brasty"
           >
             Get your Passes now!!
           </p>

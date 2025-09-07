@@ -12,17 +12,17 @@ const Footer: React.FC = () => {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 grid grid-cols-2 md:grid-cols-3 gap-3 text-center md:text-left">
   {/* Fest Info - spans both columns on mobile */}
   <div className="mb-0 md:mb-0 col-span-2 md:col-span-1">
-    <h2 className="retro-heading text-2xl sm:text-3xl tracking-widest">
-      FALAK 2025
+    <h2 className="vintage-font text-2xl sm:text-3xl tracking-widest">
+      FALAK'25
     </h2>
-    <p className="text-[#2e1a47]/90 mt-3 text-xs sm:text-sm font-mono leading-relaxed whitespace-pre-line">
+    <p className="abhaya-font text-[#2e1a47]/90 mt-3 text-s sm:text-sm font-mono leading-relaxed whitespace-pre-line">
       Manipal Institute of Technology{"\n"}Yelahanka, Bengaluru{"\n"}Karnataka - 560064
     </p>
   </div>
 
   {/* Quick Links */}
   <div className="mb-8 md:mb-0">
-    <h2 className="retro-heading text-xl sm:text-2xl mb-3">Quick Links</h2>
+    <h2 className="vintage-font text-xl sm:text-2xl mb-3">Quick Links</h2>
     <ul className="space-y-2 font-mono text-[#2e1a47]/90 text-sm sm:text-base">
       <li>
         <a className="hover:text-[#2e1a47] underline">
@@ -43,7 +43,7 @@ const Footer: React.FC = () => {
 
   {/* Contact */}
 <div>
-  <h2 className="retro-heading text-xl sm:text-2xl mb-3">Contact Us</h2>
+  <h2 className="vintage-font text-xl sm:text-2xl mb-3">Contact Us</h2>
   <ul className="space-y-3 font-mono text-[#2e1a47]/90 text-sm sm:text-base">
     <li className="text-xs flex items-center gap-2 justify-center md:justify-start">
       <Mail size={18} aria-hidden="true" />
