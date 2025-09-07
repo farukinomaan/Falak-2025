@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from "react";
+import { toast } from "sonner";
 import TeamRegistrationForm from "@/components/teams/TeamRegistrationForm";
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 	captainName?: string | null;
 	minSize?: number;
 	maxSize?: number;
+	leaderHint?: boolean; // show leader-only purchase hint when eligibility comes from proshow pass
 }
 
 export default function TeamRegistrationClient(props: Props) {
@@ -22,7 +24,12 @@ export default function TeamRegistrationClient(props: Props) {
 		return (
 			<div className="text-center">
 				<button
-					onClick={() => setOpen(true)}
+					onClick={() => {
+						setOpen(true);
+						if (props.leaderHint) {
+							toast.info("Only the team leader must purchase access to this event.");
+						}
+					}}
 					className="clusterButton cluster-root-button"
 				>
 					Register Your Team

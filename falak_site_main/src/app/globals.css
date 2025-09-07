@@ -3,6 +3,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Special+Elite&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Unlock&display=swap');
 @font-face {
   font-family: 'Brasty Vintage';
   src: url('/fonts/BrastyVintageRegular-ovoRz.ttf') format('truetype');
@@ -160,6 +161,9 @@ main {
 
 /* Utility class for Brasty Vintage */
 .font-brasty { font-family: 'Brasty Vintage', 'Press Start 2P', monospace; }
+
+/* Utility class for Unlock */
+.font-unlock { font-family: 'Unlock', serif; }
 
 
 @layer base {
