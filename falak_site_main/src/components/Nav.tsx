@@ -68,15 +68,14 @@ export default function Nav({ isMenuOpen, setIsMenuOpen }: NavProps) {
     return () => document.body.classList.remove("no-scroll");
   }, [mobileMenuOpen]);
 
-  const navItems: NavItem[] = useMemo(
-    () => [
-      { id: "FALAK", label: "FALAK", href: "/" },
-      { id: "events", label: "Events", href: "/events" },
-      { id: "passes", label: "Passes", href: "/passes" },
-      { id: "tickets", label: "Tickets", href: "/tickets" },
-    ],
-    []
-  );
+  // Desktop primary items (Sports & Cultural moved under Events dropdown)
+  const navItems: NavItem[] = useMemo(() => ([
+    //note: didnt changed id 
+    { id: "FALAK", label: "Home", href: "/" }, 
+    { id: "events", label: "Events", href: "/events" },
+    { id: "passes", label: "Passes", href: "/passes" },
+    { id: "tickets", label: "Support", href: "/tickets" },
+  ]), []);
 
   const extendedCandidates: NavItem[] = useMemo(
     () => [
@@ -147,3 +146,4 @@ export default function Nav({ isMenuOpen, setIsMenuOpen }: NavProps) {
     </>
   );
 }
+

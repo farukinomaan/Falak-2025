@@ -1,4 +1,3 @@
-
 /**
  * @copyright Falak 2025 
  */
@@ -150,7 +149,7 @@ export default function CartList() {
       <div
         className="absolute pointer-events-none inset-0"
         style={{
-          backgroundImage: 'url(/background.svg)',
+          backgroundImage: 'url(/background.svg)', //animated svg is active
           backgroundRepeat: 'no-repeat',
           backgroundSize: 'cover', // or 'contain' depending on your preference
           backgroundPosition: 'center',
@@ -176,8 +175,8 @@ export default function CartList() {
                   <p className="text-gray-400 text-lg mb-6 font-medium">Your cart is empty.</p>
                   <Link
                     href="/passes"
-                    className="inline-flex items-center px-8 py-4 text-white font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
-                    style={{ backgroundColor: '#DBAAA6' }}
+                    className="inline-flex items-center px-8 py-4 font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+                    style={{ backgroundColor: '#DBAAA6', color:'#32212C' }}
                   >
                     Browse Passes
                   </Link>

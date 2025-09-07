@@ -1,9 +1,21 @@
 import React from 'react';
 import Link from 'next/link';
 import { Press_Start_2P } from "next/font/google";
-import { Home, CreditCard, Ticket, Trophy, Music, ShoppingCart, LogIn } from 'lucide-react';
+import { Home, CreditCard, Ticket, Trophy, Music, ShoppingCart, LogIn , MessageSquareDashed} from 'lucide-react';
 
 const press = Press_Start_2P({ weight: "400", subsets: ["latin"] });
+
+// Icon mapping for display
+const iconMap: Record<string, React.ComponentType<any>> = {
+  'HOME': Home,
+  'FALAK': Home,
+  'CULTURAL': Music,
+  'SPORTS': Trophy,
+  'PASSES': Ticket,
+  'SUPPORT': MessageSquareDashed,
+  'TICKETS': MessageSquareDashed,
+  'CART': ShoppingCart
+};
 
 interface MobileNavbarProps {
   show: boolean;
@@ -20,12 +32,13 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
   activeSection, 
   menuButtonRef 
 }) => {
+  // Change the /tickets to /support after the file name change
   const menuItems = [
-    { name: 'FALAK', href: '/', icon: Home },
+    { name: 'HOME', href: '/', icon: Home },
     { name: 'CULTURAL', href: '/cultural', icon: Music },
     { name: 'SPORTS', href: '/sports', icon: Trophy },
-    { name: 'PASSES', href: '/passes', icon: CreditCard },
-    { name: 'TICKETS', href: '/tickets', icon: Ticket },
+    { name: 'PASSES', href: '/passes', icon: Ticket },
+    { name: 'SUPPORT', href: '/tickets', icon: MessageSquareDashed },
     { name: 'CART', href: '/cart', icon: ShoppingCart }
   ];
 
@@ -46,7 +59,7 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
           <div
             className="relative px-2 py-1 rounded"
             style={{
-              backgroundColor: "#32212C", 
+              backgroundColor: "#000000", 
               border: "1px solid #DBAAA6", 
               boxShadow:
                 "inset 0 1px 4px rgba(0,0,0,0.7), 0 1px 2px rgba(244,202,142,0.3)",
@@ -54,18 +67,29 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
           >
             <div className="relative">
               <div className="absolute inset-0 rounded bg-orange-300 opacity-20 blur-sm"></div>
-              <div
-                className={`relative font-mono tracking-wider font-bold uppercase ${press.className}`}
-                style={{
-                  color: "#F4CA8E", 
-                  textShadow: "0 0 6px #F4CA8E, 0 0 8px #F4CA8E",
-                  fontFamily: "monospace",
-                  fontSize: "10px",
-                  minWidth: "40px",
-                  textAlign: "center",
-                }}
-              >
-                {activeSection.toUpperCase()}
+              <div className="relative flex items-center justify-center">
+                {activeSection && iconMap[activeSection.toUpperCase()] ? (
+                  React.createElement(iconMap[activeSection.toUpperCase()], {
+                    size: 14,
+                    style: {
+                      color: "#F4CA8E",
+                      filter: "drop-shadow(0 0 4px #F4CA8E)"
+                    }
+                  })
+                ) : (
+                  <div
+                    className={`relative font-mono tracking-wider font-bold uppercase ${press.className}`}
+                    style={{
+                      color: "#F4CA8E", 
+                      fontFamily: "monospace",
+                      fontSize: "10px",
+                      minWidth: "40px",
+                      textAlign: "center",
+                    }}
+                  >
+                    {activeSection.toUpperCase()}
+                  </div>
+                )}
               </div>
               <div className="absolute inset-0 pointer-events-none">
                 <div
@@ -137,56 +161,78 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
             backdropFilter: 'blur(12px)'
           }}
         />
-
-        {/* Top-right Menu Content */}
-        <div className="absolute top-4 right-4 flex flex-col w-56 gap-3 z-50">
-          {menuItems.map((item, index) => {
-            const IconComponent = item.icon;
-            const isActive = activeSection.toUpperCase() === item.name;
-
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={toggleMobileMenu}
-                className={`group relative px-4 py-2 rounded-lg transition-all duration-300 ${press.className}`}
-                style={{
-                  background: isActive ? 'rgba(219, 170, 166, 0.25)' : 'rgba(219, 170, 166, 0.1)',
-                  border: '1px solid rgba(219, 170, 166, 0.3)',
-                  backdropFilter: 'blur(8px)',
-                  animationDelay: `${index * 80}ms`,
-                  boxShadow: isActive ? '0 4px 16px rgba(244, 202, 142, 0.3)' : '0 2px 8px rgba(0,0,0,0.2)'
-                }}
-              >
-                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-pink-500/5 via-orange-400/10 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <IconComponent 
-                      size={16}
-                      style={{
-                        color: isActive ? '#F4CA8E' : '#DBAAA6',
-                        filter: isActive ? 'drop-shadow(0 0 4px #F4CA8E)' : 'none',
-                      }}
-                      className="flex-shrink-0 transition-all duration-300"
-                    />
-                    <div className="relative font-bold tracking-wider transition-all duration-300" style={{
-                      color: isActive ? '#F4CA8E' : '#DBAAA6',
-                      textShadow: isActive ? '0 0 8px #F4CA8E' : 'none',
-                      fontSize: '14px'
-                    }}>
-                      {item.name}
+        
+        {/* Menu Content */}
+        <div className="relative flex flex-col items-center justify-center h-full p-8">
+          {/* Vertical List Layout */}
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            {menuItems.map((item, index) => {
+              const IconComponent = item.icon;
+              const isActive = activeSection.toUpperCase() === item.name;
+              
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={toggleMobileMenu}
+                  className={`group relative px-6 py-4 rounded-lg transition-all duration-300 ${press.className}`}
+                  style={{
+                    background: isActive 
+                      ? 'rgba(219, 170, 166, 0.25)' 
+                      : 'rgba(219, 170, 166, 0.1)',
+                    border: '1px solid rgba(219, 170, 166, 0.3)',
+                    backdropFilter: 'blur(8px)',
+                    animationDelay: `${index * 80}ms`,
+                    boxShadow: 
+                    // isActive 
+                    //   ? '0 4px 16px rgba(244, 202, 142, 0.3)' 
+                       '0 2px 8px rgba(0, 0, 0, 0.2)'
+                  }}
+                >
+                  {/* Subtle hover glow */}
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-pink-500/5 via-orange-400/10 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  <div className="flex items-center justify-between">
+                    {/* Left side with icon and text */}
+                    <div className="flex items-center gap-3">
+                      {/* Icon */}
+                      <IconComponent 
+                        size={16}
+                        style={{
+                          color: isActive ? '#DBAAA6' : '#DBAAA6',
+                          // filter: isActive ? 'drop-shadow(0 0 4px #F4CA8E)' : 'none',
+                        }}
+                        className="flex-shrink-0 transition-all duration-300"
+                      />
+                      
+                      {/* Text */}
+                      <div
+                        className="relative font-bold tracking-wider transition-all duration-300"
+                        style={{
+                          color: isActive ? '#DBAAA6' : '#DBAAA6',
+                          // textShadow: isActive ? '0 0 8px #F4CA8E' : 'none',
+                          fontSize: '14px'
+                        }}
+                      >
+                        {item.name}
+                      </div>
                     </div>
+
+                    {/* Active indicator dot */}
+                    {/* {isActive && (
+                      <div 
+                        className="w-3 h-3 rounded-full animate-pulse flex-shrink-0"
+                        style={{
+                          background: '#F4CA8E',
+                          boxShadow: '0 0 8px rgba(244, 202, 142, 0.8)'
+                        }}
+                      />
+                    )} */}
                   </div>
-                  {isActive && (
-                    <div className="w-3 h-3 rounded-full animate-pulse flex-shrink-0" style={{
-                      background: '#F4CA8E',
-                      boxShadow: '0 0 8px rgba(244, 202, 142, 0.8)'
-                    }}/>
-                  )}
-                </div>
-              </Link>
-            );
-          })}
+                </Link>
+              );
+            })}
+          </div>
 
           {/* Sign In button */}
           <Link
@@ -205,6 +251,16 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
               <LogIn size={14} /> SIGN IN
             </div>
           </Link>
+
+          {/* FOOTER*/}
+          <div className="absolute bottom-8 text-center">
+            <div 
+              className={`text-xs opacity-50 ${press.className}`}
+              style={{ color: '#DBAAA6', fontSize: '8px' }}
+            >
+              FALAK 2025
+            </div>
+          </div>
         </div>
       </div>
     </>

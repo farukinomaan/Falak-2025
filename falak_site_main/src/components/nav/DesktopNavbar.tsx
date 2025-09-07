@@ -1,13 +1,24 @@
 
-
 "use client";
 
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Press_Start_2P } from "next/font/google";
+import { Home, Music, Trophy, Ticket, ShoppingCart, MessageSquareDashed } from 'lucide-react';
 import { RetroButton } from './nav-components/RetroButton';
 
 const press = Press_Start_2P({ weight: "400", subsets: ["latin"] });
+
+// Icon mapping for center display
+const iconMap: Record<string, React.ComponentType<any>> = {
+  'home': Home,
+  'events': Music,
+  'sports': Trophy,
+  'cultural': Music,
+  'passes': Ticket,
+  'support': MessageSquareDashed,
+  'cart': ShoppingCart
+};
 
 interface NavItem {
   id: string;
@@ -53,10 +64,32 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
   // Determine if the current route matches a nav item; fallback to prop-based activeSection if it also matches
   const matched = useMemo(() => {
     if (!pathname) return null;
-    // Sports & Cultural should map to Events label for center display
-    if (pathname.startsWith('/sports') || pathname.startsWith('/cultural')) {
-      return navItems.find(n => n.id === 'events') || null;
+    
+    // Handle home route specifically
+    if (pathname === '/') {
+      return { id: 'home', label: 'HOME', href: '/' };
     }
+    
+    // Handle cart route specifically
+    if (pathname.startsWith('/cart')) {
+      return { id: 'cart', label: 'CART', href: '/cart' };
+    }
+    
+    // Handle support/tickets route specifically
+    if (pathname.startsWith('/tickets')) {
+      return { id: 'support', label: 'SUPPORT', href: '/tickets' };
+    }
+    
+    // Handle sports route specifically
+    if (pathname.startsWith('/sports')) {
+      return { id: 'sports', label: 'SPORTS', href: '/sports' };
+    }
+    
+    // Handle cultural route specifically
+    if (pathname.startsWith('/cultural')) {
+      return { id: 'cultural', label: 'CULTURAL', href: '/cultural' };
+    }
+    
     return navItems.find(n => pathname === n.href || pathname.startsWith(n.href + '/')) || null;
   }, [pathname, navItems]);
 
@@ -138,7 +171,7 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
                 aria-haspopup="true"
                 aria-expanded={eventsOpen}
                 onClick={(e)=>{ e.preventDefault(); openDropdown(); }}
-                className={`group relative px-2.5 py-1 rounded-md text-xs font-bold uppercase flex items-center gap-1 transition-all duration-300 ${effectiveActiveId === item.id ? 'scale-105' : 'hover:scale-102'}`}
+                className={`group relative px-2.5 py-1 rounded-md text-xs  uppercase flex items-center gap-1 transition-all duration-300 ${effectiveActiveId === item.id ? 'scale-105' : 'hover:scale-102 '}`}
                 style={{
                   backgroundColor: effectiveActiveId === item.id ? '#D7897D' : '#DBAAA6',
                   color: effectiveActiveId === item.id ? '#fff' : '#32212C',
@@ -151,7 +184,7 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
               </button>
               {eventsOpen && (
                 <div
-                  className="absolute left-0 top-full mt-2 w-44 border rounded-lg p-2 z-50"
+                  className="absolute left-0 top-full mt-5 w-44 border rounded-lg p-2 z-50" //increased top margin to mt-4 from m-2
                   style={{background:'rgba(50,33,44,0.95)', borderColor:'rgba(219,170,166,0.6)', backdropFilter:'blur(12px)'}}
                   onMouseEnter={openDropdown}
                   onMouseLeave={scheduleClose}
@@ -182,7 +215,7 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
         <div
       className="relative px-5 py-2 rounded-lg flex items-center justify-center min-w-[140px]"
           style={{
-            backgroundColor: "#32212C",
+            backgroundColor: "#000000",
             border: "1.5px solid #DBAAA6",
             boxShadow:
               "inset 0 2px 6px rgba(0,0,0,0.7), 0 1px 3px rgba(219,170,166,0.3)",
@@ -190,17 +223,29 @@ export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, se
         >
           <div className="relative">
             <div className="absolute inset-0 rounded bg-orange-300 opacity-20 blur-sm"></div>
-            <div
-              className={`relative text-xs font-mono tracking-widest font-bold uppercase ${press.className}`}
-              style={{
-                color: "#DBAAA6",
-                textShadow: "0 0 8px #DBAAA6, 0 0 12px #DBAAA6",
-                fontFamily: "monospace",
-                minWidth: "60px",
-                textAlign: "center",
-              }}
-            >
-              {centerLabel}
+            <div className="relative flex items-center justify-center">
+              {matched && iconMap[matched.id] ? (
+                React.createElement(iconMap[matched.id], {
+                  size: 18,
+                  style: {
+                    color: "#DBAAA6",
+                    filter: "drop-shadow(0 0 8px #DBAAA6)"
+                  }
+                })
+              ) : (
+                <div
+                  className={`text-xs font-mono tracking-widest font-bold uppercase ${press.className}`}
+                  style={{
+                    color: "#DBAAA6",
+                    textShadow: "0 0 8px #DBAAA6, 0 0 12px #DBAAA6",
+                    fontFamily: "monospace",
+                    minWidth: "60px",
+                    textAlign: "center",
+                  }}
+                >
+                  -------
+                </div>
+              )}
             </div>
             <div className="absolute inset-0 pointer-events-none">
               <div
