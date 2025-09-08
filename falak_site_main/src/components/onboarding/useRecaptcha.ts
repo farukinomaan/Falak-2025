@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { RecaptchaVerifier } from "firebase/auth";
 import { auth } from "@/lib/firebase/firebase";
-import { ReCaptchaEnterpriseProvider } from "firebase/app-check";
 
 declare global {
   interface Window {
