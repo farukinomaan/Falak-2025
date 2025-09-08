@@ -3,7 +3,7 @@
 
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Press_Start_2P } from "next/font/google";
+import { press } from "@/styles/fonts";
 import { Home, Music, Trophy, Ticket, ShoppingCart, MessageSquareDashed, type LucideIcon } from 'lucide-react';
 import { RetroButton } from './nav-components/RetroButton';
 import { ChevronLeft } from "lucide-react";
@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 
 
-const press = Press_Start_2P({ weight: "400", subsets: ["latin"] });
+// using shared font instance
 
 // Icon mapping for center display
 const iconMap: Record<string, LucideIcon> = {
@@ -102,7 +102,7 @@ const matched = useMemo(() => {
     <nav
       role="navigation"
       className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden xl:flex items-stretch justify-center gap-3 px-3 py-2
-      rounded-3xl shadow-lg border-2 transition-all duration-500
+      rounded-3xl shadow-lg border-2 transition-transform duration-500
       ${press.className} ${show ? "translate-y-0" : "-translate-y-32"}`}
       style={{
         backgroundColor: "rgba(50, 33, 44, 0.95)",
@@ -127,7 +127,7 @@ const matched = useMemo(() => {
 
 
         {/* Left buttons */}
-        <div className="flex gap-1.5">
+  <div className="flex gap-1.5">
       {leftItems.map((item) => {
           const isEvents = item.id === 'events';
           if (!isEvents) return (
@@ -152,7 +152,7 @@ const matched = useMemo(() => {
                 aria-haspopup="true"
                 aria-expanded={eventsOpen}
                 onClick={(e)=>{ e.preventDefault(); openDropdown(); }}
-                className={`group relative px-2.5 py-1 rounded-md text-xs  uppercase flex items-center gap-1 transition-all duration-300 ${effectiveActiveId === item.id ? 'scale-105' : 'hover:scale-102 '}`}
+                className={`group relative px-2.5 py-1 rounded-md text-xs uppercase flex items-center gap-1 transition-colors duration-300`}
                 style={{
                   backgroundColor: effectiveActiveId === item.id ? '#D7897D' : '#DBAAA6',
                   color: effectiveActiveId === item.id ? '#fff' : '#32212C',
@@ -201,7 +201,7 @@ const matched = useMemo(() => {
     {/* Center glowing display (fixed width to keep sides balanced) */}
     <div className="flex items-center justify-center flex-1">
         <div
-      className="relative px-0 py-2 rounded-lg flex items-center justify-center min-w-[60px]"
+      className="relative px-0 py-2 rounded-lg flex items-center justify-center min-w-[60px] h-[36px]"
           style={{
             backgroundColor: "#000000",
             border: "1.5px solid #DBAAA6",
@@ -251,7 +251,7 @@ const matched = useMemo(() => {
   {/* Right nav + spinner (mirrors left group) */}
   <div className="flex items-center gap-2 pr-1 pl-2 flex-1 justify-end">
         {/* Right buttons */}
-        <div className="flex gap-1.5">
+  <div className="flex gap-1.5">
       {rightItems.map((item) => (
             <RetroButton
               key={item.id}
