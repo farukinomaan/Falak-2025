@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { press } from "@/styles/fonts";
@@ -48,7 +49,12 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
   return (
     <>
       {/* Top Navigation Bar */}
-      <div className={`fixed top-0 left-0 right-0 z-50 flex xl:hidden items-start justify-between p-4 transition-all duration-500 ${show ? 'translate-y-0' : '-translate-y-32'}`}>
+      <motion.div
+        className={`fixed top-0 left-0 right-0 z-50 flex xl:hidden items-start justify-between p-4 transition-transform duration-500 ${show ? 'translate-y-0' : '-translate-y-32'}`}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 160, damping: 18 }}
+      >
         {/* Top-right notch with display and menu */}
   <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg shadow-lg border-2 transition-transform duration-500 ${press.className}`}
           style={{
@@ -149,7 +155,7 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
             />
           </button>
         </div>
-      </div>
+  </motion.div>
 
       {/* Full-Screen Menu Overlay - Top-right Layout */}
       <div className={`fixed inset-0 z-40 xl:hidden transition-all duration-300 ${

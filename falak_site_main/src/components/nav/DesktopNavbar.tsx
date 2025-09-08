@@ -4,6 +4,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { press } from "@/styles/fonts";
+import { motion } from 'framer-motion';
 import { Home, Music, Trophy, Ticket, ShoppingCart, MessageSquareDashed, type LucideIcon } from 'lucide-react';
 import { RetroButton } from './nav-components/RetroButton';
 import { ChevronLeft } from "lucide-react";
@@ -41,6 +42,18 @@ interface DesktopNavbarProps {
 }
 
 export const DesktopNavbar: React.FC<DesktopNavbarProps> = ({ show, navItems, setActiveSection }) => {
+  const groupVariants = {
+    hidden: { opacity: 0, y: -10 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { staggerChildren: 0.06, delayChildren: 0.15 },
+    },
+  } as const;
+  const itemVariants = {
+    hidden: { opacity: 0, y: -6 },
+    visible: { opacity: 1, y: 0 },
+  } as const;
   const router = useRouter();
   const pathname = usePathname();
   // Spinner rotation state (persistent incremental rotation each click)
@@ -99,7 +112,7 @@ const matched = useMemo(() => {
   const effectiveActiveId = matched ? matched.id : undefined;
 
   return (
-    <nav
+    <motion.nav
       role="navigation"
       className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden xl:flex items-stretch justify-center gap-3 px-3 py-2
       rounded-3xl shadow-lg border-2 transition-transform duration-500
@@ -113,6 +126,9 @@ const matched = useMemo(() => {
         width: "72%",
         boxShadow: "0 6px 28px rgba(0,0,0,0.45), 0 0 18px rgba(215, 137, 125, 0.18)",
       }}
+      initial={{ opacity: 0, y: -20, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 160, damping: 18 }}
     >
       {/* Left spinner + nav (fixed width group for symmetry) */}
       <div className="flex items-center gap-2 pl-1 pr-2 flex-1 justify-start">
@@ -127,21 +143,24 @@ const matched = useMemo(() => {
 
 
         {/* Left buttons */}
-  <div className="flex gap-1.5">
+        <motion.div className="flex gap-1.5" variants={groupVariants} initial="hidden" animate="visible">
       {leftItems.map((item) => {
           const isEvents = item.id === 'events';
           if (!isEvents) return (
-            <RetroButton
+            <motion.div variants={itemVariants} key={item.id}>
+              <RetroButton
               key={item.id}
               item={item}
               isActive={effectiveActiveId === item.id}
               onClick={setActiveSection}
               size="sm"
-            />
+              />
+            </motion.div>
           );
           return (
-            <div
+            <motion.div
               key={item.id}
+              variants={itemVariants}
               className="relative"
               onMouseEnter={openDropdown}
               onMouseLeave={scheduleClose}
@@ -192,14 +211,14 @@ const matched = useMemo(() => {
                   </div>
                 </div>
               )}
-            </div>
+      </motion.div>
           );
         })}
-        </div>
+    </motion.div>
       </div>
 
     {/* Center glowing display (fixed width to keep sides balanced) */}
-    <div className="flex items-center justify-center flex-1">
+  <div className="flex items-center justify-center flex-1">
         <div
       className="relative px-0 py-2 rounded-lg flex items-center justify-center min-w-[60px] h-[36px]"
           style={{
@@ -251,17 +270,19 @@ const matched = useMemo(() => {
   {/* Right nav + spinner (mirrors left group) */}
   <div className="flex items-center gap-2 pr-1 pl-2 flex-1 justify-end">
         {/* Right buttons */}
-  <div className="flex gap-1.5">
+        <motion.div className="flex gap-1.5" variants={groupVariants} initial="hidden" animate="visible">
       {rightItems.map((item) => (
-            <RetroButton
-              key={item.id}
-              item={item}
-        isActive={effectiveActiveId === item.id}
-              onClick={setActiveSection}
-              size="sm"
-            />
+            <motion.div variants={itemVariants} key={item.id}>
+              <RetroButton
+                key={item.id}
+                item={item}
+                isActive={effectiveActiveId === item.id}
+                onClick={setActiveSection}
+                size="sm"
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Spinner with trigger */}
         <button
@@ -272,6 +293,6 @@ const matched = useMemo(() => {
   <ChevronRight size={16} />
 </button>
       </div>
-    </nav>
+  </motion.nav>
   );
 };
