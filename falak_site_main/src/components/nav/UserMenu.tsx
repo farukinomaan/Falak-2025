@@ -121,7 +121,12 @@ export function UserMenu({ className = "" }: { className?: string }) {
             <button
               onClick={() => {
                 setOpen(false);
-                signIn("google");
+                if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-start'));
+                signIn("google").finally(() => {
+                  setTimeout(() => {
+                    if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-stop'));
+                  }, 8000);
+                });
               }}
               className={`text-left px-4 py-3 flex items-center gap-3 transition-all duration-200 group ${press.className}`}
               style={{

@@ -239,7 +239,17 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
 
           {/* Sign In button */}
           <button
-            onClick={() => { signIn(); toggleMobileMenu(); }}
+            onClick={() => {
+              // start global loader for sign-in
+              if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-start'));
+              signIn().finally(() => {
+                // Stop will typically be handled by route change; fallback here
+                setTimeout(() => {
+                  if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-stop'));
+                }, 8000);
+              });
+              toggleMobileMenu();
+            }}
             className={`relative mt-6 px-6 py-2 rounded-lg transition-all duration-300 ${press.className} group w-full`}
             style={{
               background: 'rgba(219, 170, 166, 0.15)',

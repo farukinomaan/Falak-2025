@@ -90,7 +90,7 @@ export default function OnboardingPage() {
           <div className="bg-[#32212C] backdrop-blur-sm rounded-2xl border border-black/20 p-6 text-neutral-50 text-center space-y-4">
             <h1 className="text-2xl font-semibold">Sign in required</h1>
             <p className="text-sm text-neutral-300">Please sign in to complete onboarding.</p>
-            <Button onClick={() => signIn()} className="bg-[#de8c89] hover:bg-[#DBAAA6] text-[#32212C] w-full">Sign in</Button>
+            <Button onClick={() => { if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-start')); signIn().finally(() => setTimeout(()=>{ if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-stop')); }, 8000)); }} className="bg-[#de8c89] hover:bg-[#DBAAA6] text-[#32212C] w-full">Sign in</Button>
           </div>
         </div>
       </div>
@@ -151,7 +151,7 @@ export default function OnboardingPage() {
         </Button>
 
         <div className="flex justify-end pt-2">
-          <Button type="button" variant="ghost" size="sm" onClick={() => signOut()} className="text-neutral-300 hover:text-white">
+          <Button type="button" variant="ghost" size="sm" onClick={() => { if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-start')); signOut({ redirect: false }).finally(()=>{ window.location.assign('/'); setTimeout(()=>{ if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-stop')); }, 1000); }); }} className="text-neutral-300 hover:text-white">
             Logout
           </Button>
         </div>

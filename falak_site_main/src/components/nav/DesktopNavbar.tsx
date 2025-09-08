@@ -175,7 +175,14 @@ const matched = useMemo(() => {
                       <a
                         key={d.id}
                         href={d.href}
-                        onClick={()=>{ setActiveSection(d.id); setEventsOpen(false); }}
+                        onClick={()=>{ 
+                          setActiveSection(d.id); 
+                          setEventsOpen(false); 
+                          if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-start'));
+                          setTimeout(()=>{
+                            if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-stop'));
+                          }, 8000);
+                        }}
                         className={`px-2 py-1 rounded text-xs font-semibold uppercase transition-colors ${pathname?.startsWith(d.href) ? 'bg-[#D7897D] text-white' : 'text-[#DBAAA6] hover:bg-[#DBAAA6] hover:text-[#32212C]'}`}
                         style={{fontFamily: press.style.fontFamily}}
                       >

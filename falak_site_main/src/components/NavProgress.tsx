@@ -58,6 +58,25 @@ export default function NavProgress() {
     return () => document.removeEventListener("click", onClick, true);
   }, []);
 
+  // Listen for manual start/stop events (e.g., sign-in / sign-out / programmatic nav)
+  useEffect(() => {
+    function onStart() {
+      setIsNavigating(true);
+      if (guardTimerRef.current) window.clearTimeout(guardTimerRef.current);
+      guardTimerRef.current = window.setTimeout(() => setIsNavigating(false), 10000);
+    }
+    function onStop() {
+      setIsNavigating(false);
+      if (guardTimerRef.current) window.clearTimeout(guardTimerRef.current);
+    }
+    window.addEventListener("navprogress-start", onStart as EventListener);
+    window.addEventListener("navprogress-stop", onStop as EventListener);
+    return () => {
+      window.removeEventListener("navprogress-start", onStart as EventListener);
+      window.removeEventListener("navprogress-stop", onStop as EventListener);
+    };
+  }, []);
+
   // When the pathname updates, hide the overlay shortly after
   useEffect(() => {
     if (lastPathRef.current !== pathname) {
@@ -76,7 +95,13 @@ export default function NavProgress() {
     <div className="fixed inset-0 z-[100] pointer-events-none">
       <div className="absolute inset-0 bg-black/20" />
       <div className="absolute top-0 left-0 h-0.5 w-full overflow-hidden">
-        <div className="h-full w-1/3 animate-[loader_1s_ease_infinite] bg-black dark:bg-white" />
+        <div
+          className="h-full w-1/3 animate-[loader_1s_ease_infinite]"
+          style={{
+            background: "linear-gradient(90deg, #DBAAA6 0%, #F4CA8E 50%, #DBAAA6 100%)",
+            boxShadow: "0 0 8px rgba(219,170,166,0.6), 0 0 12px rgba(244,202,142,0.4)",
+          }}
+        />
       </div>
       
       <style jsx>{`
