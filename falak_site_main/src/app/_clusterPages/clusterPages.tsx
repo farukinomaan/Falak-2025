@@ -21,9 +21,7 @@ import CulturalAnimations from "@/components/CulturalAnimations";
 import MountReveal from "./MountReveal";
 import LoadingIndicatorClient from "./LoadingIndicatorClient";
 
-// Toggle when events go live
-// NOTE: Keep data fetching intact below; we short-circuit rendering only.
-const EVENTS_SALES_ACTIVE = false;
+// Events now live (flag removed; always show detail)
 
 type EvtBase = {
   id: string;
@@ -168,12 +166,8 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
   const events = eventsRes.ok ? ((eventsRes.data as EvtBase[]) || []).filter((e) => (e.enable ?? true) as boolean) : [];
 
   // Determine if user has a MAHE proshow pass (no event_id) to unlock access (except esports)
-  let userIsMahe = false;
-  if (userId) {
-    const supabase = getServiceClient();
-    const { data: userRow } = await supabase.from("Users").select("mahe").eq("id", userId).maybeSingle();
-    userIsMahe = Boolean((userRow as { mahe?: boolean } | null)?.mahe);
-  }
+  interface SessWithMahe { user?: { mahe?: boolean | null } }
+  const userIsMahe = Boolean((session as SessWithMahe | null)?.user?.mahe);
   const userOwnedPasses = passes.filter(p => ownedPassIds.has(p.id));
   const hasMaheProshow = userOwnedPasses.some(p => !p.event_id && (p.mahe === true || userIsMahe));
 
@@ -261,23 +255,7 @@ export async function ClusterEvent({
     userId ? saGetUserTeamForEvent(userId, slug) : Promise.resolve({ ok: true as const, data: null }),
   ]);
 
-  // COMING SOON MODE for event details
-  if (!EVENTS_SALES_ACTIVE) {
-    return (
-      <>
-        {cluster === 'cultural' && <CulturalAnimations />}
-        <PageBackground cluster={cluster} />
-        <div className={`clusterContainer max-w-3xl mx-auto p-6 md:p-10 ${cluster}`}>
-          <div className="clusterCard rounded-2xl p-10 flex items-center justify-center min-h-[40vh]">
-            <h1 className="text-4xl md:text-6xl font-semibold text-center tracking-wide">
-              COMING SOOOoooo.......n
-            </h1>
-          </div>
-          {/* TODO: When events go live, remove the Coming Soon block above and restore the full event detail UI. */}
-        </div>
-      </>
-    );
-  }
+  // Coming soon mode removed; always render full event detail
 
 
   const ownedPassIds = new Set<string>(ownedRes.ok ? ownedRes.data : []);
@@ -292,12 +270,8 @@ export async function ClusterEvent({
   if (!event) return notFound();
   const nice = clusterLabel(cluster);
   // Determine if user has a MAHE proshow pass (no event_id) to unlock access (except esports)
-  let userIsMahe = false;
-  if (userId) {
-    const supabase = getServiceClient();
-    const { data: userRow } = await supabase.from("Users").select("mahe").eq("id", userId).maybeSingle();
-    userIsMahe = Boolean((userRow as { mahe?: boolean } | null)?.mahe);
-  }
+  interface SessWithMahe2 { user?: { mahe?: boolean | null } }
+  const userIsMahe = Boolean((session as SessWithMahe2 | null)?.user?.mahe);
   const userOwnedPasses = passes.filter(p => ownedPassIds.has(p.id));
   const hasMaheProshow = userOwnedPasses.some(p => !p.event_id && (p.mahe === true || userIsMahe));
   const eligibleUniversal = hasMaheProshow && event.sub_cluster.toLowerCase() !== 'esports';

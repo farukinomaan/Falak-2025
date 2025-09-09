@@ -3,8 +3,6 @@ import Vinyl from "@/components/profile/Vinyl";
 import { saListProshowPasses } from "@/lib/actions/adminAggregations";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getUserByEmail } from "@/lib/actions";
-import type { User } from "@/lib/actions";
 
 export const revalidate = 60;
 
@@ -17,24 +15,15 @@ type PassCard = {
   mahe?: boolean | null; // true=MAHE pass, false=Non-MAHE only, undefined => open
 };
 
-// Toggle when passes go live
-const PASSES_SALES_ACTIVE = false;
+// Passes now live (flag removed; always show passes)
 
 export default async function PassesPage() {
   const res = await saListProshowPasses();
   const passes: PassCard[] = res.ok ? (res.data as PassCard[]) : [];
-  // Determine if current user is MAHE
+  // Determine if current user is MAHE from enriched session (avoids extra DB round trip)
   const session = await getServerSession(authOptions);
-  let isMahe = false;
-  if (session?.user?.email) {
-    try {
-      const u = await getUserByEmail(session.user.email);
-      if (u.ok && u.data) {
-        const user = u.data as User;
-        isMahe = Boolean(user.mahe);
-      }
-    } catch {}
-  }
+  interface SessWithMahe { user?: { mahe?: boolean | null } }
+  const isMahe = Boolean((session as SessWithMahe | null)?.user?.mahe);
 
   // When passes go live, use this filtered list
   // Visibility rules:
@@ -61,26 +50,9 @@ export default async function PassesPage() {
   backgroundColor: '#32212C',
       }}
     >
-      {/* Passes COMING SOON overlay; keep data fetching for later */}
-      {PASSES_SALES_ACTIVE ? (
-        // TODO: When passes go live, remove this condition and render Features below
-        <div className="relative z-20 ">
-      {/* Switch to filteredPasses to enforce MAHE visibility rules */}
-      <Features passes={filteredPasses} isMahe={isMahe} />
-        </div>
-      ) : (
-        <div className="relative z-20 flex items-center justify-center min-h-[70vh] px-4">
-          <div className="w-full max-w-2xl">
-            <div className="rounded-3xl border border-white/15 bg-white/5 backdrop-blur-xl shadow-2xl px-6 py-10 sm:px-10">
-              <div className="text-center space-y-3">
-                <span className="inline-block text-xs uppercase tracking-wider px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/80">Passes</span>
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-wide text-[#de8c89]">COMING SOON</h1>
-                <p className="text-white/70">Proshow and event passes will be available here soon.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="relative z-20">
+        <Features passes={filteredPasses} isMahe={isMahe} />
+      </div>
 
       {/* Dim the background slightly without affecting foreground */}
       <div
@@ -97,7 +69,7 @@ export default async function PassesPage() {
           backgroundPosition: "center bottom",
           backgroundRepeat: "no-repeat",
           opacity: 0.9,
-          filter: PASSES_SALES_ACTIVE ? undefined : 'blur(3px)'
+          filter: undefined
         }}
       />
 
