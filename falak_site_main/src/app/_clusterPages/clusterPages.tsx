@@ -323,6 +323,18 @@ export async function ClusterEvent({
     }
   }
 
+  // Restrict MAHE users to a single esports event registration
+  const isEsports = (event.sub_cluster || '').toLowerCase() === 'esports';
+  let blockedEsportsRegistration = false;
+  if (userIsMahe && isEsports && owned && !existingTeam && userId) {
+    // Only now fetch all team event IDs (potentially heavy) since user could actually attempt another esports registration
+    const teamEvtListRes = await saListUserTeamEventIds(userId);
+    if (teamEvtListRes.ok) {
+      const teamEventIds = new Set<string>(teamEvtListRes.data);
+      blockedEsportsRegistration = teamEventIds.size > 0 && !teamEventIds.has(event.id);
+    }
+  }
+
   return (
     <>
       {cluster === 'cultural' && <CulturalAnimations />}
@@ -396,14 +408,20 @@ export async function ClusterEvent({
         
     {owned && !existingTeam && (
           <div className="mt-8" style={{ position: 'relative', zIndex: 5 }}>
-            
-            <TeamRegistrationClient
-              eventId={event.id}
-              captainId={userId || ""}
-              captainName={session?.user?.name || null}
-              minSize={1}
-      leaderHint={eligibleUniversal && !ownedEventIds.has(event.id)}
-            />
+            {blockedEsportsRegistration ? (
+              <div className="clusterCard border rounded-lg p-6 text-center bg-black/30">
+                <p className="text-lg font-medium mb-2">Esports Registration Limit Reached</p>
+                <p className="text-md text-gray-300">You have already registered for another Esports event. MAHE users may participate in only one Esports event.</p>
+              </div>
+            ) : (
+              <TeamRegistrationClient
+                eventId={event.id}
+                captainId={userId || ""}
+                captainName={session?.user?.name || null}
+                minSize={1}
+                leaderHint={eligibleUniversal && !ownedEventIds.has(event.id)}
+              />
+            )}
           </div>
         )}
         {/* <img src="/wave2.svg" className="waveImage" alt="" /> */}
