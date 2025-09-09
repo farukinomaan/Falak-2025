@@ -36,6 +36,15 @@ export default async function PassesPage() {
     if (isMahe) return passes.filter((p) => p.mahe !== false);
     return passes.filter((p) => !(p.event_id == null && p.mahe === true));
   })();
+
+  // Adapt to Features prop shape
+  const featurePasses = filteredPasses.map(p => ({
+    id: p.id,
+    title: p.pass_name,
+    description: p.description || undefined,
+    price: typeof p.cost === 'number' ? p.cost : Number(p.cost) || 0,
+    perks: [],
+  }));
   
   return (
     <div
@@ -51,7 +60,7 @@ export default async function PassesPage() {
       }}
     >
       <div className="relative z-20">
-        <Features passes={filteredPasses} isMahe={isMahe} />
+  <Features passes={featurePasses} isMahe={isMahe} />
       </div>
 
       {/* Dim the background slightly without affecting foreground */}
