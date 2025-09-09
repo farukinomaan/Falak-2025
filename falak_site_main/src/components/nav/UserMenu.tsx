@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { ShoppingCart, User, LogIn } from "lucide-react";
+import { ShoppingCart, User, LogIn, LogOut } from "lucide-react";
 import { useCartCount } from "@/components/cart/useCartCount";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
@@ -181,6 +181,10 @@ export function UserMenu({ className = "" }: { className?: string }) {
               )}
             </Link>
           )}
+          {/* Divider between Cart and Sign Out (only if cart is shown) */}
+          {!isMahe && status === 'authenticated' && (
+            <div className="mx-4 my-2 h-px opacity-30" style={{ background: "linear-gradient(to right, transparent, #DBAAA6, transparent)" }} />
+          )}
           {status === 'authenticated' && (
             <button
               onClick={() => { setOpen(false); signOut(); }}
@@ -194,6 +198,7 @@ export function UserMenu({ className = "" }: { className?: string }) {
               }}
               role="menuitem"
             >
+              <LogOut size={16} style={{ color: "#DBAAA6", filter: "drop-shadow(0 0 4px rgba(219, 170, 166, 0.6))" }} />
               Sign Out
             </button>
           )}
