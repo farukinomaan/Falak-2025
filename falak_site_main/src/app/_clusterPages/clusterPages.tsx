@@ -176,7 +176,7 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
   const list = events.filter(
     (e) =>
       (e.cluster_name || "").toLowerCase() === cluster &&
-      e.sub_cluster.toLowerCase() === decodedCategory.toLowerCase()
+      ((e.sub_cluster || "").toLowerCase() === decodedCategory.toLowerCase())
   );
 
   if (list.length === 0) return notFound();
@@ -198,7 +198,7 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
         >
           <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-8">
             {list.map((e) => {
-              const eligibleUniversal = hasMaheProshow && e.sub_cluster.toLowerCase() !== 'esports';
+              const eligibleUniversal = hasMaheProshow && (e.sub_cluster || '').toLowerCase() !== 'esports';
               const owned = ownedEventIds.has(e.id) || eligibleUniversal;
               const inTeam = teamEventIds.has(e.id);
               return (
@@ -213,14 +213,21 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
                   back={
                     <>
                       <div className={`status-tag ${inTeam ? 'in-team' : owned ? 'owned' : 'available'}`}>
-                        {inTeam ? "In Team" : owned ? "Owned" : "Available"}
+                        {inTeam ? "In Team" : owned ? "Owned" : userIsMahe ? "MAHE" : "Available"}
                       </div>
-                      <Link
-                        className="clusterButton mt-4"
-                        href={`/${cluster}/${encodeURIComponent(decodedCategory)}/${encodeURIComponent(e.id)}`}
-                      >
-                        Go to Event Page
-                      </Link>
+                      <div className="mt-4 flex flex-col gap-2">
+                        <Link
+                          className="clusterButton"
+                          href={`/${cluster}/${encodeURIComponent(decodedCategory)}/${encodeURIComponent(e.id)}`}
+                        >
+                          Go to Event Page
+                        </Link>
+                        {!owned && userIsMahe && (
+                          <Link href="/passes" className="clusterButton alt">
+                            Get Access
+                          </Link>
+                        )}
+                      </div>
                     </>
                   }
                 />
@@ -265,7 +272,7 @@ export async function ClusterEvent({
   for (const p of passes) if (p.event_id && ownedPassIds.has(p.id)) ownedEventIds.add(p.event_id);
   const events: EvtBase[] = eventsRes.ok ? (eventsRes.data as unknown as EvtBase[]) : [];
   const event = events.find(
-    (e) => e.id === slug && e.sub_cluster.toLowerCase() === decodeURIComponent(category).toLowerCase() && (e.cluster_name || "").toLowerCase() === cluster
+    (e) => e.id === slug && ((e.sub_cluster || '').toLowerCase() === decodeURIComponent(category).toLowerCase()) && (e.cluster_name || "").toLowerCase() === cluster
   );
   if (!event) return notFound();
   const nice = clusterLabel(cluster);
@@ -274,7 +281,7 @@ export async function ClusterEvent({
   const userIsMahe = Boolean((session as SessWithMahe2 | null)?.user?.mahe);
   const userOwnedPasses = passes.filter(p => ownedPassIds.has(p.id));
   const hasMaheProshow = userOwnedPasses.some(p => !p.event_id && (p.mahe === true || userIsMahe));
-  const eligibleUniversal = hasMaheProshow && event.sub_cluster.toLowerCase() !== 'esports';
+  const eligibleUniversal = hasMaheProshow && (event.sub_cluster || '').toLowerCase() !== 'esports';
   const owned = ownedEventIds.has(event.id) || eligibleUniversal;
   
   const date = event.date ? new Date(event.date) : null;
@@ -337,7 +344,11 @@ export async function ClusterEvent({
               <p><span className="font-semibold text-gray-400">Venue:</span> {event.venue}</p>
               {dateStr && <p><span className="font-semibold text-gray-400">Date:</span> {dateStr}</p>}
               {timeStr && <p><span className="font-semibold text-gray-400">Time:</span> {timeStr}</p>}
-              {priceStr && <p><span className="font-semibold text-gray-400">Price:</span> ₹{priceStr}</p>}
+              {userIsMahe ? (
+                <p><span className="font-semibold text-gray-400">Pass:</span> {(event.sub_cluster || '').toLowerCase() === 'esports' ? 'Esports Pass' : 'Pro-show Pass'}</p>
+              ) : (
+                priceStr && <p><span className="font-semibold text-gray-400">Price:</span> ₹{priceStr}</p>
+              )}
             </div>
             {(() => {
               if (existingTeam) {
@@ -367,6 +378,14 @@ export async function ClusterEvent({
                 );
               }
               if (!owned) {
+                // MAHE users see a unified access pass CTA instead of per-event add-to-cart
+                if (userIsMahe) {
+                  return (
+                    <Link href="/passes" className="clusterButton">
+                      Get Access
+                    </Link>
+                  );
+                }
                 return <AddToCartButton passId={event.id} className="clusterButton" />;
               }
               return null;
