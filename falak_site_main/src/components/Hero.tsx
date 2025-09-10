@@ -68,18 +68,25 @@ const Hero: React.FC = () => {
           {!prefersReducedMotion ? (
             <>
               <video
-                ref={mainVideoRef}
-                autoPlay
-                loop
-                muted
-                preload="metadata"
-                playsInline
-                poster="/window.svg"
-                className="absolute left-0 top-0 w-full h-full object-cover object-center pointer-events-none"
-                onCanPlay={() => setCanPlay(true)}
-              >
-                {videoSrc ? <source src={videoSrc} type="video/mp4" /> : null}
-              </video>
+  ref={mainVideoRef}
+  autoPlay
+  loop
+  muted
+  preload="metadata"
+  playsInline
+  poster="/window.svg"
+  className="absolute left-0 top-0 w-full h-full object-cover object-center pointer-events-none"
+  onCanPlay={() => setCanPlay(true)}
+>
+  {videoSrc && (
+    <>
+      {/* WebM first for modern browsers */}
+      <source src={videoSrc.replace(".mp4", "_optimized.webm")} type="video/webm" />
+      {/* Fallback MP4 for Safari */}
+      <source src={videoSrc} type="video/mp4" />
+    </>
+  )}
+</video>
               {!canPlay && (
                 <Image
                   src="/window.svg"
