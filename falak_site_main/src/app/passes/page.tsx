@@ -74,7 +74,7 @@ export default async function PassesPage() {
             <div className="rounded-3xl border border-white/15 bg-white/5 backdrop-blur-xl shadow-2xl px-6 py-10 sm:px-10">
               <div className="text-center space-y-3">
                 <span className="inline-block text-xs uppercase tracking-wider px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/80">Passes</span>
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-wide text-[#de8c89]">COMING SOON</h1>
+                <h1 className="vintage-font text-4xl sm:text-5xl md:text-6xl font-semibold tracking-wide text-white">COMING SOON</h1>
                 <p className="text-white/70">Proshow and event passes will be available here soon.</p>
               </div>
             </div>
@@ -84,7 +84,7 @@ export default async function PassesPage() {
 
       {/* Dim the background slightly without affecting foreground */}
       <div
-        className="pointer-events-none absolute inset-0  z-10 opacity-40 bg-black"
+        className="pointer-events-none absolute inset-0  z-10 opacity-30 bg-black"
         aria-hidden
       />
 
@@ -97,7 +97,7 @@ export default async function PassesPage() {
           backgroundPosition: "center bottom",
           backgroundRepeat: "no-repeat",
           opacity: 0.9,
-          filter: PASSES_SALES_ACTIVE ? undefined : 'blur(3px)'
+          filter: PASSES_SALES_ACTIVE ? undefined : 'blur(1.5px)'
         }}
       />
 

@@ -14,6 +14,11 @@ const sponsors = [
     logo: "/sponsors/findoc.png",
     url: "https://findoc.com/",
   },
+  {
+    name: "InterviewBuddy",
+    logo: "/sponsors/inbuddy.png",
+    url: "https://interviewbuddy.com/",
+  },
 ];
 
 const Sponsor: React.FC = () => {
