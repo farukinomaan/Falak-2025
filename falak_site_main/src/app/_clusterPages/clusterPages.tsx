@@ -173,6 +173,9 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
 
   const decodedCategory = decodeURIComponent(category);
 
+  // Esports note will be shown below title when viewing the esports sub-cluster
+  const isEsportsCategory = decodedCategory.toLowerCase() === 'esports';
+
   const list = events.filter(
     (e) =>
       (e.cluster_name || "").toLowerCase() === cluster &&
@@ -187,6 +190,11 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
       <PageBackground cluster={cluster} />
       <div className={`clusterContainer max-w-5xl mx-auto p-4 md:p-6 space-y-4 ${cluster}`}>
         <h1 className="text-3xl font-semibold">{decodedCategory}</h1>
+        {isEsportsCategory && (
+          <p className="text-sm text-gray-300 italic -mt-2">
+            Note: You are allowed to register for only one Esports event. Choose wisely – access is locked after your first team registration.
+          </p>
+        )}
         <MountReveal
           fallback={
             <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-8">
@@ -323,17 +331,50 @@ export async function ClusterEvent({
     }
   }
 
-  // Restrict MAHE users to a single esports event registration
+  // Esports single-registration enforcement (applies to ALL users)
+  const supabase = getServiceClient();
   const isEsports = (event.sub_cluster || '').toLowerCase() === 'esports';
-  let blockedEsportsRegistration = false;
-  if (userIsMahe && isEsports && owned && !existingTeam && userId) {
-    // Only now fetch all team event IDs (potentially heavy) since user could actually attempt another esports registration
-    const teamEvtListRes = await saListUserTeamEventIds(userId);
-    if (teamEvtListRes.ok) {
-      const teamEventIds = new Set<string>(teamEvtListRes.data);
-      blockedEsportsRegistration = teamEventIds.size > 0 && !teamEventIds.has(event.id);
-    }
+  let redeemedEventId: string | null = null;
+  let participationEventId: string | null = null; // any esports event where user participates (captain or member)
+  if (userId) {
+    try {
+      // 1. Determine if user already participates in ANY esports event via Teams / Team_members join
+      const { data: esportsEvents } = await supabase
+        .from('Events')
+        .select('id')
+        .eq('sub_cluster', 'Esports');
+      const esportsIds = new Set((esportsEvents as Array<{ id: string }> | null)?.map(r => r.id) || []);
+      if (esportsIds.size) {
+        const [captainRows, memberRows] = await Promise.all([
+          supabase.from('Teams').select('eventId').eq('captainId', userId).in('eventId', Array.from(esportsIds)),
+          supabase.from('Team_members').select('eventId').eq('memberId', userId).in('eventId', Array.from(esportsIds)),
+        ]);
+        if (!captainRows.error) {
+          for (const r of (captainRows.data as Array<{ eventId: string }> || [])) { participationEventId = r.eventId; break; }
+        }
+        if (!participationEventId && !memberRows.error) {
+          for (const r of (memberRows.data as Array<{ eventId: string }> || [])) { participationEventId = r.eventId; break; }
+        }
+      }
+      // 2. Fetch redeemed row if any
+      const { data: redeemed } = await supabase
+        .from('esports_redeemed')
+        .select('event_id')
+        .eq('user_id', userId)
+        .limit(1);
+      if (Array.isArray(redeemed) && redeemed.length) redeemedEventId = (redeemed[0] as { event_id: string }).event_id;
+      // 3. If user participates & no redeemed record, insert one now
+      if (participationEventId && !redeemedEventId) {
+        try {
+          await supabase.from('esports_redeemed').insert({ user_id: userId, event_id: participationEventId });
+          redeemedEventId = participationEventId;
+        } catch { /* ignore */ }
+      }
+    } catch { /* ignore top-level esports logic errors */ }
   }
+
+  const lockedToDifferentEsports = isEsports && (redeemedEventId && redeemedEventId !== event.id);
+  const blockedEsportsRegistration = lockedToDifferentEsports;
 
   return (
     <>
@@ -411,8 +452,13 @@ export async function ClusterEvent({
           <div className="mt-8" style={{ position: 'relative', zIndex: 5 }}>
             {blockedEsportsRegistration ? (
               <div className="clusterCard border rounded-lg p-6 text-center bg-black/30">
-                <p className="text-lg font-medium mb-2">Esports Registration Limit Reached</p>
-                <p className="text-md text-gray-300">You have already registered for another Esports event. MAHE users may participate in only one Esports event.</p>
+                <p className="text-lg font-medium mb-2">Esports Registration Locked</p>
+                <p className="text-md text-gray-300">You are already registered (captain or member) in another Esports event. Only one Esports event registration is allowed.</p>
+                {(redeemedEventId || participationEventId) && (
+                  <Link href={`/${cluster}/${encodeURIComponent(category)}/${encodeURIComponent((redeemedEventId || participationEventId) || '')}`} className="clusterButton mt-4">
+                    View My Registered Esports Event
+                  </Link>
+                )}
               </div>
             ) : (
               <TeamRegistrationClient
