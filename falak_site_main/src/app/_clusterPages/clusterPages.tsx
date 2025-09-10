@@ -390,15 +390,16 @@ export async function ClusterEvent({
                 );
               }
               if (!owned) {
-                // MAHE users see a unified access pass CTA instead of per-event add-to-cart
-                if (userIsMahe) {
-                  return (
-                    <Link href="/passes" className="clusterButton">
-                      Get Access
-                    </Link>
-                  );
+                // Non-MAHE: always show Add to Cart for the specific event
+                if (!userIsMahe) {
+                  return <AddToCartButton passId={event.id} className="clusterButton" />;
                 }
-                return <AddToCartButton passId={event.id} className="clusterButton" />;
+                // MAHE: unified pass CTA
+                return (
+                  <Link href="/passes" className="clusterButton">
+                    Get Access
+                  </Link>
+                );
               }
               return null;
             })()}

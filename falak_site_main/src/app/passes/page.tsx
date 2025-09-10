@@ -26,15 +26,16 @@ export default async function PassesPage() {
   const isMahe = Boolean((session as SessWithMahe | null)?.user?.mahe);
 
   // When passes go live, use this filtered list
-  // Visibility rules:
-  // - Only enabled passes are fetched at the API level.
-  // - If user.mahe === true => hide passes where pass.mahe === false (Non-MAHE only)
-  // - If user.mahe === false => hide passes where event_id is null AND pass.mahe === true (MAHE-only proshow)
-  // - If unauthenticated/unregistered => show all
+  // Visibility rules UPDATED:
+  // - Enabled filtering handled upstream.
+  // - MAHE user: show all passes except those explicitly non-MAHE (mahe === false)
+  // - Non-MAHE user (mahe === false): show ONLY public proshow passes => event_id IS NULL AND mahe === false
+  // - Guest (no session): show all (marketing visibility) – adjust later if needed
   const filteredPasses: PassCard[] = (() => {
-    if (!session?.user?.email) return passes; // guest: show all
-    if (isMahe) return passes.filter((p) => p.mahe !== false);
-    return passes.filter((p) => !(p.event_id == null && p.mahe === true));
+    if (!session?.user?.email) return passes; // guest sees all
+    if (isMahe) return passes.filter(p => p.mahe !== false);
+    // Non-MAHE user: strictly public proshow passes (no event tie + mahe === false)
+    return passes.filter(p => p.event_id == null && p.mahe === false);
   })();
 
   // Adapt to Features prop shape
@@ -60,7 +61,14 @@ export default async function PassesPage() {
       }}
     >
       <div className="relative z-20">
-  <Features passes={featurePasses} isMahe={isMahe} />
+  {featurePasses.length > 0 ? (
+    <Features passes={featurePasses} isMahe={isMahe} />
+  ) : (
+    <div className="pt-40 pb-20 text-center text-white relative z-20">
+      <h2 className="text-3xl font-semibold mb-4">No passes available</h2>
+      <p className="text-sm opacity-80 max-w-md mx-auto">Currently no public proshow passes are available for Non-MAHE users. Please check back later.</p>
+    </div>
+  )}
       </div>
 
       {/* Dim the background slightly without affecting foreground */}
