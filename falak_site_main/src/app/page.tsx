@@ -1,12 +1,13 @@
-import Hero from "@/components/Hero";
-import Head from "next/head";
-import Artist from "@/components/Artist";
-import Timeline from "@/components/Timeline";
-import Trailer from "@/components/Trailer";
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
 import Footer from "@/components/Footer";
 import { Orbitron } from "next/font/google";
-import About from "@/components/About";
-import Sponsor from "@/components/Sponsor";
+const Hero = dynamic(() => import("@/components/Hero"));
+const Artist = dynamic(() => import("@/components/Artist"));
+const Timeline = dynamic(() => import("@/components/Timeline"));
+const Trailer = dynamic(() => import("@/components/Trailer"));
+const About = dynamic(() => import("@/components/About"));
+const Sponsor = dynamic(() => import("@/components/Sponsor"));
 
 const orbitron = Orbitron({
   subsets: ["latin"],
@@ -16,15 +17,7 @@ const orbitron = Orbitron({
 export default function Home() {
   return (
     <div className={orbitron.className}>
-      <Head>
-        <link
-          rel="preload"
-          as="video"
-          href="/videos/nbg.mp4"
-          type="video/mp4"
-          crossOrigin="anonymous"
-        />
-      </Head>
+  {/* Preload critical media via metadata in layout if needed */}
 
       {/* Background Layers */}
       {/* Base background color */}
@@ -49,13 +42,29 @@ export default function Home() {
 
       {/* Page content */}
       <div className="relative z-10">
-        <Hero />
-        <About />
-        <Artist />
-        <Timeline />
-        <Trailer />
-        <Sponsor />
+        <Suspense fallback={<SectionSkeleton title="Welcome" />}> <Hero /> </Suspense>
+        <Suspense fallback={<SectionSkeleton title="About" />}> <About /> </Suspense>
+        <Suspense fallback={<SectionSkeleton title="Artist" />}> <Artist /> </Suspense>
+        <Suspense fallback={<SectionSkeleton title="Timeline" />}> <Timeline /> </Suspense>
+        <Suspense fallback={<SectionSkeleton title="Trailer" />}> <Trailer /> </Suspense>
+        <Suspense fallback={<SectionSkeleton title="Sponsors" />}> <Sponsor /> </Suspense>
         <Footer />
+      </div>
+    </div>
+  );
+}
+
+export const metadata = {
+  title: "FALAK 2025",
+  description: "MIT Bengaluru Cultural fest",
+};
+
+function SectionSkeleton({ title }: { title: string }) {
+  return (
+    <div className="w-full py-16 px-4">
+      <div className="max-w-[1100px] mx-auto">
+        <div className="h-6 w-40 mb-6 rounded bg-[#DBAAA6]/20" aria-hidden />
+        <div className="h-40 w-full rounded border-2 border-[#DBAAA6]/30 bg-[#32212C]/60" aria-label={`${title} loading`} />
       </div>
     </div>
   );

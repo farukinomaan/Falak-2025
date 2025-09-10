@@ -10,9 +10,11 @@ export default function AuthButtons() {
       <button
         className="text-sm"
         onClick={async () => {
+          if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-start'));
           await signOut({ redirect: false });
           window.location.href = "/"; 
           toast.success("Signed out");
+          if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-stop'));
         }}
       >
         Sign out
@@ -23,8 +25,11 @@ export default function AuthButtons() {
     <button
       className="text-sm"
       onClick={async () => {
-        //  const res = await signIn("google", { callbackUrl: "/" });
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-start'));
         await signIn("google", { callbackUrl: "/" });
+        setTimeout(() => {
+          if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-stop'));
+        }, 8000);
         // if (res === undefined) {
         //   toast.info("Sign-in flow opened");
         // }

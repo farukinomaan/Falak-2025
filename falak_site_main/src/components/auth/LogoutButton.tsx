@@ -13,11 +13,15 @@ export default function LogoutButton() {
         if (pending) return;
         start(async () => {
           try {
+            if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-start'));
             await signOut({ redirect: false });
           } finally {
             // Force client-side nav to avoid any middleware race conditions
             if (typeof window !== "undefined") window.location.assign("/");
             else router.replace("/");
+            setTimeout(() => {
+              if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-stop'));
+            }, 1000);
           }
         });
       }}

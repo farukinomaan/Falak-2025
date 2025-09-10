@@ -1,5 +1,3 @@
-"use client";
-
 import Image from "next/image";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -9,8 +7,8 @@ import EnvWarning from "@/components/EnvWarning";
 import { Toaster } from "sonner";
 import NavProgress from "@/components/NavProgress";
 import Navbar from "@/components/Nav";
-import { useState } from "react";
 import Link from "next/link"; 
+import PageTransitionClient from "@/components/PageTransitionClient";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,8 +30,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // Track mobile menu
-
   return (
     <html lang="en" className="h-full">
       <head>
@@ -45,18 +41,16 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen h-full flex flex-col overflow-x-hidden`}>
+    <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen h-full flex flex-col overflow-x-hidden`}>
         <ClientProviders>
           <EnvWarning />
 
           {/* Navbar */}
-          <Navbar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+      <Navbar />
 
           {/* Fixed Logo */}
 <div
-  className={`fixed -top-6 right-0 z-[9999] xl:left-4 xl:top-[-3.5rem] xl:right-auto transition-all duration-300${
-    isMenuOpen ? "opacity-0 pointer-events-none" : "opacity-100"
-  }`}
+  className={`fixed -top-6 right-0 z-[9999] xl:left-4 xl:top-[-3.5rem] xl:right-auto transition-all duration-300 opacity-100`}
   style={{ transform: "translateZ(0)" }}
 >
   <Link href="/" aria-label="Go to homepage">
@@ -72,7 +66,9 @@ export default function RootLayout({
 </div>
 
 
-          <main className="flex-1 w-full min-h-screen">{children}</main>
+          <main className="flex-1 w-full min-h-screen">
+            <PageTransitionClient>{children}</PageTransitionClient>
+          </main>
           <NavProgress />
           <Toaster richColors position="bottom-right" />
         </ClientProviders>

@@ -18,6 +18,8 @@ import { getServiceClient } from "@/lib/actions/supabaseClient";
 import "./cluster.css";
 import FlipCard from "./FlipCard";
 import CulturalAnimations from "@/components/CulturalAnimations";
+import MountReveal from "./MountReveal";
+import LoadingIndicatorClient from "./LoadingIndicatorClient";
 
 // Toggle when events go live
 // NOTE: Keep data fetching intact below; we short-circuit rendering only.
@@ -101,34 +103,44 @@ export async function ClusterRoot({ cluster }: { cluster: string }) {
         {subs.length === 0 && (
           <p className="text-md text-muted-foreground">No {nice.toLowerCase()} events available.</p>
         )}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-8">
-          {subs.map(([slug, meta], index) => (
-            <FlipCard
-              key={slug}
-              containerClassName="h-48"
-              style={{ animationDelay: `${index * 100}ms` }}
-              frontClassName="clusterCard border rounded-lg p-6 flex flex-col justify-center items-center text-center"
-              backClassName="clusterCard border rounded-lg p-6"
-              front={
-                <>
-                  <h3 className="text-3xl font-medium mb-2 break-words">{slug}</h3>
-                  <p className="text-muted-foreground flex items-center gap-2 cluster-meta-text text-md">
-                    <span className="inline-block px-3 py-1 rounded-full bg-black text-white cluster-tag">{nice}</span>
-                    {meta.count} event{meta.count !== 1 && "s"}
-                  </p>
-                </>
-              }
-              back={
-                <Link
-                  className="clusterButton cluster-root-button"
-                  href={`/${cluster}/${encodeURIComponent(slug)}`}
-                >
-                  View {slug}
-                </Link>
-              }
-            />
-          ))}
-        </div>
+        <MountReveal
+          fallback={
+            <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-8">
+              {Array.from({ length: Math.max(4, subs.length || 4) }).map((_, i) => (
+                <div key={i} className="h-48 clusterCard border rounded-lg animate-pulse" />
+              ))}
+            </div>
+          }
+        >
+          <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-8">
+            {subs.map(([slug, meta], index) => (
+              <FlipCard
+                key={slug}
+                containerClassName="h-48"
+                style={{ animationDelay: `${index * 100}ms` }}
+                frontClassName="clusterCard border rounded-lg p-6 flex flex-col justify-center items-center text-center"
+                backClassName="clusterCard border rounded-lg p-6"
+                front={
+                  <>
+                    <h3 className="text-3xl font-medium mb-2 break-words">{slug}</h3>
+                    <p className="text-muted-foreground flex items-center gap-2 cluster-meta-text text-md">
+                      <span className="inline-block px-3 py-1 rounded-full bg-black text-white cluster-tag">{nice}</span>
+                      {meta.count} event{meta.count !== 1 && "s"}
+                    </p>
+                  </>
+                }
+                back={
+                  <Link
+                    className="clusterButton cluster-root-button"
+                    href={`/${cluster}/${encodeURIComponent(slug)}`}
+                  >
+                    View {slug}
+                  </Link>
+                }
+              />
+            ))}
+          </div>
+        </MountReveal>
   {/* <img src="/wave2.svg" className="waveImage" alt="" /> */}
       </div>
     </>
@@ -181,37 +193,47 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
       <PageBackground cluster={cluster} />
       <div className={`clusterContainer max-w-5xl mx-auto p-4 md:p-6 space-y-4 ${cluster}`}>
         <h1 className="text-3xl font-semibold">{decodedCategory}</h1>
-        <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-8">
-          {list.map((e) => {
-            const eligibleUniversal = hasMaheProshow && e.sub_cluster.toLowerCase() !== 'esports';
-            const owned = ownedEventIds.has(e.id) || eligibleUniversal;
-            const inTeam = teamEventIds.has(e.id);
-            return (
-              <FlipCard
-                key={e.id}
-                containerClassName="h-56"
-                frontClassName="clusterCard border rounded-lg p-6 flex flex-col justify-center items-center"
-                backClassName="clusterCard border rounded-lg p-6"
-                front={
-                  <h2 className="text-3xl font-medium text-center break-words">{e.name}</h2>
-                }
-                back={
-                  <>
-                    <div className={`status-tag ${inTeam ? 'in-team' : owned ? 'owned' : 'available'}`}>
-                      {inTeam ? "In Team" : owned ? "Owned" : "Available"}
-                    </div>
-                    <Link
-                      className="clusterButton mt-4"
-                      href={`/${cluster}/${encodeURIComponent(decodedCategory)}/${encodeURIComponent(e.id)}`}
-                    >
-                      Go to Event Page
-                    </Link>
-                  </>
-                }
-              />
-            );
-          })}
-        </div>
+        <MountReveal
+          fallback={
+            <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-8">
+              {Array.from({ length: Math.max(4, list.length || 4) }).map((_, i) => (
+                <div key={i} className="h-56 clusterCard border rounded-lg animate-pulse" />
+              ))}
+            </div>
+          }
+        >
+          <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-8">
+            {list.map((e) => {
+              const eligibleUniversal = hasMaheProshow && e.sub_cluster.toLowerCase() !== 'esports';
+              const owned = ownedEventIds.has(e.id) || eligibleUniversal;
+              const inTeam = teamEventIds.has(e.id);
+              return (
+                <FlipCard
+                  key={e.id}
+                  containerClassName="h-56"
+                  frontClassName="clusterCard border rounded-lg p-6 flex flex-col justify-center items-center"
+                  backClassName="clusterCard border rounded-lg p-6"
+                  front={
+                    <h2 className="text-3xl font-medium text-center break-words">{e.name}</h2>
+                  }
+                  back={
+                    <>
+                      <div className={`status-tag ${inTeam ? 'in-team' : owned ? 'owned' : 'available'}`}>
+                        {inTeam ? "In Team" : owned ? "Owned" : "Available"}
+                      </div>
+                      <Link
+                        className="clusterButton mt-4"
+                        href={`/${cluster}/${encodeURIComponent(decodedCategory)}/${encodeURIComponent(e.id)}`}
+                      >
+                        Go to Event Page
+                      </Link>
+                    </>
+                  }
+                />
+              );
+            })}
+          </div>
+        </MountReveal>
   {/* <img src="/wave2.svg" className="waveImage" alt="" /> */}
       </div>
     </>
@@ -325,6 +347,8 @@ export async function ClusterEvent({
       {cluster === 'cultural' && <CulturalAnimations />}
       <PageBackground cluster={cluster} />
       <div className={`clusterContainer max-w-3xl mx-auto p-4 md:p-6 space-y-4 ${cluster}`}>
+  {/* Ensure global top loader stops once event content renders */}
+  <LoadingIndicatorClient startOnMount={false} stopOnMount />
         <div className="decorated-card-container mt-8">
           <div className="clusterCard rounded-2xl p-6 md:p-8 lg:p-10 space-y-6">
             <h1 className="text-4xl font-semibold flex items-center justify-center gap-3">

@@ -2,9 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Press_Start_2P } from "next/font/google";
-
-const press = Press_Start_2P({ weight: "400", subsets: ["latin"] });
+import { press } from "@/styles/fonts";
 
 interface NavItem {
   id: string;
@@ -27,7 +25,6 @@ export const RetroButton: React.FC<RetroButtonProps> = ({ item, isActive, onClic
   const textClass = isMobile ? 'text-xs' : 'text-xs';
   const roundedClass = isMobile ? 'rounded-lg' : 'rounded-2xl';
   const borderSize = isMobile ? '1.5px' : '2px';
-  const activeScale = isMobile ? 'scale-105' : 'scale-105';
   
   return (
     <Link
@@ -41,8 +38,7 @@ export const RetroButton: React.FC<RetroButtonProps> = ({ item, isActive, onClic
         }
         onClick(item.id);
       }}
-      className={`group relative ${paddingClass} ${roundedClass} ${textClass} font-bold uppercase flex justify-center items-center transition-all duration-300 ${press.className}
-        ${isActive ? activeScale + ' z-10' : "hover:scale-102"}`}
+  className={`group relative ${paddingClass} ${roundedClass} ${textClass} font-bold uppercase flex justify-center items-center ${press.className}`}
       style={{
         backgroundColor: isActive ? "#D7897D" : "#DBAAA6", 
         color: isActive ? "#fff" : "#32212C", 

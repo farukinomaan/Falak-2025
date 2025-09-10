@@ -21,6 +21,8 @@ export default function OnboardingPage() {
   const [verified, setVerified] = useState(false);
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // Mount guard to avoid SSR/CSR mismatch (session/state driven conditional UI)
+  const [mounted, setMounted] = useState(false);
   useRecaptcha();
 
   useEffect(() => {
@@ -28,6 +30,15 @@ export default function OnboardingPage() {
       router.replace("/");
     }
   }, [status, session, router]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Avoid rendering until mounted or session status resolved to prevent hydration warnings
+  if (!mounted || status === 'loading') {
+    return <div className="min-h-screen" style={{ backgroundColor: '#32212C' }} />;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -90,7 +101,7 @@ export default function OnboardingPage() {
           <div className="bg-[#32212C] backdrop-blur-sm rounded-2xl border border-black/20 p-6 text-neutral-50 text-center space-y-4">
             <h1 className="text-2xl font-semibold">Sign in required</h1>
             <p className="text-sm text-neutral-300">Please sign in to complete onboarding.</p>
-            <Button onClick={() => signIn()} className="bg-[#de8c89] hover:bg-[#DBAAA6] text-[#32212C] w-full">Sign in</Button>
+            <Button onClick={() => { if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-start')); signIn().finally(() => setTimeout(()=>{ if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-stop')); }, 8000)); }} className="bg-[#de8c89] hover:bg-[#DBAAA6] text-[#32212C] w-full">Sign in</Button>
           </div>
         </div>
       </div>
@@ -150,15 +161,34 @@ export default function OnboardingPage() {
           {submitting ? "Processing..." : "Proceed"}
         </Button>
 
-        <div className="flex justify-end pt-2">
-          <Button type="button" variant="ghost" size="sm" onClick={() => signOut()} className="text-neutral-300 hover:text-white">
-            Logout
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2">
+          <p className="pl-4 text-[10px] sm:text-xs leading-snug text-neutral-400 max-w-xs">
+            <span className="font-semibold text-[#DBAAA6]">Note:</span> Registration opens when passes go <span className="text-[#F4CA8E] font-medium">Live</span>. You can logout for now and return later.
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-start'));
+              signOut({ redirect: false }).finally(() => {
+                window.location.assign('/');
+                setTimeout(() => { if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-stop')); }, 1000);
+              });
+            }}
+            className="relative text-neutral-300 hover:text-[#6a0671] transition-colors duration-200 px-4 py-1 rounded-md overflow-hidden group mr-6"
+          >
+            <span className="z-10">Logout</span>
+            <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'radial-gradient(circle at 30% 30%, rgba(219,170,166,0.25), transparent 70%)' }} />
+            <span className="absolute inset-0 ring-1 ring-transparent group-hover:ring-[#DBAAA6]/40 rounded-md transition-colors duration-300" />
           </Button>
         </div>
       </form>
 
   {/* Invisible reCAPTCHA host (required for Firebase phone auth) */}
-  <div id="recaptcha-container" />
+  <div className="fixed bottom-2 right-2 z-50 pointer-events-none opacity-90" style={{ transform: 'scale(0.85)', transformOrigin: 'bottom right' }}>
+    <div id="recaptcha-container" className="pointer-events-auto" />
+  </div>
     </div>
     </div>
     </div>

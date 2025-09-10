@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { auth } from "@/lib/firebase/firebase";
-import { signInWithPhoneNumber, ConfirmationResult, RecaptchaVerifier } from "firebase/auth";
+import { signInWithPhoneNumber, ConfirmationResult, RecaptchaVerifier, signOut as fbSignOut } from "firebase/auth";
+import { signOut as nextSignOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import { Input } from "@/components/ui/input";
@@ -39,7 +40,7 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
 
   async function ensureRecaptcha() {
     if (typeof window === 'undefined') return;
-    if (!window.recaptchaVerifier) {
+  if (!window.recaptchaVerifier) {
       try {
         window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
         await window.recaptchaVerifier.render();
@@ -76,11 +77,29 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
       toast.success("OTP sent");
     } catch (err: unknown) {
       console.error(err);
-      let errorMessage = err instanceof Error ? err.message : "Failed to send OTP";
-      if (errorMessage.includes('argument-error')) {
-        errorMessage = 'Phone auth failed: reCAPTCHA or phone format issue';
+      const code = typeof err === 'object' && err && 'code' in err ? String((err as { code?: string }).code) : undefined;
+      if (code === 'auth/too-many-requests' || code === 'auth/quota-exceeded') {
+        await handleThrottleOrQuotaExceeded();
+        return;
       }
-      toast.error(errorMessage);
+      if (code === 'auth/billing-not-enabled') {
+        toast.error('Phone verification temporarily unavailable. Please try again shortly.');
+      } else {
+        let errorMessage = err instanceof Error ? err.message : 'Failed to send OTP';
+        if (errorMessage.includes('argument-error')) {
+          errorMessage = 'Phone auth failed: reCAPTCHA or phone format issue';
+        }
+        toast.error(errorMessage);
+      }
+      // Recreate verifier on failure to avoid stale widget issues
+      try {
+        const v = window.recaptchaVerifier as RecaptchaVerifier | undefined;
+        if (v && typeof (v as unknown as { clear?: () => void }).clear === 'function') {
+          (v as unknown as { clear: () => void }).clear();
+        }
+      } catch {}
+      // allow re-init on next attempt
+      window.recaptchaVerifier = undefined;
     } finally {
       setSending(false);
     }
@@ -97,17 +116,40 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
       toast.success("Phone verified");
     } catch (err: unknown) {
       console.error(err);
-      const errorMessage = err instanceof Error ? err.message : "Invalid OTP";
-      toast.error(errorMessage);
+      const code = typeof err === 'object' && err && 'code' in err ? String((err as { code?: string }).code) : undefined;
+      if (code === 'auth/too-many-requests' || code === 'auth/quota-exceeded') {
+        await handleThrottleOrQuotaExceeded();
+      } else {
+        const errorMessage = err instanceof Error ? err.message : "Invalid OTP";
+        toast.error(errorMessage);
+      }
     } finally {
       setVerifying(false);
     }
   }
 
+  async function handleThrottleOrQuotaExceeded() {
+    // Inform the user first
+    toast.error('Daily phone auth limit reached. Please try again later.');
+    // Best-effort cleanup of Firebase auth session (in case a user was implicitly signed in)
+    try { await fbSignOut(auth); } catch {}
+    // Clear and reset reCAPTCHA to avoid a stuck widget
+    try {
+      const v = window.recaptchaVerifier as RecaptchaVerifier | undefined;
+      if (v && typeof (v as unknown as { clear?: () => void }).clear === 'function') {
+        (v as unknown as { clear: () => void }).clear();
+      }
+    } catch {}
+    window.recaptchaVerifier = undefined;
+    // Give the toast a moment, then log out of the web session and redirect home
+    await new Promise((r) => setTimeout(r, 1200));
+    await nextSignOut({ redirect: true, callbackUrl: '/' });
+  }
+
   return (
     <>
       <div>
-        <label className="block text-sm font-medium">Phone (+91...)</label>
+        <label className="block text-sm font-medium">Billing Phone (+91...)</label>
         <div className="flex gap-2">
           <Input
             className="flex-1 w-full border-2 rounded px-3 py-2 border-[#D3877A] focus:border-[#DBAAA6] bg-black/10"
@@ -122,6 +164,10 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
             {sending ? "Sending..." : "Send OTP"}
           </Button>
         </div>
+        <p className="text-[10px] sm:text-xs leading-snug text-neutral-400 max-w-xs">
+            <span className="font-semibold text-[#DBAAA6]">Note:</span> Enter the number you will use on payment portal, discrepancies will cause issues.
+          </p>
+        {verified && <p className="mt-1 text-sm text-green-400 font-medium">Phone number verified</p>}
       </div>
 
       {(otpRequested && !verified) && (

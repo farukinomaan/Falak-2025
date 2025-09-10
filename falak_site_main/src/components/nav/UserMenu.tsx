@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { ShoppingCart, User, LogIn } from "lucide-react";
+import { ShoppingCart, User, LogIn, LogOut } from "lucide-react";
 import { useCartCount } from "@/components/cart/useCartCount";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 import { Press_Start_2P } from "next/font/google";
 
@@ -10,7 +10,8 @@ const press = Press_Start_2P({ weight: "400", subsets: ["latin"] });
 
 export function UserMenu({ className = "" }: { className?: string }) {
   const cartCount = useCartCount();
-  const { status } = useSession();
+  const { status, data: session } = useSession();
+  const isMahe = Boolean((session?.user as { mahe?: boolean } | undefined)?.mahe);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -28,7 +29,7 @@ export function UserMenu({ className = "" }: { className?: string }) {
       className={`fixed top-4 right-4 z-50 xl:relative xl:top-auto xl:right-auto ${className}`}
     >
       {/* Cart Badge */}
-      {cartCount > 0 && (
+  {!isMahe && cartCount > 0 && (
         <span
           className="absolute -top-1 -right-1 text-[10px] rounded-full px-1.5 py-0.5 font-bold animate-bounce z-20"
           style={{
@@ -121,7 +122,12 @@ export function UserMenu({ className = "" }: { className?: string }) {
             <button
               onClick={() => {
                 setOpen(false);
-                signIn("google");
+                if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-start'));
+                signIn("google").finally(() => {
+                  setTimeout(() => {
+                    if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-stop'));
+                  }, 8000);
+                });
               }}
               className={`text-left px-4 py-3 flex items-center gap-3 transition-all duration-200 group ${press.className}`}
               style={{
@@ -141,38 +147,61 @@ export function UserMenu({ className = "" }: { className?: string }) {
           {/* Divider */}
           <div className="mx-4 my-2 h-px opacity-30" style={{ background: "linear-gradient(to right, transparent, #DBAAA6, transparent)" }} />
 
-          {/* Cart */}
-          <Link
-            href="/cart"
-            onClick={() => setOpen(false)}
-            className={`px-4 py-3 flex items-center gap-3 transition-all duration-200 group relative ${press.className}`}
-            style={{
-              color: "#F4CA8E",
-              fontSize: "10px",
-              fontWeight: "bold",
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-            }}
-            role="menuitem"
-          >
-            <ShoppingCart size={16} style={{ color: "#DBAAA6", filter: "drop-shadow(0 0 4px rgba(219, 170, 166, 0.6))" }} />
-            Cart
-            {cartCount > 0 && (
-              <span
-                className="ml-auto inline-flex items-center justify-center text-[9px] rounded-full px-2 py-1 font-bold animate-pulse"
-                style={{
-                  backgroundColor: "#D7897D",
-                  color: "#fff",
-                  border: "1px solid #DBAAA6",
-                  boxShadow: "0 0 8px rgba(215, 137, 125, 0.6)",
-                  fontFamily: "monospace",
-                  minWidth: "20px",
-                }}
-              >
-                {cartCount}
-              </span>
-            )}
-          </Link>
+          {/* Cart (hidden for MAHE users) */}
+          {!isMahe && (
+            <Link
+              href="/cart"
+              onClick={() => setOpen(false)}
+              className={`px-4 py-3 flex items-center gap-3 transition-all duration-200 group relative ${press.className}`}
+              style={{
+                color: "#F4CA8E",
+                fontSize: "10px",
+                fontWeight: "bold",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+              }}
+              role="menuitem"
+            >
+              <ShoppingCart size={16} style={{ color: "#DBAAA6", filter: "drop-shadow(0 0 4px rgba(219, 170, 166, 0.6))" }} />
+              Cart
+              {cartCount > 0 && (
+                <span
+                  className="ml-auto inline-flex items-center justify-center text-[9px] rounded-full px-2 py-1 font-bold animate-pulse"
+                  style={{
+                    backgroundColor: "#D7897D",
+                    color: "#fff",
+                    border: "1px solid #DBAAA6",
+                    boxShadow: "0 0 8px rgba(215, 137, 125, 0.6)",
+                    fontFamily: "monospace",
+                    minWidth: "20px",
+                  }}
+                >
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+          )}
+          {/* Divider between Cart and Sign Out (only if cart is shown) */}
+          {!isMahe && status === 'authenticated' && (
+            <div className="mx-4 my-2 h-px opacity-30" style={{ background: "linear-gradient(to right, transparent, #DBAAA6, transparent)" }} />
+          )}
+          {status === 'authenticated' && (
+            <button
+              onClick={() => { setOpen(false); signOut(); }}
+              className={`text-left px-4 py-3 flex items-center gap-3 transition-all duration-200 group ${press.className}`}
+              style={{
+                color: "#F4CA8E",
+                fontSize: "10px",
+                fontWeight: "bold",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+              }}
+              role="menuitem"
+            >
+              <LogOut size={16} style={{ color: "#DBAAA6", filter: "drop-shadow(0 0 4px rgba(219, 170, 166, 0.6))" }} />
+              Sign Out
+            </button>
+          )}
         </div>
       </div>
     </div>

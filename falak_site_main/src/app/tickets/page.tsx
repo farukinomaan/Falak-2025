@@ -1,6 +1,5 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getUserByEmail } from "@/lib/actions/tables/users";
 import { createTicket } from "@/lib/actions/tables/tickets";
 import RegisteredTicketForm from "../../components/tickets/ti_register";
 import UnregisteredNotice from "../../components/tickets/ti_unreg";
@@ -15,18 +14,19 @@ const orbitron = Orbitron({
 
 export default async function TicketsPage() {
   const session = await getServerSession(authOptions);
-  const email = session?.user?.email ?? null;
-
-  const userRes = email ? await getUserByEmail(email) : { ok: true as const, data: null };
-  const registeredUser = userRes.ok ? userRes.data : null;
+  interface MaybeOnboardSession { needsOnboarding?: boolean; user?: { id?: string; email?: string | null } }
+  const s = session as MaybeOnboardSession | null;
+  const userId = s?.user?.id || null;
+  const needsOnboarding = s?.needsOnboarding === true;
+  const registered = !!userId && !needsOnboarding; // rely on auth callback logic
 
   async function submit(formData: FormData) {
     "use server";
-    if (!registeredUser) return;
+  if (!registered || !userId) return;
     const category = String(formData.get("category") || "other");
     const issue = String(formData.get("issue") || "");
     if (!issue || issue.trim().length < 5) return;
-    await createTicket({ userId: registeredUser.id!, category, issue });
+  await createTicket({ userId, category, issue });
     redirect("/tickets?submitted=1");
   }
 
@@ -55,9 +55,7 @@ export default async function TicketsPage() {
       Support Ticket
     </h1>
 
-    {!session || !email ? (
-      <UnregisteredNotice />
-    ) : !registeredUser ? (
+    {!session || !registered ? (
       <UnregisteredNotice />
     ) : (
       <RegisteredTicketForm action={submit} />
