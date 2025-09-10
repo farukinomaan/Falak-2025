@@ -14,6 +14,8 @@ import {
 } from "@/lib/actions/adminAggregations";
 import AddToCartButton from "@/components/cart/AddToCartButton";
 import TeamRegistrationClient from "./team-registration-client";
+import CopySmall from "@/components/CopySmall";
+import EsportsTeamRegistration from "@/components/teams/EsportsTeamRegistration";
 import { getServiceClient } from "@/lib/actions/supabaseClient";
 import "./cluster.css";
 import FlipCard from "./FlipCard";
@@ -411,6 +413,7 @@ export async function ClusterEvent({
                   <div className="space-y-3 border rounded-lg p-4 bg-black/20">
                     <h2 className="text-xl font-medium">Your Team</h2>
                     <p className="text-md">Name: {existingTeam.team.name}</p>
+                    <p className="text-md break-all flex items-center gap-2">Team Code: <span className="font-mono text-sm inline-flex items-center gap-2 bg-white/10 px-2 py-1 rounded border border-white/20">{existingTeam.team.id}<CopySmall text={existingTeam.team.id} /></span></p>
                     {capInfo && (
                       <p className="text-md">Captain: {capInfo.name || capInfo.email || capId}</p>
                     )}
@@ -461,13 +464,17 @@ export async function ClusterEvent({
                 )}
               </div>
             ) : (
-              <TeamRegistrationClient
-                eventId={event.id}
-                captainId={userId || ""}
-                captainName={session?.user?.name || null}
-                minSize={1}
-                leaderHint={eligibleUniversal && !ownedEventIds.has(event.id)}
-              />
+              isEsports ? (
+                <EsportsTeamRegistration eventId={event.id} userId={userId || ''} />
+              ) : (
+                <TeamRegistrationClient
+                  eventId={event.id}
+                  captainId={userId || ""}
+                  captainName={session?.user?.name || null}
+                  minSize={1}
+                  leaderHint={eligibleUniversal && !ownedEventIds.has(event.id)}
+                />
+              )
             )}
           </div>
         )}

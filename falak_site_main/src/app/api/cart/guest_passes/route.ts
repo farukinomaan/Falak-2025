@@ -41,7 +41,28 @@ export async function GET(req: NextRequest) {
         : (row.event_id && requested.has(row.event_id) ? row.event_id : row.id);
       map.set(row.id, { ...row, original_id });
   }
-  return NextResponse.json({ ok: true, data: Array.from(map.values()) });
+  const out = Array.from(map.values());
+  // Enrich with event sub_cluster so client can infer esports without extra round trip
+  try {
+    const eventIds = Array.from(new Set(out.map(r => r.event_id).filter(Boolean))) as string[];
+    if (eventIds.length) {
+      const { data: eventsMeta, error: e3 } = await supabase
+        .from('Events')
+        .select('id, sub_cluster')
+        .in('id', eventIds);
+      if (!e3 && Array.isArray(eventsMeta)) {
+        const emap = new Map<string, string | null>();
+        (eventsMeta as Array<{ id: string; sub_cluster: string | null }>).forEach(ev => emap.set(ev.id, ev.sub_cluster));
+        for (const row of out) {
+          if (row.event_id && emap.has(row.event_id)) {
+            // @ts-expect-error augment row with sub_cluster for client consumption
+            row.sub_cluster = emap.get(row.event_id);
+          }
+        }
+      }
+    }
+  } catch { /* swallow enrichment errors */ }
+  return NextResponse.json({ ok: true, data: out });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Service client error";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
