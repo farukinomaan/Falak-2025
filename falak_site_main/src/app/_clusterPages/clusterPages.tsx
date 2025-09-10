@@ -248,7 +248,7 @@ export async function ClusterEvent({
         <div className={`clusterContainer max-w-3xl mx-auto p-6 md:p-10 ${cluster}`}>
           <div className="clusterCard rounded-2xl p-10 flex items-center justify-center min-h-[40vh]">
             <h1 className="text-4xl md:text-6xl font-semibold text-center tracking-wide">
-              COMING SOOOoooo.......n
+              COMING SOON
             </h1>
           </div>
           {/* TODO: When events go live, remove the Coming Soon block above and restore the full event detail UI. */}
