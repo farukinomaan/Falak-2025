@@ -85,7 +85,7 @@ export default async function ProfilePage() {
                 backdropFilter:'blur(6px)'
               }}>
                 <p style={{fontSize:14,lineHeight:1.4,color:'#e2e8f0'}}>
-                  <strong style={{color:'#fff'}}>Note:</strong> If you do not see a pass immediately after purchase, do not panic. Please scroll down and contact HR, show them your reciept. Devs also have mid-sems—thanks for understanding.
+                  <strong style={{color:'#fff'}}>Note:</strong> If you do not see a pass immediately after purchase, do not panic. Please got to footer and contact HR, show them your reciept. Devs also have mid-sems—thanks for understanding.
                 </p>
                 <div className="mt-3 mb-1">
                   <ManualVerifyButton label="Verify Purchases" />
