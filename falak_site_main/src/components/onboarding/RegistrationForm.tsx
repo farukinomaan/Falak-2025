@@ -6,27 +6,18 @@ interface RegistrationFormProps {
   regNo: string;
   setRegNo: (regNo: string) => void;
   mahe: boolean;
-  setMahe: (val: boolean) => void;
+  setMahe: (b: boolean) => void;
   institute: string;
-  setInstitute: (val: string) => void;
+  setInstitute: (v: string) => void;
 }
 
-export function RegistrationForm({
-  name,
-  setName,
-  regNo,
-  setRegNo,
-  mahe,
-  setMahe,
-  institute,
-  setInstitute,
-}: RegistrationFormProps) {
+export function RegistrationForm({ name, setName, regNo, setRegNo, mahe, setMahe, institute, setInstitute }: RegistrationFormProps) {
   return (
-    <>
+    <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium">Full name</label>
+        <label className="block text-sm font-medium">Full Name</label>
         <input
-          className="w-full border-2 rounded px-3 py-2 border-[#D3877A] focus:border-[#DBAAA6]"
+          className="w-full border rounded px-3 py-2 bg-black/20 border-white/20 text-white placeholder:text-neutral-400"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -34,45 +25,56 @@ export function RegistrationForm({
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">Are you from MAHE?</label>
-        <div className="flex items-center gap-4">
-          <label className="inline-flex items-center gap-2">
-            <input type="radio" name="mahe" checked={mahe === true} onChange={() => setMahe(true)} />
-            <span>MAHE</span>
-          </label>
-          <label className="inline-flex items-center gap-2">
-            <input type="radio" name="mahe" checked={mahe === false} onChange={() => setMahe(false)} />
-            <span>Non-MAHE</span>
-          </label>
-        </div>
+      <div className="flex gap-4 items-center text-sm">
+        <label className="inline-flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="maheToggle"
+            checked={mahe}
+            onChange={() => setMahe(true)}
+            className="accent-[#de8c89]"
+          />
+          <span>MAHE</span>
+        </label>
+        <label className="inline-flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="maheToggle"
+            checked={!mahe}
+            onChange={() => setMahe(false)}
+            className="accent-[#de8c89]"
+          />
+          <span>Non‑MAHE</span>
+        </label>
       </div>
 
       {mahe ? (
         <div>
-          <label className="block text-sm font-medium">Registration number</label>
+          <label className="block text-sm font-medium">Registration Number</label>
           <input
-            className="w-full border-2 rounded px-3 py-2 border-[#D3877A] focus:border-[#DBAAA6]"
+            className="w-full border rounded px-3 py-2 bg-black/20 border-white/20 text-white placeholder:text-neutral-400"
             value={regNo}
-            onChange={(e) => setRegNo(e.target.value.replace(/[^0-9]/g, ""))}
+            onChange={(e) => setRegNo(e.target.value.replace(/[^0-9]/g, ''))}
             inputMode="numeric"
             pattern="[0-9]*"
             required
-            placeholder="2358....."
+            placeholder="2358...."
           />
+          <p className="mt-1 text-[11px] text-neutral-400">Digits only. Previously enforced length retained for MAHE clarity.</p>
         </div>
       ) : (
         <div>
-          <label className="block text-sm font-medium">College name</label>
+          <label className="block text-sm font-medium">College / Institute</label>
           <input
-            className="w-full border-2 rounded px-3 py-2 border-[#D3877A] focus:border-[#DBAAA6]"
+            className="w-full border rounded px-3 py-2 bg-black/20 border-white/20 text-white placeholder:text-neutral-400"
             value={institute}
             onChange={(e) => setInstitute(e.target.value)}
             required
-            placeholder="Your college"
+            placeholder="Your institute name"
+            maxLength={80}
           />
         </div>
       )}
-    </>
+    </div>
   );
 }

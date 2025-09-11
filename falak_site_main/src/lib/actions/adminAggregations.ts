@@ -265,6 +265,101 @@ export async function assignPassToUser(userId: string, passId: string) {
   return { ok: true as const, data: created.data };
 }
 
+// ---------------- Pending Payment Log -> Pass Mapping (Ticket Admin) ----------------
+
+interface PendingPaymentRow {
+  payment_log_id: string;
+  user_id: string | null;
+  tracking_id: string | null;
+  membership_type: string | null;
+  event_name: string | null;
+  event_type: string | null;
+  created_at: string | null;
+  legacy_key: string;
+  v2_key: string;
+}
+
+// List payment_logs that are Success but have no active mapping (neither legacy nor v2) resolved.
+export async function listPendingPaymentLogs(limit = 200) {
+  const supabase = getServiceClient();
+  const pl = await supabase.from('payment_logs').select('id, user_id, tracking_id, membership_type, event_name, event_type, external_created_at').eq('status','Success').limit(limit * 3);
+  if (pl.error) return { ok:false as const, error: pl.error.message };
+  const mapRes = await supabase.from('external_pass_map').select('external_key, external_key_v2, pass_id, active').eq('active', true);
+  if (mapRes.error) return { ok:false as const, error: mapRes.error.message };
+  const mapping = new Set<string>();
+  for (const r of (mapRes.data||[]) as any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (r.external_key) mapping.add((r.external_key as string).toLowerCase());
+    if (r.external_key_v2) mapping.add((r.external_key_v2 as string).toLowerCase());
+  }
+  const pending: PendingPaymentRow[] = [];
+  for (const row of (pl.data||[]) as any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const legacy_key = `${(row.membership_type||'').trim().toLowerCase()}|${(row.event_name||'').trim().toLowerCase()}`;
+    const v2_key = `${(row.event_type||'').trim().toLowerCase()}|${(row.event_name||'').trim().toLowerCase()}`;
+    if (!mapping.has(v2_key) && !mapping.has(legacy_key)) {
+      pending.push({
+        payment_log_id: row.id,
+        user_id: row.user_id,
+        tracking_id: row.tracking_id,
+        membership_type: row.membership_type,
+        event_name: row.event_name,
+        event_type: row.event_type,
+        created_at: row.external_created_at,
+        legacy_key,
+        v2_key,
+      });
+    }
+    if (pending.length >= limit) break;
+  }
+  return { ok:true as const, data: pending };
+}
+
+// Resolve a single pending payment log by creating a mapping + granting pass.
+export async function resolvePendingPaymentLog(paymentLogId: string, passId: string) {
+  const pidOk = uuid.safeParse(paymentLogId);
+  const passOk = uuid.safeParse(passId);
+  if (!pidOk.success || !passOk.success) return { ok:false as const, error: 'Invalid ids' };
+  const supabase = getServiceClient();
+  // Fetch log & pass
+  const [logRes, passRes] = await Promise.all([
+    supabase.from('payment_logs').select('id, user_id, tracking_id, membership_type, event_name, event_type').eq('id', paymentLogId).maybeSingle(),
+    supabase.from('Pass').select('id, pass_name, enable, status').eq('id', passId).maybeSingle(),
+  ]);
+  if (logRes.error) return { ok:false as const, error: logRes.error.message };
+  if (!logRes.data) return { ok:false as const, error: 'payment_log_not_found' };
+  if (passRes.error) return { ok:false as const, error: passRes.error.message };
+  if (!passRes.data) return { ok:false as const, error: 'pass_not_found' };
+  const passEnabled = (passRes.data.enable ?? passRes.data.status) ?? false;
+  if (!passEnabled) return { ok:false as const, error: 'pass_disabled' };
+  const row = logRes.data as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const mt = (row.membership_type||'').trim().toLowerCase();
+  const en = (row.event_name||'').trim().toLowerCase();
+  const et = (row.event_type||'').trim().toLowerCase();
+  const legacy_key = `${mt}|${en}`;
+  const v2_key = `${et}|${en}`;
+  const preferV2 = et.length > 0; // only if event_type present
+  // Compose payload (attempt to store both if we have both membership_type & event_type)
+  let payload: Record<string, unknown> = { pass_id: passId, active: true };
+  if (mt) payload.external_key = legacy_key;
+  if (et) payload.external_key_v2 = v2_key;
+  // Attempt upsert including both columns
+  let upsert = await supabase.from('external_pass_map').upsert(payload, { onConflict: mt ? 'external_key' : (et ? 'external_key_v2' : 'external_key') }).select('id').maybeSingle();
+  if (upsert.error && /external_key_v2/i.test(upsert.error.message) && preferV2) {
+    // Retry without v2 column if schema missing
+    payload = { pass_id: passId, active: true };
+    if (mt) payload.external_key = legacy_key;
+    upsert = await supabase.from('external_pass_map').upsert(payload, { onConflict: 'external_key' }).select('id').maybeSingle();
+  }
+  if (upsert.error) return { ok:false as const, error: upsert.error.message };
+  // Grant pass ownership if not already
+  const already = await supabase.from('User_passes').select('id').eq('userId', row.user_id).eq('passId', passId).maybeSingle();
+  if (already.error) return { ok:false as const, error: already.error.message };
+  if (!already.data) {
+    const created = await _createUserPass({ userId: row.user_id, passId });
+    if (!created.ok) return { ok:false as const, error: created.error || 'grant_failed' };
+  }
+  return { ok:true as const, data: { mapped: true, passGranted: true } };
+}
+
 // Role resolver helper for the page
 export async function getRoleForEmail(email: string) {
   const supabase = getServiceClient();

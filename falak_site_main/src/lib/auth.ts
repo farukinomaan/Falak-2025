@@ -7,11 +7,12 @@ import type { Session } from "next-auth";
 // Removed unused Firebase client imports after simplifying auth callbacks
 import { getUserByEmail } from "@/lib/actions";
 
-type AugSession = Session & { needsOnboarding?: boolean; user: Session["user"] & { id?: string } };
+type AugSession = Session & { needsOnboarding?: boolean; user: Session["user"] & { id?: string; mahe?: boolean | null } };
 
 interface AugToken extends JWT {
   supabaseUserId?: string;
   needsOnboarding?: boolean;
+  userMahe?: boolean | null;
 }
 
 // Helper: check if user exists in Supabase
@@ -43,6 +44,7 @@ export const  authOptions: AuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      httpOptions: { timeout: 10000 },
     }),
   ],
   // pages: {
@@ -53,18 +55,24 @@ export const  authOptions: AuthOptions = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  debug: process.env.NODE_ENV !== 'production',
   callbacks: {
     jwt: async ({ token }) => {
       const t = token as AugToken;
       const exists = await checkUserExistsByEmail(t.email);
       t.needsOnboarding = !exists;
-      // If user exists, fetch Supabase user id (only if not cached)
-      if (t.email && !t.supabaseUserId && !t.needsOnboarding) {
+      // If user exists, fetch Supabase user data once to populate id & mahe (if not already cached on token)
+      if (t.email && (!t.supabaseUserId || t.userMahe === undefined) && !t.needsOnboarding) {
         try {
           const userRes = await getUserByEmail(t.email);
-          if (userRes.ok && userRes.data?.id) t.supabaseUserId = userRes.data.id as string;
+          if (userRes.ok && userRes.data?.id) {
+            interface MinimalUser { id: string; mahe?: boolean | null }
+            const u = userRes.data as MinimalUser;
+            t.supabaseUserId = u.id;
+            t.userMahe = Boolean(u.mahe);
+          }
         } catch {
-          // ignore
+          // ignore fetch errors; token will lack enriched fields
         }
       }
       return token; // return base token instance, mutated in place
@@ -75,10 +83,16 @@ export const  authOptions: AuthOptions = {
       if (s.user) {
         // Prefer Supabase user id for server-side data lookups
         s.user.id = t.supabaseUserId || t.sub;
+        s.user.mahe = t.userMahe ?? null;
         s.needsOnboarding = t.needsOnboarding ?? false;
       }
       return s;
     },
   },
+  // Add minimal signIn/error logging hooks for local diagnostics
+  events: {
+    signIn(message) { console.log('[next-auth][event][signIn]', message?.user?.email); },
+    signOut(message) { console.log('[next-auth][event][signOut]', message?.token?.sub); },
+  }
 };
 

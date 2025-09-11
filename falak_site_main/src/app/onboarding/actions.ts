@@ -18,9 +18,10 @@ const OnboardSchema = z
   })
   .superRefine((val, ctx) => {
     if (val.mahe) {
+      // Removed strict 9-digit constraint; accept any length numeric (>=1)
       const digits = (val.regNo || '').replace(/[^0-9]/g, '');
-      if (digits.length !== 9) {
-        ctx.addIssue({ code: 'custom', path: ['regNo'], message: 'Registration number must be exactly 9 digits' });
+      if (digits.length < 1) {
+        ctx.addIssue({ code: 'custom', path: ['regNo'], message: 'Registration number is required' });
       }
     } else {
       if (!val.institute || val.institute.trim().length < 2) {

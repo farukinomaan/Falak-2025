@@ -1,17 +1,41 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useGuestCart } from "./useGuestCart";
 import { toast } from "sonner";
 import { useSession, signIn } from "next-auth/react";
+
+// Lightweight probe for pass -> event meta to decide if we need leader confirmation (esports + non-MAHE should skip)
+async function fetchPassMeta(passId: string): Promise<{ sub_cluster?: string | null; mahe?: boolean | null } | null> {
+  try {
+    const params = new URLSearchParams({ ids: passId });
+    const res = await fetch(`/api/cart/guest_passes?${params.toString()}`, { cache: 'no-store' });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.ok || !Array.isArray(json.data) || !json.data.length) return null;
+    const row = json.data[0];
+    return { sub_cluster: row.sub_cluster || row.subCluster || row.event_sub_cluster || null, mahe: row.mahe ?? null };
+  } catch { return null; }
+}
 
 export default function AddToCartButton({ passId, className }: { passId: string; className?: string }) {
   const router = useRouter();
   const { add, ids } = useGuestCart();
   const [pending, start] = useTransition();
   const [added, setAdded] = useState(false);
-  const { status } = useSession();
+  const { status, data: session } = useSession();
+  interface SessLike { user?: { mahe?: boolean | null } }
+  const userIsMahe = Boolean((session as SessLike | null)?.user?.mahe);
+  const [isEsports, setIsEsports] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      const meta = await fetchPassMeta(passId);
+      if (!ignore) setIsEsports((meta?.sub_cluster || '').toLowerCase() === 'esports');
+    })();
+    return () => { ignore = true; };
+  }, [passId]);
   const inCart = useMemo(() => added || (ids || []).includes(passId), [added, ids, passId]);
   const swappedClassName = useMemo(() => {
     const base = className || "px-4 py-2 rounded bg-black text-white";
@@ -63,33 +87,30 @@ export default function AddToCartButton({ passId, className }: { passId: string;
       router.push("/cart");
       return;
     }
-    toast.info(
-      () => (
-        <div className="space-y-2">
-          <p className="text-sm font-medium">Only the team leader must purchase access to this event.</p>
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={() => {
-                toast.dismiss();
-              }}
-              className="text-xs px-3 py-1 rounded border border-gray-300"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => {
-                toast.dismiss();
-                start(confirmAndAdd);
-              }}
-              className="text-xs px-3 py-1 rounded bg-emerald-600 text-white"
-            >
-              Proceed
-            </button>
-          </div>
+    const skipLeaderConfirm = isEsports === true && !userIsMahe; // non-MAHE & esports
+    if (skipLeaderConfirm) {
+      start(confirmAndAdd);
+      return;
+    }
+    toast.info(() => (
+      <div className="space-y-2">
+        <p className="text-sm font-medium">Only the team leader must purchase access to this event.</p>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => { toast.dismiss(); }}
+            className="text-xs px-3 py-1 rounded border border-gray-300"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => { toast.dismiss(); start(confirmAndAdd); }}
+            className="text-xs px-3 py-1 rounded bg-emerald-600 text-white"
+          >
+            Proceed
+          </button>
         </div>
-      ),
-      { duration: 8000 }
-    );
+      </div>
+    ), { duration: 8000 });
   };
 
   return (

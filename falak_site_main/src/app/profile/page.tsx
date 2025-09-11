@@ -75,6 +75,18 @@ export default async function ProfilePage() {
           <div className={styles.detailsColumn}>
             <section className={styles.section}>
               <h2>Your Passes</h2>
+              <div className={styles.infoCard} style={{
+                background:'rgba(0,0,0,0.35)',
+                border:'1px solid rgba(255,255,255,0.15)',
+                borderRadius:12,
+                padding:'12px 16px',
+                marginBottom:16,
+                backdropFilter:'blur(6px)'
+              }}>
+                <p style={{fontSize:14,lineHeight:1.4,color:'#e2e8f0'}}>
+                  <strong style={{color:'#fff'}}>Note:</strong> If you don’t see a pass immediately after purchase, don’t panic. Please scroll down and contact HR. Devs also have mid-sems—thanks for understanding.
+                </p>
+              </div>
               {passes.length === 0 ? (
                 <EmptyState message="You don’t own any passes yet." ctaHref="/passes" ctaLabel="Browse Passes" />
               ) : (
