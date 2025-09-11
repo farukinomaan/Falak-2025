@@ -17,11 +17,12 @@ export function useRecaptcha() {
       try {
         const verifier = new RecaptchaVerifier(auth, "recaptcha-container", {
           size: "invisible",
+            // Position badge bottom-right to align with app layout
+            badge: "bottomright",
           // Fire when reCAPTCHA gets a token; phone auth will consume it automatically
           callback: () => {},
           // Optional: handle token expiry
           "expired-callback": () => {},
-          // badge: "bottomright", // tweak badge position if needed
         });
         window.recaptchaVerifier = verifier;
         // Render once and cache widget id so we can reuse/reset if ever needed

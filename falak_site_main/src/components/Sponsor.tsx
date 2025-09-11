@@ -14,6 +14,11 @@ const sponsors = [
     logo: "/sponsors/findoc.png",
     url: "https://findoc.com/",
   },
+  {
+    name: "InterviewBuddy",
+    logo: "/sponsors/inbuddy.png",
+    url: "https://interviewbuddy.com/",
+  },
 ];
 
 const Sponsor: React.FC = () => {
@@ -29,9 +34,9 @@ const Sponsor: React.FC = () => {
   }, []);
 
   return (
-    <section className="w-full bg-[#32212C]/90 py-16 overflow-hidden border-t-4 border-[#DBAAA6]">
+    <section className="w-full bg-[#DBAAA6] py-16 overflow-hidden border-t-4 border-[#D7897D]">
       <div className="max-w-[1100px] mx-auto text-center mb-10 px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-[#DBAAA6] vintage-font tracking-wide">
+        <h2 className="text-3xl md:text-4xl font-bold text-[#32212C] vintage-font tracking-wide">
           Our Sponsors
         </h2>
       </div>

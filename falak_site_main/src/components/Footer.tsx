@@ -1,83 +1,80 @@
 "use client";
 
 import React from "react";
-import { Mail, Phone, MapPin } from "lucide-react";
+import Image from "next/image";
+import { Mail, Phone } from "lucide-react";
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-[#DBAAA6] text-[#2e1a47] border-t-4 border-[#513b61] relative overflow-hidden">
+    <footer className="bg-[#32212C] text-[#DBAAA6] border-t-4 border-[#D7897D] relative overflow-hidden">
       {/* Retro radial background */}
       <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle,rgba(242,234,225,0.3)_0%,transparent_70%)]"></div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 grid grid-cols-2 md:grid-cols-3 gap-8">
+      <div
+        className="relative max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 
+                   grid grid-cols-2 md:grid-cols-3 gap-8 items-center"
+      >
         {/* Fest Info */}
-        <div className="col-span-2 md:col-span-1 flex flex-col items-center md:items-start text-center md:text-left">
+        <div className="flex flex-col items-start text-left">
           <h2 className="vintage-font text-2xl sm:text-3xl tracking-widest">
             FALAK&#39;25
           </h2>
-          <p className="abhaya-font text-[#2e1a47]/90 mt-3 text-sm sm:text-base font-mono leading-relaxed whitespace-pre-line">
+          <p className="abhaya-font text-[#DBAAA6] mt-3 text-sm sm:text-base font-mono leading-relaxed whitespace-pre-line">
             Manipal Institute of Technology{"\n"}Yelahanka, Bengaluru{"\n"}
             Karnataka - 560064
           </p>
         </div>
 
-        {/* Quick Links */}
-        <div className="flex flex-col items-start text-left">
-          <h2 className="vintage-font text-xl sm:text-2xl mb-3">Quick Links</h2>
-          <ul className="space-y-2 font-mono text-[#2e1a47]/90 text-sm sm:text-base">
-            <li>
-              <a className="hover:text-[#2e1a47] underline">Privacy Policy</a>
-            </li>
-            <li>
-              <a className="hover:text-[#2e1a47] underline">Terms of Service</a>
-            </li>
-            <li className="flex items-center gap-2">
-              <MapPin size={18} aria-hidden="true" />
-              <span>MIT Bengaluru</span>
-            </li>
-          </ul>
+        {/* Center Logo - only visible on md+ */}
+        <div className="hidden md:flex justify-center">
+          <Image
+            src="/images/logo.png"
+            alt="Falak Logo"
+            width={300}
+            height={300}
+            className="object-contain"
+          />
         </div>
 
         {/* Contact */}
-<div className="flex flex-col items-end md:items-start text-right md:text-left">
-  <h2 className="vintage-font text-xl sm:text-2xl mb-3">Contact Us</h2>
-  <ul className="space-y-3 font-mono text-[#2e1a47]/90 text-sm sm:text-base">
-    <li className="flex items-center gap-2">
-      <Mail size={18} aria-hidden="true" />
-      <a
-        href="mailto:fest@falak2025.com"
-        className="hover:underline text-left md:text-inherit"
-      >
-        fest.mitblr@manipal.edu
-      </a>
-    </li>
+        <div className="flex flex-col items-end text-right">
+          <h2 className="vintage-font text-xl sm:text-2xl mb-3">Contact Us</h2>
+          <ul className="space-y-3 font-mono text-[#DBAAA6] text-sm sm:text-base">
+            <li className="flex items-center justify-end gap-2">
+              <Mail size={18} aria-hidden="true" />
+              <a
+                href="mailto:fest@falak2025.com"
+                className="hover:underline text-xs sm:text-base"
+              >
+                fest.mitblr@manipal.edu
+              </a>
+            </li>
 
-    <li className="flex flex-col items-end md:items-start">
-      <div className="flex items-center gap-2">
-        <Phone size={18} aria-hidden="true" />
-        <span className="text-sm">+91 90281 86267</span>
-      </div>
-      <span className="text-xs font-semibold text-[#2e1a47]/80">
-        Swaraj Shewale, HR Head
-      </span>
-    </li>
+            <li className="flex flex-col items-end">
+              <div className="flex items-center gap-2">
+                <Phone size={18} aria-hidden="true" />
+                <span className="text-sm">+91 95353 90081</span>
+              </div>
+              <span className="text-xs font-semibold text-[#2e1a47]/80">
+                Aishani Sharma, HR Head
+              </span>
+            </li>
 
-    <li className="flex flex-col items-end md:items-start">
-      <div className="flex items-center gap-2">
-        <Phone size={18} aria-hidden="true" />
-        <span className="text-sm">+91 95353 90081</span>
-      </div>
-      <span className="text-xs font-semibold text-[#2e1a47]/80">
-        Aishani Sharma, HR Head
-      </span>
-    </li>
-  </ul>
-</div>
-
+            <li className="flex flex-col items-end">
+              <div className="flex items-center gap-2">
+                <Phone size={18} aria-hidden="true" />
+                <span className="text-sm">+91 90281 86267</span>
+              </div>
+              <span className="text-xs font-semibold text-[#2e1a47]/80">
+                Swaraj Shewale, HR Head
+              </span>
+            </li>
+          </ul>
+        </div>
       </div>
 
       {/* Bottom bar */}
-      <div className="relative text-center py-3 sm:py-4 border-t border-[#2e1a47]/40 text-xs sm:text-sm text-[#2e1a47]/80 font-mono">
+      <div className="relative text-center py-3 sm:py-4 border-t border-[#D7897D]/40 text-xs sm:text-sm text-[#DBAAA6]/80 font-mono">
         © {new Date().getFullYear()} FALAK 2025 · All Rights Reserved
       </div>
     </footer>

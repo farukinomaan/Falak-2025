@@ -52,7 +52,7 @@ export default function RootLayout({
 
           {/* Fixed Logo */}
 <div
-  className={`fixed -top-6 right-0 z-[9999] xl:left-4 xl:top-[-3.5rem] xl:right-auto transition-all duration-300 opacity-100`}
+  className={`fixed -top-6 -right-5 z-[9999] xl:left-4 xl:top-[-3.5rem] xl:right-auto transition-all duration-300 opacity-100`}
   style={{ transform: "translateZ(0)" }}
 >
   <Link href="/" aria-label="Go to homepage">
@@ -60,7 +60,7 @@ export default function RootLayout({
       src="/images/logo.png"
       alt="Falak Logo"
       width={400}
-      height={320}
+      height={370}
       className="w-[200px] h-[120px] xl:w-[300px] xl:h-[200px] cursor-pointer"
       priority
     />

@@ -149,7 +149,7 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
   return (
     <>
       <div>
-        <label className="block text-sm font-medium">Phone (+91...)</label>
+        <label className="block text-sm font-medium">Billing Phone (+91...)</label>
         <div className="flex gap-2">
           <Input
             className="flex-1 w-full border-2 rounded px-3 py-2 border-[#D3877A] focus:border-[#DBAAA6] bg-black/10"
@@ -164,6 +164,10 @@ export function PhoneVerification({ phone, setPhone, onVerificationComplete }: P
             {sending ? "Sending..." : "Send OTP"}
           </Button>
         </div>
+        <p className="text-[10px] sm:text-xs leading-snug text-neutral-400 max-w-xs">
+            <span className="font-semibold text-[#DBAAA6]">Note:</span> Enter the number you will use on payment portal, discrepancies will cause issues.
+          </p>
+        {verified && <p className="mt-1 text-sm text-green-400 font-medium">Phone number verified</p>}
       </div>
 
       {(otpRequested && !verified) && (

@@ -3,9 +3,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
+import { signIn, signOut, useSession } from 'next-auth/react';
 import { press } from "@/styles/fonts";
-import { Home, Ticket, Trophy, Music, ShoppingCart, LogIn , MessageSquareDashed, type LucideIcon } from 'lucide-react';
+import { Home, Ticket, Trophy, Music, ShoppingCart, LogIn , MessageSquareDashed, User, type LucideIcon } from 'lucide-react';
 
 // using shared font instance
 
@@ -36,6 +36,10 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
   activeSection, 
   menuButtonRef 
 }) => {
+  interface AugSession { needsOnboarding?: boolean }
+  const { status, data: session } = useSession();
+  const isAuthed = status === 'authenticated';
+  const isRegistered = Boolean((session as AugSession | null)?.needsOnboarding === false);
   // Change the /tickets to /support after the file name change
   const menuItems = [
     { name: 'HOME', href: '/', icon: Home },
@@ -43,8 +47,11 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
     { name: 'SPORTS', href: '/sports', icon: Trophy },
     { name: 'PASSES', href: '/passes', icon: Ticket },
     { name: 'SUPPORT', href: '/tickets', icon: MessageSquareDashed },
+  ...(isAuthed && isRegistered ? [{ name: 'PROFILE', href: '/profile', icon: User }] : []),
     { name: 'CART', href: '/cart', icon: ShoppingCart }
   ];
+
+  // User icon is provided directly via lucide-react for PROFILE entry
 
   return (
     <>
@@ -243,32 +250,51 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
             })}
           </div>
 
-          {/* Sign In button */}
-          <button
-            onClick={() => {
-              // start global loader for sign-in
-              if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-start'));
-              signIn().finally(() => {
-                // Stop will typically be handled by route change; fallback here
-                setTimeout(() => {
-                  if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-stop'));
-                }, 8000);
-              });
-              toggleMobileMenu();
-            }}
-            className={`relative mt-6 px-6 py-2 rounded-lg transition-all duration-300 ${press.className} group w-full`}
-            style={{
-              background: 'rgba(219, 170, 166, 0.15)',
-              border: '1px solid rgba(219, 170, 166, 0.4)',
-              backdropFilter: 'blur(8px)',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-            }}
-          >
-            <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-pink-500/5 via-orange-400/10 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="flex items-center justify-center gap-2 text-[#DBAAA6] font-bold tracking-wider text-xs">
-              <LogIn size={14} /> SIGN IN
-            </div>
-          </button>
+          {/* Auth button */}
+          {isAuthed ? (
+            <button
+              onClick={() => {
+                toggleMobileMenu();
+                signOut();
+              }}
+              className={`relative mt-6 px-6 py-2 rounded-lg transition-all duration-300 ${press.className} group w-full`}
+              style={{
+                background: 'rgba(219, 170, 166, 0.15)',
+                border: '1px solid rgba(219, 170, 166, 0.4)',
+                backdropFilter: 'blur(8px)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+              }}
+            >
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-pink-500/5 via-orange-400/10 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-center gap-2 text-[#DBAAA6] font-bold tracking-wider text-xs">
+                SIGN OUT
+              </div>
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-start'));
+                signIn().finally(() => {
+                  setTimeout(() => {
+                    if (typeof window !== 'undefined') window.dispatchEvent(new Event('navprogress-stop'));
+                  }, 8000);
+                });
+                toggleMobileMenu();
+              }}
+              className={`relative mt-6 px-6 py-2 rounded-lg transition-all duration-300 ${press.className} group w-full`}
+              style={{
+                background: 'rgba(219, 170, 166, 0.15)',
+                border: '1px solid rgba(219, 170, 166, 0.4)',
+                backdropFilter: 'blur(8px)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+              }}
+            >
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-pink-500/5 via-orange-400/10 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-center gap-2 text-[#DBAAA6] font-bold tracking-wider text-xs">
+                <LogIn size={14} /> SIGN IN
+              </div>
+            </button>
+          )}
 
           {/* FOOTER*/}
           <div className="absolute bottom-8 text-center">

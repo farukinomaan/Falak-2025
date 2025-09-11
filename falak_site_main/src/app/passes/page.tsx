@@ -60,6 +60,7 @@ export default async function PassesPage() {
   backgroundColor: '#32212C',
       }}
     >
+
       <div className="relative z-20">
   {featurePasses.length > 0 ? (
     <Features passes={featurePasses} isMahe={isMahe} />
@@ -71,9 +72,10 @@ export default async function PassesPage() {
   )}
       </div>
 
+
       {/* Dim the background slightly without affecting foreground */}
       <div
-        className="pointer-events-none absolute inset-0  z-10 opacity-40 bg-black"
+        className="pointer-events-none absolute inset-0  z-10 opacity-30 bg-black"
         aria-hidden
       />
 
@@ -86,7 +88,9 @@ export default async function PassesPage() {
           backgroundPosition: "center bottom",
           backgroundRepeat: "no-repeat",
           opacity: 0.9,
+
           filter: undefined
+
         }}
       />
 

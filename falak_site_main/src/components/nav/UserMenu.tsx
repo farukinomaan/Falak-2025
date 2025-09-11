@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { ShoppingCart, User, LogIn } from "lucide-react";
+import { ShoppingCart, User, LogIn, LogOut } from "lucide-react";
 import { useCartCount } from "@/components/cart/useCartCount";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 import { Press_Start_2P } from "next/font/google";
 
@@ -148,6 +148,7 @@ export function UserMenu({ className = "" }: { className?: string }) {
           <div className="mx-4 my-2 h-px opacity-30" style={{ background: "linear-gradient(to right, transparent, #DBAAA6, transparent)" }} />
 
           {/* Cart (hidden for MAHE users who use unified pass) */}
+
           {!isMahe && (
             <Link
               href="/cart"
@@ -180,6 +181,29 @@ export function UserMenu({ className = "" }: { className?: string }) {
                 </span>
               )}
             </Link>
+          )}
+
+
+          {/* Divider between Cart and Sign Out (only if cart is shown) */}
+          {!isMahe && status === 'authenticated' && (
+            <div className="mx-4 my-2 h-px opacity-30" style={{ background: "linear-gradient(to right, transparent, #DBAAA6, transparent)" }} />
+          )}
+          {status === 'authenticated' && (
+            <button
+              onClick={() => { setOpen(false); signOut(); }}
+              className={`text-left px-4 py-3 flex items-center gap-3 transition-all duration-200 group ${press.className}`}
+              style={{
+                color: "#F4CA8E",
+                fontSize: "10px",
+                fontWeight: "bold",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+              }}
+              role="menuitem"
+            >
+              <LogOut size={16} style={{ color: "#DBAAA6", filter: "drop-shadow(0 0 4px rgba(219, 170, 166, 0.6))" }} />
+              Sign Out
+            </button>
           )}
         </div>
       </div>

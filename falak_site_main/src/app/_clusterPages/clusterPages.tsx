@@ -278,7 +278,7 @@ export async function ClusterEvent({
     userId ? computeUserAccessibleEventIds(userId) : Promise.resolve({ eventIds: [] }),
   ]);
 
-  // Coming soon mode removed; always render full event detail
+// Coming soon mode removed; always render full event detail
 
 
   const ownedPassIds = new Set<string>(ownedRes.ok ? ownedRes.data : []);

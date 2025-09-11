@@ -132,7 +132,7 @@ gsap.to([subtitleRef.current, textRef.current], {
           ref={subtitleRef}
           className="vintage-font text-base sm:text-lg md:text-xl font-light text-[#D7897D] mb-6 sm:mb-8 md:mb-10"
         >
-          <span className="font-bold">FALAK&#39;25</span> - The Ultimate Sports & Cultural Fest of Our College
+          <span className="font-bold">FALAK&#39;25</span> - The Ultimate Sports & Cultural Fest of MIT Bengaluru
         </p>
 
         <div
