@@ -54,7 +54,11 @@ export async function completeOnboarding(input: OnboardInput) {
     // Build payload matching UserCreateSchema
     const v = parsed.data;
 
-  const phone = v.phone;
+  // Normalize phone to 10-digit national format (strip +91/leading zeros/non-digits)
+  let phone = (v.phone || '').replace(/[^0-9]/g, '');
+  if (phone.startsWith('91') && phone.length === 12) phone = phone.slice(2);
+  if (phone.length > 10) phone = phone.slice(-10);
+  if (phone.length === 11 && phone.startsWith('0')) phone = phone.slice(1);
 
     const toCreate: z.infer<typeof UserCreateSchema> = {
       name: v.name,
@@ -72,15 +76,24 @@ export async function completeOnboarding(input: OnboardInput) {
     }
 
     // Check if a user already exists with this phone; if so, update that record to have this email if missing
-    const byPhone = await getUserByPhone(phone);
+    let byPhone = await getUserByPhone(phone);
     if (!byPhone.ok) {
       return { ok: false, message: byPhone.error || "Lookup error" } as const;
     }
+    // Fallback: try matching '+91' prefixed phone to migrate older rows
+    if (!byPhone.data) {
+      const byPhoneLegacy = await getUserByPhone("+91" + phone);
+      if (!byPhoneLegacy.ok) {
+        return { ok: false, message: byPhoneLegacy.error || "Lookup error" } as const;
+      }
+      if (byPhoneLegacy.data) byPhone = byPhoneLegacy;
+    }
+
     if (byPhone.data) {
       // If this phone is already tied to a user, and that user has no email or different email, try to attach email
       const u = byPhone.data as { id: string; email?: string | null };
       if (!u.email || u.email !== email) {
-        const updated = await updateUser({ id: u.id, email });
+        const updated = await updateUser({ id: u.id, email, phone });
         if (!updated.ok) {
           // Fallback: return ok to avoid blocking flow if phone is already used
           return { ok: true } as const;

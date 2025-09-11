@@ -66,9 +66,10 @@ export default function OnboardingPage() {
     try {
       const payload = {
         name,
-  phone: "+91" + phone.replace(/[^0-9]/g, ""),
+        // Store phone as plain digits without country code
+        phone: phone.replace(/[^0-9]/g, ""),
         mahe,
-  regNo: mahe ? regNo.replace(/[^0-9]/g, "") : null,
+        regNo: mahe ? regNo.replace(/[^0-9]/g, "") : null,
         institute: mahe ? null : institute.trim(),
       };
       const res = await completeOnboarding(payload);
