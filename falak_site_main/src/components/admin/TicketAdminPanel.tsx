@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { assignPassToUser, getUserDetails, saListPasses, searchUsers, type UserDetailsData } from "@/lib/actions/adminAggregations";
+import { assignPassToUser, getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData } from "@/lib/actions/adminAggregations";
 import type { SearchUserRow } from "@/lib/actions/adminAggregations";
 
 // Define a Pass summary type for this component
@@ -17,11 +17,25 @@ export default function TicketAdminPanel() {
   const [details, setDetails] = useState<UserDetailsData | null>(null);
   const [passes, setPasses] = useState<PassSummary[]>([]);
   const [passToAssign, setPassToAssign] = useState<string>("");
+  const [pending, setPending] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [loadingPending, setLoadingPending] = useState(false);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [resolvePass, setResolvePass] = useState<Record<string,string>>({});
+
+  async function loadPending() {
+    setLoadingPending(true);
+    try {
+      const res = await listPendingPaymentLogs(150);
+      if (!res.ok) toast.error(res.error);
+      else setPending(res.data as any[]); // eslint-disable-line @typescript-eslint/no-explicit-any
+    } finally { setLoadingPending(false); }
+  }
 
   useEffect(() => {
     (async () => {
       const pr = await saListPasses();
       if (pr.ok) setPasses(((pr.data as unknown) as PassSummary[]).map((p) => ({ id: p.id, pass_name: p.pass_name, enable: p.enable, status: p.status })));
+  await loadPending();
     })();
   }, []);
 
@@ -45,6 +59,20 @@ export default function TicketAdminPanel() {
     else toast.success("Pass assigned");
     // refresh details
     if (selected) loadDetails(selected);
+  }
+
+  async function resolve(paymentLogId: string) {
+    const passId = resolvePass[paymentLogId];
+    if (!passId) { toast.error('Select a pass'); return; }
+    setResolvingId(paymentLogId);
+    try {
+      const res = await resolvePendingPaymentLog(paymentLogId, passId);
+      if (!res.ok) toast.error(res.error);
+      else {
+        toast.success('Mapped & granted');
+        setPending(prev => prev.filter(p => p.payment_log_id !== paymentLogId));
+      }
+    } finally { setResolvingId(null); }
   }
 
   return (
@@ -111,6 +139,70 @@ export default function TicketAdminPanel() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="rounded border p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-medium">Pending Payment Logs (Unmapped)</h2>
+          <Button variant="outline" onClick={loadPending} disabled={loadingPending}>{loadingPending ? 'Refreshing...' : 'Refresh'}</Button>
+        </div>
+        {pending.length === 0 && (
+          <div className="text-sm text-muted-foreground">No pending payment logs 🎉</div>
+        )}
+        {pending.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="text-left border-b">
+                  <th className="py-2 pr-3">Tracking</th>
+                  <th className="py-2 pr-3">User</th>
+                  <th className="py-2 pr-3">Membership</th>
+                  <th className="py-2 pr-3">Event</th>
+                  <th className="py-2 pr-3">Event Type</th>
+                  <th className="py-2 pr-3">Legacy Key</th>
+                  <th className="py-2 pr-3">V2 Key</th>
+                  <th className="py-2 pr-3">Assign Pass</th>
+                  <th className="py-2">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pending.map(row => (
+                  <tr key={row.payment_log_id} className="border-b last:border-b-0">
+                    <td className="py-2 pr-3 font-mono text-xs">{row.tracking_id || '—'}</td>
+                    <td className="py-2 pr-3 text-xs">{row.user_id?.slice(0,8)}…</td>
+                    <td className="py-2 pr-3">{row.membership_type || <span className="opacity-50">—</span>}</td>
+                    <td className="py-2 pr-3">{row.event_name || <span className="opacity-50">—</span>}</td>
+                    <td className="py-2 pr-3">{row.event_type || <span className="opacity-50">—</span>}</td>
+                    <td className="py-2 pr-3 font-mono text-[11px]">{row.legacy_key}</td>
+                    <td className="py-2 pr-3 font-mono text-[11px]">{row.v2_key}</td>
+                    <td className="py-2 pr-3">
+                      <select
+                        className="h-8 w-40 rounded-md border bg-background"
+                        value={resolvePass[row.payment_log_id]||''}
+                        onChange={e => setResolvePass(prev => ({ ...prev, [row.payment_log_id]: e.target.value }))}
+                      >
+                        <option value="">Select pass</option>
+                        {passes.filter(p => Boolean(p.enable ?? p.status)).map(p => (
+                          <option key={p.id} value={p.id}>{p.pass_name}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="py-2">
+                      <Button
+                        size="sm"
+                        onClick={() => resolve(row.payment_log_id)}
+                        disabled={resolvingId === row.payment_log_id}
+                      >
+                        {resolvingId === row.payment_log_id ? 'Saving…' : 'Map + Grant'}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">Mapping creates whitelist entry then grants pass (idempotent). Ownership skipped if already granted.</p>
       </div>
     </div>
   );
