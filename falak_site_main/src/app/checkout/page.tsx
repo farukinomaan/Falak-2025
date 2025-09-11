@@ -23,7 +23,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (status === "authenticated" && ids.length > 0) {
       const controller = new AbortController();
-      const run = async () => {
+  const run = async () => {
         setLoading(true);
         try {
           const params = new URLSearchParams({ ids: ids.join(",") });
@@ -62,8 +62,11 @@ export default function CheckoutPage() {
           setLoading(false);
         }
       };
-      run();
-      return () => controller.abort();
+  run();
+  // Refresh when payment sync completes globally
+  const onSync = () => { if (!controller.signal.aborted) run(); };
+  window.addEventListener('payments:sync-complete', onSync);
+  return () => { window.removeEventListener('payments:sync-complete', onSync); controller.abort(); };
     } else {
       setPasses([]);
     }

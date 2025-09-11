@@ -26,6 +26,9 @@ export default function CheckoutGrid({ items, eventsById }: Props) {
         // Keep the flag for now; future logic can clear after server confirms.
       }
     } catch {}
+  const onSync = () => setReturningFromPayment(false);
+  window.addEventListener('payments:sync-complete', onSync);
+  return () => { window.removeEventListener('payments:sync-complete', onSync); };
   }, []);
 
   const handlePay = useCallback(() => {

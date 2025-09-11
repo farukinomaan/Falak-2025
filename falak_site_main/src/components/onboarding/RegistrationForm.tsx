@@ -60,7 +60,7 @@ export function RegistrationForm({ name, setName, regNo, setRegNo, mahe, setMahe
             required
             placeholder="2358...."
           />
-          <p className="mt-1 text-[11px] text-neutral-400">Digits only. Previously enforced length retained for MAHE clarity.</p>
+          <p className="mt-1 text-[11px] text-neutral-400">Digits only.</p>
         </div>
       ) : (
         <div>

@@ -10,6 +10,7 @@ import Navbar from "@/components/Nav";
 import Link from "next/link"; 
 import PageTransitionClient from "@/components/PageTransitionClient";
 import PaymentReturnSync from "@/components/payments/PaymentReturnSync";
+import { Analytics } from "@vercel/analytics/next"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +42,7 @@ export default function RootLayout({
           type="font/woff2"
           crossOrigin="anonymous"
         />
+        <link rel="icon" type="image/svg+xml" href="/falak-icon.svg" />
       </head>
     <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen h-full flex flex-col overflow-x-hidden`}>
         <ClientProviders>
@@ -73,6 +75,7 @@ export default function RootLayout({
           </main>
           <NavProgress />
           <Toaster richColors position="bottom-right" />
+          <Analytics/>
         </ClientProviders>
       </body>
     </html>
