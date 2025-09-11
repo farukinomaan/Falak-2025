@@ -12,6 +12,7 @@ import {
   saListUserTeamEventIds,
   saGetUserTeamForEvent,
 } from "@/lib/actions/adminAggregations";
+import { computeUserAccessibleEventIds } from "@/lib/actions/access";
 import AddToCartButton from "@/components/cart/AddToCartButton";
 import TeamRegistrationClient from "./team-registration-client";
 import CopySmall from "@/components/CopySmall";
@@ -152,11 +153,12 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
   // Backend logic re-enabled
   const session = await getServerSession(authOptions);
   const userId = (session as { user?: { id?: string } } | null)?.user?.id;
-  const [ownedRes, eventsRes, passesRes, teamEvtRes] = await Promise.all([
+  const [ownedRes, eventsRes, passesRes, teamEvtRes, accessibleRes] = await Promise.all([
     userId ? saListUserPassIds(userId) : Promise.resolve({ ok: true as const, data: [] as string[] }),
     saListEvents(),
     saListPasses(),
     userId ? saListUserTeamEventIds(userId) : Promise.resolve({ ok: true as const, data: [] as string[] }),
+    userId ? computeUserAccessibleEventIds(userId) : Promise.resolve({ eventIds: [] }),
   ]);
 
   const ownedPassIds = new Set<string>(ownedRes.ok ? ownedRes.data : []);
@@ -164,6 +166,8 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
   const passes = passesRes.ok ? (passesRes.data as PassLite[]) : [];
   const ownedEventIds = new Set<string>();
   for (const p of passes) if (p.event_id && ownedPassIds.has(p.id)) ownedEventIds.add(p.event_id);
+  // Incorporate unified access layer (includes esports bundle / Falak25 esports full bundle / proshow unlocks)
+  const accessibleIds = new Set<string>(accessibleRes.eventIds || []);
   const teamEventIds = new Set<string>(teamEvtRes.ok ? teamEvtRes.data : []);
   const events = eventsRes.ok ? ((eventsRes.data as EvtBase[]) || []).filter((e) => (e.enable ?? true) as boolean) : [];
 
@@ -208,8 +212,9 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
         >
           <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-8">
             {list.map((e) => {
-              const eligibleUniversal = hasMaheProshow && (e.sub_cluster || '').toLowerCase() !== 'esports';
-              const owned = ownedEventIds.has(e.id) || eligibleUniversal;
+              // Ownership / access now centralized
+              const eligibleUniversal = hasMaheProshow && (e.sub_cluster || '').toLowerCase() !== 'esports'; // legacy (still valid for display)
+              const owned = accessibleIds.has(e.id) || ownedEventIds.has(e.id) || eligibleUniversal;
               const inTeam = teamEventIds.has(e.id);
               return (
                 <FlipCard
@@ -265,11 +270,12 @@ export async function ClusterEvent({
   const session = await getServerSession(authOptions);
   const userId = (session as { user?: { id?: string } } | null)?.user?.id;
   // Keeping these fetches for when events go live
-  const [ownedRes, eventsRes, passesRes, teamRes] = await Promise.all([
+  const [ownedRes, eventsRes, passesRes, teamRes, accessibleRes] = await Promise.all([
     userId ? saListUserPassIds(userId) : Promise.resolve({ ok: true as const, data: [] as string[] }),
     saListEvents(),
     saListPasses(),
     userId ? saGetUserTeamForEvent(userId, slug) : Promise.resolve({ ok: true as const, data: null }),
+    userId ? computeUserAccessibleEventIds(userId) : Promise.resolve({ eventIds: [] }),
   ]);
 
   // Coming soon mode removed; always render full event detail
@@ -291,8 +297,9 @@ export async function ClusterEvent({
   const userIsMahe = Boolean((session as SessWithMahe2 | null)?.user?.mahe);
   const userOwnedPasses = passes.filter(p => ownedPassIds.has(p.id));
   const hasMaheProshow = userOwnedPasses.some(p => !p.event_id && (p.mahe === true || userIsMahe));
+  const accessibleIds = new Set<string>(accessibleRes.eventIds || []);
   const eligibleUniversal = hasMaheProshow && (event.sub_cluster || '').toLowerCase() !== 'esports';
-  const owned = ownedEventIds.has(event.id) || eligibleUniversal;
+  const owned = accessibleIds.has(event.id) || ownedEventIds.has(event.id) || eligibleUniversal;
   
   const date = event.date ? new Date(event.date) : null;
   const dateStr = date?.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });

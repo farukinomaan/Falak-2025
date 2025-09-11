@@ -44,6 +44,7 @@ export const  authOptions: AuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      httpOptions: { timeout: 10000 },
     }),
   ],
   // pages: {
@@ -54,6 +55,7 @@ export const  authOptions: AuthOptions = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  debug: process.env.NODE_ENV !== 'production',
   callbacks: {
     jwt: async ({ token }) => {
       const t = token as AugToken;
@@ -87,5 +89,10 @@ export const  authOptions: AuthOptions = {
       return s;
     },
   },
+  // Add minimal signIn/error logging hooks for local diagnostics
+  events: {
+    signIn(message) { console.log('[next-auth][event][signIn]', message?.user?.email); },
+    signOut(message) { console.log('[next-auth][event][signOut]', message?.token?.sub); },
+  }
 };
 

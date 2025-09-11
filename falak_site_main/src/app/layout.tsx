@@ -9,6 +9,7 @@ import NavProgress from "@/components/NavProgress";
 import Navbar from "@/components/Nav";
 import Link from "next/link"; 
 import PageTransitionClient from "@/components/PageTransitionClient";
+import PaymentReturnSync from "@/components/payments/PaymentReturnSync";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,6 +44,7 @@ export default function RootLayout({
       </head>
     <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen h-full flex flex-col overflow-x-hidden`}>
         <ClientProviders>
+          <PaymentReturnSync />
           <EnvWarning />
 
           {/* Navbar */}
