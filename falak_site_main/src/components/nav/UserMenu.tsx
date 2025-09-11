@@ -147,7 +147,8 @@ export function UserMenu({ className = "" }: { className?: string }) {
           {/* Divider */}
           <div className="mx-4 my-2 h-px opacity-30" style={{ background: "linear-gradient(to right, transparent, #DBAAA6, transparent)" }} />
 
-          {/* Cart (hidden for MAHE users) */}
+          {/* Cart (hidden for MAHE users who use unified pass) */}
+
           {!isMahe && (
             <Link
               href="/cart"
@@ -181,6 +182,8 @@ export function UserMenu({ className = "" }: { className?: string }) {
               )}
             </Link>
           )}
+
+
           {/* Divider between Cart and Sign Out (only if cart is shown) */}
           {!isMahe && status === 'authenticated' && (
             <div className="mx-4 my-2 h-px opacity-30" style={{ background: "linear-gradient(to right, transparent, #DBAAA6, transparent)" }} />

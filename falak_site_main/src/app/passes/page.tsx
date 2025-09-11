@@ -3,8 +3,6 @@ import Vinyl from "@/components/profile/Vinyl";
 import { saListProshowPasses } from "@/lib/actions/adminAggregations";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getUserByEmail } from "@/lib/actions";
-import type { User } from "@/lib/actions";
 
 export const revalidate = 60;
 
@@ -17,36 +15,37 @@ type PassCard = {
   mahe?: boolean | null; // true=MAHE pass, false=Non-MAHE only, undefined => open
 };
 
-// Toggle when passes go live
-const PASSES_SALES_ACTIVE = false;
+// Passes now live (flag removed; always show passes)
 
 export default async function PassesPage() {
   const res = await saListProshowPasses();
   const passes: PassCard[] = res.ok ? (res.data as PassCard[]) : [];
-  // Determine if current user is MAHE
+  // Determine if current user is MAHE from enriched session (avoids extra DB round trip)
   const session = await getServerSession(authOptions);
-  let isMahe = false;
-  if (session?.user?.email) {
-    try {
-      const u = await getUserByEmail(session.user.email);
-      if (u.ok && u.data) {
-        const user = u.data as User;
-        isMahe = Boolean(user.mahe);
-      }
-    } catch {}
-  }
+  interface SessWithMahe { user?: { mahe?: boolean | null } }
+  const isMahe = Boolean((session as SessWithMahe | null)?.user?.mahe);
 
   // When passes go live, use this filtered list
-  // Visibility rules:
-  // - Only enabled passes are fetched at the API level.
-  // - If user.mahe === true => hide passes where pass.mahe === false (Non-MAHE only)
-  // - If user.mahe === false => hide passes where event_id is null AND pass.mahe === true (MAHE-only proshow)
-  // - If unauthenticated/unregistered => show all
+  // Visibility rules UPDATED:
+  // - Enabled filtering handled upstream.
+  // - MAHE user: show all passes except those explicitly non-MAHE (mahe === false)
+  // - Non-MAHE user (mahe === false): show ONLY public proshow passes => event_id IS NULL AND mahe === false
+  // - Guest (no session): show all (marketing visibility) – adjust later if needed
   const filteredPasses: PassCard[] = (() => {
-    if (!session?.user?.email) return passes; // guest: show all
-    if (isMahe) return passes.filter((p) => p.mahe !== false);
-    return passes.filter((p) => !(p.event_id == null && p.mahe === true));
+    if (!session?.user?.email) return passes; // guest sees all
+    if (isMahe) return passes.filter(p => p.mahe !== false);
+    // Non-MAHE user: strictly public proshow passes (no event tie + mahe === false)
+    return passes.filter(p => p.event_id == null && p.mahe === false);
   })();
+
+  // Adapt to Features prop shape
+  const featurePasses = filteredPasses.map(p => ({
+    id: p.id,
+    title: p.pass_name,
+    description: p.description || undefined,
+    price: typeof p.cost === 'number' ? p.cost : Number(p.cost) || 0,
+    perks: [],
+  }));
   
   return (
     <div
@@ -61,26 +60,18 @@ export default async function PassesPage() {
   backgroundColor: '#32212C',
       }}
     >
-      {/* Passes COMING SOON overlay; keep data fetching for later */}
-      {PASSES_SALES_ACTIVE ? (
-        // TODO: When passes go live, remove this condition and render Features below
-        <div className="relative z-20 ">
-      {/* Switch to filteredPasses to enforce MAHE visibility rules */}
-      <Features passes={filteredPasses} isMahe={isMahe} />
-        </div>
-      ) : (
-        <div className="relative z-20 flex items-center justify-center min-h-[70vh] px-4">
-          <div className="w-full max-w-2xl">
-            <div className="rounded-3xl border border-white/15 bg-white/5 backdrop-blur-xl shadow-2xl px-6 py-10 sm:px-10">
-              <div className="text-center space-y-3">
-                <span className="inline-block text-xs uppercase tracking-wider px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/80">Passes</span>
-                <h1 className="vintage-font text-4xl sm:text-5xl md:text-6xl font-semibold tracking-wide text-white">COMING SOON</h1>
-                <p className="text-white/70">Proshow and event passes will be available here soon.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
+      <div className="relative z-20">
+  {featurePasses.length > 0 ? (
+    <Features passes={featurePasses} isMahe={isMahe} />
+  ) : (
+    <div className="pt-40 pb-20 text-center text-white relative z-20">
+      <h2 className="text-3xl font-semibold mb-4">No passes available</h2>
+      <p className="text-sm opacity-80 max-w-md mx-auto">Currently no public proshow passes are available for Non-MAHE users. Please check back later.</p>
+    </div>
+  )}
+      </div>
+
 
       {/* Dim the background slightly without affecting foreground */}
       <div
@@ -97,7 +88,9 @@ export default async function PassesPage() {
           backgroundPosition: "center bottom",
           backgroundRepeat: "no-repeat",
           opacity: 0.9,
-          filter: PASSES_SALES_ACTIVE ? undefined : 'blur(1.5px)'
+
+          filter: undefined
+
         }}
       />
 
