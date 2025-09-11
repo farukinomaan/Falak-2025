@@ -179,6 +179,8 @@ function validateDoc(d: ExternalPaymentDoc): string | null {
   return null;
 }
 
+function digitsOnly(p: string) { return (p || '').replace(/[^0-9]/g, ''); }
+
 async function fetchRemoteLogsOnce(phone: string): Promise<ExternalPaymentDoc[]> {
   if (!ACCESS_KEY || !ACCESS_TOKEN) throw new Error("payment_keys_missing");
   const controller = new AbortController();
@@ -209,20 +211,30 @@ async function fetchRemoteLogs(phone: string): Promise<ExternalPaymentDoc[]> {
     // Return a shallow copy to avoid accidental mutation across ingestions.
     return [...MOCK_PAYMENT_DOCS];
   }
+  // Try original phone, then try +91 + digits (to handle upstream expectations)
+  const variants: string[] = [];
+  const d = digitsOnly(phone);
+  variants.push(phone);
+  if (!phone.startsWith('+91') && d.length === 10) variants.push('+91' + d);
   let lastErr: unknown;
-  for (let attempt = 0; attempt < RETRY_ATTEMPTS; attempt++) {
-    try {
-      return await fetchRemoteLogsOnce(phone);
-    } catch (e) {
-      lastErr = e;
+  for (const variant of variants) {
+    for (let attempt = 0; attempt < RETRY_ATTEMPTS; attempt++) {
+      try {
+        const docs = await fetchRemoteLogsOnce(variant);
+        // If docs are empty and we have more variants, continue trying
+        if (docs && docs.length > 0) return docs;
+      } catch (e) {
+        lastErr = e;
+      }
       if (attempt < RETRY_ATTEMPTS - 1) {
         const backoff = 1000 * (attempt + 1);
         await new Promise(r => setTimeout(r, backoff));
-        continue;
       }
     }
   }
-  throw lastErr ?? new Error('remote_fetch_failed');
+  // If we reach here, either lastErr occurred or all attempts returned empty
+  if (lastErr) throw lastErr;
+  return [];
 }
 
 // Soft lock helpers removed.

@@ -11,6 +11,7 @@ import Link from "next/link";
 import QrCode from "@/components/QrCode";
 import Image from "next/image";
 import RetroAnimations from "../../components/profile/RetroAnimations";
+import ManualVerifyButton from "@/components/payments/ManualVerifyButton";
 import { PageBackground } from "../_clusterPages/clusterPages";
 import styles from "./page.module.css";
 import LogoutButton from "@/components/auth/LogoutButton";
@@ -84,8 +85,14 @@ export default async function ProfilePage() {
                 backdropFilter:'blur(6px)'
               }}>
                 <p style={{fontSize:14,lineHeight:1.4,color:'#e2e8f0'}}>
-                  <strong style={{color:'#fff'}}>Note:</strong> If you don’t see a pass immediately after purchase, don’t panic. Please scroll down and contact HR. Devs also have mid-sems—thanks for understanding.
+                  <strong style={{color:'#fff'}}>Note:</strong> If you do not see a pass immediately after purchase, do not panic. Please scroll down and contact HR, show them your reciept. Devs also have mid-sems—thanks for understanding.
                 </p>
+                <div className="mt-3 mb-1">
+                  <ManualVerifyButton label="Verify Purchases" />
+                </div>
+                <span className="pl-3" style={{fontSize:12,lineHeight:1.8,color:'#e2e8f0'}}>
+                  <p style={{color:'#fff'}}>Wait a little after clicking</p> 
+                </span>
               </div>
               {passes.length === 0 ? (
                 <EmptyState message="You don’t own any passes yet." ctaHref="/passes" ctaLabel="Browse Passes" />
