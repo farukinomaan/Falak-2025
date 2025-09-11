@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ingestAndListUserPasses } from '@/lib/actions/payments';
+import { checkDevHeader } from '../guard';
 
 function denyProd() {
   if (process.env.NODE_ENV === 'production') {
@@ -12,6 +13,7 @@ function denyProd() {
 // Triggers real ingestion (no mock docs) for the specified user id using the devUserId fallback.
 export async function GET(req: NextRequest) {
   const deny = denyProd(); if (deny) return deny;
+  const headerFail = checkDevHeader(req); if (headerFail) return headerFail;
   const userId = req.nextUrl.searchParams.get('userId');
   if (!userId) return NextResponse.json({ ok: false, error: 'missing userId' }, { status: 400 });
   const debug = req.nextUrl.searchParams.get('debug') === '1';

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { __clearMappingCache } from '@/lib/actions/payments';
+import { checkDevHeader } from '../guard';
 
 interface SeedBody { membership_type?: string; event_name?: string; event_type?: string; pass_name?: string }
 
@@ -18,6 +19,7 @@ function denyProd() {
 // You may supply both during migration for dual resolution.
 export async function POST(req: NextRequest) {
   const deny = denyProd(); if (deny) return deny;
+  const headerFail = checkDevHeader(req); if (headerFail) return headerFail;
   let body: SeedBody = {};
   try { body = await req.json() as SeedBody; } catch {}
   const { membership_type, event_name, pass_name, event_type } = body;

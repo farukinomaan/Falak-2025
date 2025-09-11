@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { __setMockPaymentDocs, ingestAndListUserPasses } from '@/lib/actions/payments';
+import { checkDevHeader } from '../guard';
 
 interface MockDoc {
   tracking_id: string;
@@ -45,6 +46,7 @@ function denyProd() {
 // Enable mock: POST /api/dev/payments/mock?scenario=esports OR send body {docs:[...]}
 export async function POST(req: NextRequest) {
   const deny = denyProd(); if (deny) return deny;
+  const headerFail = checkDevHeader(req); if (headerFail) return headerFail;
   let docs: MockDoc[] | null = null;
   const scenario = req.nextUrl.searchParams.get('scenario') || 'proshowBundle';
   try {
@@ -66,14 +68,16 @@ export async function POST(req: NextRequest) {
 // Run ingestion now (GET) while mock active
 export async function GET(req: NextRequest) {
   const deny = denyProd(); if (deny) return deny;
+  const headerFail = checkDevHeader(req); if (headerFail) return headerFail;
   const devUserId = req.nextUrl.searchParams.get('devUserId') || undefined;
   const res = await ingestAndListUserPasses({ devUserId });
   return NextResponse.json(res, { status: res.ok ? 200 : 500 });
 }
 
 // Disable mock
-export async function DELETE() {
+export async function DELETE(req: NextRequest) {
   const deny = denyProd(); if (deny) return deny;
+  const headerFail = checkDevHeader(req); if (headerFail) return headerFail;
   __setMockPaymentDocs(null);
   return NextResponse.json({ ok: true, enabled: false });
 }

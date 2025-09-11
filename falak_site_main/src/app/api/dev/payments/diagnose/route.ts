@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
+import { checkDevHeader } from '../guard';
 
 function denyProd() {
   if (process.env.NODE_ENV === 'production') {
@@ -34,6 +35,7 @@ async function fetchRemote(phone: string) {
 
 export async function GET(req: NextRequest) {
   const deny = denyProd(); if (deny) return deny;
+  const headerFail = checkDevHeader(req); if (headerFail) return headerFail;
   const userId = req.nextUrl.searchParams.get('userId');
   if (!userId) return NextResponse.json({ ok:false, error:'missing userId' }, { status:400 });
   const svc = createServiceClient();
