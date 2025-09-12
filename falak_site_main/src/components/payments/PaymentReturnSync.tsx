@@ -58,6 +58,7 @@ export default function PaymentReturnSync() {
         toast.success('Pass acquired!');
       }
       try { localStorage.removeItem('falak_payment_in_progress'); } catch {}
+  try { window.dispatchEvent(new CustomEvent('payments:sync-complete')); } catch {}
     })();
   }, []);
 

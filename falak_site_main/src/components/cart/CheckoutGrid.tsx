@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import ManualVerifyButton from "@/components/payments/ManualVerifyButton";
 
 type Row = { id: string; pass_name: string; description?: string | null; event_id?: string | null; original_id?: string };
 interface Props { items: Row[]; eventsById?: Map<string, { id: string; name: string }> }
@@ -26,6 +27,9 @@ export default function CheckoutGrid({ items, eventsById }: Props) {
         // Keep the flag for now; future logic can clear after server confirms.
       }
     } catch {}
+  const onSync = () => setReturningFromPayment(false);
+  window.addEventListener('payments:sync-complete', onSync);
+  return () => { window.removeEventListener('payments:sync-complete', onSync); };
   }, []);
 
   const handlePay = useCallback(() => {
@@ -40,6 +44,11 @@ export default function CheckoutGrid({ items, eventsById }: Props) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {!returningFromPayment && (
+        <div className="sm:col-span-2 lg:col-span-3 -mt-1 mb-2">
+          <ManualVerifyButton label="Verify Purchases" compact className="inline-block" />
+        </div>
+      )}
       {items.map((p) => (
         <div key={p.id} className="border rounded p-4 flex flex-col gap-2">
           <div className="font-medium flex items-center text-white gap-2">

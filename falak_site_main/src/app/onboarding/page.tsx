@@ -57,8 +57,8 @@ export default function OnboardingPage() {
     }
     if (mahe) {
       const digits = regNo.replace(/[^0-9]/g, "");
-      if (digits.length !== 9) {
-        toast.warning("Registration number must be exactly 9 digits");
+      if (digits.length < 9) {
+        toast.warning("Registration number must be at least 9 digits");
         setSubmitting(false);
         return;
       }
@@ -66,9 +66,10 @@ export default function OnboardingPage() {
     try {
       const payload = {
         name,
-  phone: "+91" + phone.replace(/[^0-9]/g, ""),
+        // Store phone as plain digits without country code
+        phone: phone.replace(/[^0-9]/g, ""),
         mahe,
-  regNo: mahe ? regNo.replace(/[^0-9]/g, "") : null,
+        regNo: mahe ? regNo.replace(/[^0-9]/g, "") : null,
         institute: mahe ? null : institute.trim(),
       };
       const res = await completeOnboarding(payload);
@@ -137,7 +138,8 @@ export default function OnboardingPage() {
           name={name}
           setName={setName}
           regNo={regNo}
-          setRegNo={(v: string) => setRegNo(v.replace(/[^0-9]/g, "").slice(0, 9))}
+          // Allow arbitrary length; enforce minimum length (>=9) in submit handler
+          setRegNo={(v: string) => setRegNo(v.replace(/[^0-9]/g, ""))}
           mahe={mahe}
           setMahe={setMahe}
           institute={institute}

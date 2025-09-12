@@ -56,7 +56,7 @@ export default function Home() {
 
 export const metadata = {
   title: "FALAK 2025",
-  description: "MIT Bengaluru Cultural fest",
+  description: "MIT Bengaluru Cultural fest"
 };
 
 function SectionSkeleton({ title }: { title: string }) {
