@@ -40,6 +40,8 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
   const { status, data: session } = useSession();
   const isAuthed = status === 'authenticated';
   const isRegistered = Boolean((session as AugSession | null)?.needsOnboarding === false);
+  interface SessUser { user?: { mahe?: boolean | null } }
+  const isMahe = Boolean((session as SessUser | null)?.user?.mahe);
   // Change the /tickets to /support after the file name change
   const menuItems = [
     { name: 'HOME', href: '/', icon: Home },
@@ -47,8 +49,9 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({
     { name: 'SPORTS', href: '/sports', icon: Trophy },
     { name: 'PASSES', href: '/passes', icon: Ticket },
     { name: 'SUPPORT', href: '/tickets', icon: MessageSquareDashed },
-  ...(isAuthed && isRegistered ? [{ name: 'PROFILE', href: '/profile', icon: User }] : []),
-    { name: 'CART', href: '/cart', icon: ShoppingCart }
+    ...(isAuthed && isRegistered ? [{ name: 'PROFILE', href: '/profile', icon: User }] : []),
+    // Only show cart for non-MAHE users (they purchase individual event passes)
+    ...(!isMahe ? [{ name: 'CART', href: '/cart', icon: ShoppingCart }] : []),
   ];
 
   // User icon is provided directly via lucide-react for PROFILE entry
