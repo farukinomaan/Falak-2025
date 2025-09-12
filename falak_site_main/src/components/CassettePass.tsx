@@ -46,19 +46,80 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
   <div className={`relative w-full h-full ${introDone ? '' : 'animate-cassette-whirl'}`} style={{ transformStyle: 'preserve-3d', transition: 'transform 0.7s ease-in-out' }}>
         <div className="absolute inset-0" style={{ transformStyle: 'preserve-3d', transform: `rotateY(${flipped ? 180 : 0}deg)`, transition: 'transform 0.7s ease-in-out' }}>
           {/* FRONT */}
-          <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden', pointerEvents: flipped ? 'none' : 'auto' }}>
-    <div className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none" style={{ backgroundImage: "url('/cassette.png')", backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' }} />
-    <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "url('/cassette.png')", backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', filter: 'drop-shadow(0 0 6px #d4cba6)', borderRadius: '16px' }} />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -mt-10 sm:-mt-28 px-2 text-center">
-              <h3 className="font-brasty font-bold text-center text-white leading-snug mt-2" style={{ textShadow: '0 0 4px rgba(255,255,255,0.22)', fontSize: 'clamp(1.1rem, 5vw, 6rem)' }}>{pass.pass_name}</h3>
-            </div>
-            {pass.cost && (
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-10 sm:mt-20 px-2">
-                <p className="font-brasty font-bold text-center text-white -mt-4" style={{ fontSize: 'clamp(1rem, 4.2vw, 3.75rem)' }}>₹{typeof pass.cost === 'number' ? pass.cost : pass.cost}</p>
-              </div>
-            )}
-            
-          </div>
+          <div
+  className="absolute inset-0"
+  style={{ backfaceVisibility: "hidden", pointerEvents: flipped ? "none" : "auto" }}
+>
+  {/* Base cassette */}
+  <div
+    className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
+    style={{
+      backgroundImage: "url('/cassette.png')",
+      backgroundSize: "contain",
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center",
+    }}
+  />
+
+  {/* Dark overlay ON CASSETTE ONLY */}
+  <div
+    className="absolute inset-0 pointer-events-none"
+    style={{
+      backgroundColor: "rgba(0,0,0,0)", // darkness level
+      WebkitMaskImage: "url('/cassette.png')", // clip overlay to cassette shape
+      WebkitMaskRepeat: "no-repeat",
+      WebkitMaskSize: "contain",
+      WebkitMaskPosition: "center",
+      maskImage: "url('/cassette.png')", // fallback for browsers
+      maskRepeat: "no-repeat",
+      maskSize: "contain",
+      maskPosition: "center",
+    }}
+  />
+
+  {/* Glow / shadow */}
+  <div
+    className="absolute inset-0 pointer-events-none"
+    style={{
+      backgroundImage: "url('/cassette.png')",
+      backgroundSize: "contain",
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center",
+      filter: "drop-shadow(0 0 6px #d4cba6)",
+      borderRadius: "16px",
+    }}
+  />
+
+  {/* Name */}
+<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[220%] px-2 text-center">
+  <h3
+    className="font-brasty font-bold text-center leading-snug mt-2"
+    style={{
+      color: "#DBAAA6",
+      fontSize: "clamp(0.7rem, 3vw, 3rem)",
+      WebkitTextStroke: "1px #32212c", // <-- white outline
+      textShadow: "0 0 4px rgba(0,0,0,0.15)", // subtle glow to soften edges
+    }}
+  >
+    {pass.pass_name}
+  </h3>
+</div>
+
+
+  {/* Price */}
+  {pass.cost && (
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-[100%] px-2">
+      <p
+        className="font-brasty font-bold text-center text-[#32212C]"
+        style={{ fontSize: "clamp(1rem, 4.2vw, 3.75rem)" }}
+      >
+        ₹{typeof pass.cost === "number" ? pass.cost : pass.cost}
+      </p>
+    </div>
+  )}
+</div>
+
+
           {/* BACK */}
           <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', pointerEvents: flipped ? 'auto' : 'none' }}>
             <div className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none" style={{ backgroundImage: "url('/cassette.png')", backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' }} />
