@@ -24,7 +24,13 @@ export function TeamRegistrationForm({ eventId, minSize = 1, captainId, captainN
     setMembers((prev) => prev.map((m, idx) => (idx === i ? val : m)));
   }
   function addMember() {
-    setMembers((prev) => (maxSize && prev.length >= maxSize ? prev : [...prev, ""]));
+    setMembers((prev) => {
+      if (maxSize && prev.length >= maxSize) {
+        toast.error(`Maximum team size is ${maxSize}`);
+        return prev;
+      }
+      return [...prev, ""];
+    });
   }
   function removeMember(i: number) {
     setMembers((prev) => prev.filter((_, idx) => idx !== i));
@@ -38,7 +44,11 @@ export function TeamRegistrationForm({ eventId, minSize = 1, captainId, captainN
       return;
     }
     if (filtered.length < minSize) {
-      toast.error(`Need at least ${minSize} member id${minSize>1?"s":""}`);
+      toast.error(`Need at least ${minSize} member${minSize>1?"s":""}`);
+      return;
+    }
+    if (maxSize && filtered.length > maxSize) {
+      toast.error(`Cannot exceed ${maxSize} members`);
       return;
     }
     const payload = useEmails
@@ -85,30 +95,34 @@ export function TeamRegistrationForm({ eventId, minSize = 1, captainId, captainN
           disabled
         />
       </div>
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="text-base font-medium">Team Members ({useEmails ? "Emails" : "User IDs"})</label>
-          <button type="button" onClick={addMember} disabled={!!maxSize && members.length >= maxSize} className="text-xs px-2 py-1 rounded bg-black text-white disabled:opacity-40">Add Member</button>
-        </div>
-        {members.map((m, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <input
-              className="w-full border rounded px-3 py-2 text-base"
-              value={m}
-              onChange={(e) => updateMember(i, e.target.value)}
-              placeholder={`Member #${i + 1} ${useEmails ? "email" : "userId"}`}
-            />
-            <button
-              type="button"
-              onClick={() => removeMember(i)}
-              className="text-sm px-2 py-1 rounded bg-red-600 text-white disabled:opacity-50"
-              disabled={members.length <= minSize}
-            >
-              Remove
-            </button>
+      {(maxSize === 0 && minSize === 0) ? (
+        <div className="text-sm text-gray-600">Solo event – no additional members required.</div>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-base font-medium">Team Members ({useEmails ? "Emails" : "User IDs"})</label>
+            <button type="button" onClick={addMember} disabled={!!maxSize && members.length >= maxSize} className="text-xs px-2 py-1 rounded bg-black text-white disabled:opacity-40">Add Member</button>
           </div>
-        ))}
-      </div>
+          {members.map((m, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <input
+                className="w-full border rounded px-3 py-2 text-base"
+                value={m}
+                onChange={(e) => updateMember(i, e.target.value)}
+                placeholder={`Member #${i + 1} ${useEmails ? "email" : "userId"}`}
+              />
+              <button
+                type="button"
+                onClick={() => removeMember(i)}
+                className="text-sm px-2 py-1 rounded bg-red-600 text-white disabled:opacity-50"
+                disabled={members.length <= minSize}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
       <button
         type="submit"
         disabled={isPending}

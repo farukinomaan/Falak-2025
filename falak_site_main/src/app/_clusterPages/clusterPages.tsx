@@ -30,11 +30,13 @@ type EvtBase = {
   id: string;
   name: string;
   description?: string | null;
+  rules?: string | null;
   venue: string;
   sub_cluster: string;
   cluster_name?: string | null;
   date?: string | Date | null;
   price?: number | string | null;
+  min_team_size?: number | null;
   max_team_size?: number | null;
   enable?: boolean | null;
 };
@@ -304,6 +306,17 @@ export async function ClusterEvent({
   const date = event.date ? new Date(event.date) : null;
   const dateStr = date?.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const timeStr = date?.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  const minTeamSize = typeof event.min_team_size === 'number' && event.min_team_size > 0 ? event.min_team_size : null;
+  const maxTeamSize = typeof event.max_team_size === 'number' && event.max_team_size > 0 ? event.max_team_size : null;
+  let teamSizeLabel: string | null = null;
+  if (minTeamSize && maxTeamSize) {
+    if (minTeamSize === maxTeamSize) teamSizeLabel = `${minTeamSize} player${minTeamSize === 1 ? '' : 's'}`;
+    else teamSizeLabel = `${minTeamSize}-${maxTeamSize} players`;
+  } else if (minTeamSize) {
+    teamSizeLabel = `Min ${minTeamSize}`;
+  } else if (maxTeamSize) {
+    teamSizeLabel = `Up to ${maxTeamSize}`;
+  }
 
   const priceStr =
     typeof event.price === "number" || typeof event.price === "string"
@@ -401,11 +414,38 @@ export async function ClusterEvent({
             {event.description && (
               <p className="text-gray-300 whitespace-pre-line text-lg">{event.description}</p>
             )}
+            {(() => {
+              const raw = (event.rules || '').trim();
+              if (!raw) return null;
+              // Allow admin to paste either plain URL or text containing URL; extract first http(s):// link
+              const match = raw.match(/https?:\/\/[^\s]+/i);
+              const url = match ? match[0] : (raw.startsWith('http://') || raw.startsWith('https://') ? raw : null);
+              if (!url) return null;
+              return (
+                <div className="mt-2">
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-amber-300 hover:text-white underline decoration-dotted underline-offset-4"
+                  >
+                    View Event Rules / Guidelines
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                      <path d="M13 3a1 1 0 0 0 0 2h4.586l-9.293 9.293a1 1 0 1 0 1.414 1.414L19 6.414V11a1 1 0 1 0 2 0V4a1 1 0 0 0-1-1h-7Z" />
+                      <path d="M5 5a2 2 0 0 0-2 2v12c0 1.103.897 2 2 2h12a2 2 0 0 0 2-2v-5a1 1 0 1 0-2 0v5H5V7h5a1 1 0 1 0 0-2H5Z" />
+                    </svg>
+                  </a>
+                </div>
+              );
+            })()}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-md border-t border-gray-600 pt-6">
               <p><span className="font-semibold text-gray-400">Category:</span> {event.sub_cluster}</p>
               <p><span className="font-semibold text-gray-400">Venue:</span> {event.venue}</p>
               {dateStr && <p><span className="font-semibold text-gray-400">Date:</span> {dateStr}</p>}
               {timeStr && <p><span className="font-semibold text-gray-400">Time:</span> {timeStr}</p>}
+              {teamSizeLabel && (
+                <p><span className="font-semibold text-gray-400">Team Size:</span> {teamSizeLabel}</p>
+              )}
               {userIsMahe ? (
                 <p><span className="font-semibold text-gray-400">Pass:</span> {(event.sub_cluster || '').toLowerCase() === 'esports' ? 'Esports Pass' : 'Pro-show Pass'}</p>
               ) : (
@@ -474,13 +514,22 @@ export async function ClusterEvent({
               isEsports ? (
                 <EsportsTeamRegistration eventId={event.id} userId={userId || ''} />
               ) : (
+                // Adjust min/max to account for captain already counted in event team size.
+                // If event requires 7 total, user should add only 6 additional members.
+                (() => {
+                  const adjustedMin = minTeamSize ? Math.max(minTeamSize - 1, 0) : 0;
+                  const adjustedMax = maxTeamSize ? Math.max(maxTeamSize - 1, 0) : undefined;
+                  return (
                 <TeamRegistrationClient
                   eventId={event.id}
                   captainId={userId || ""}
                   captainName={session?.user?.name || null}
-                  minSize={1}
+                  minSize={adjustedMin}
+                  maxSize={adjustedMax}
                   leaderHint={eligibleUniversal && !ownedEventIds.has(event.id)}
                 />
+                  );
+                })()
               )
             )}
           </div>
