@@ -101,7 +101,7 @@ export default async function ProfilePage() {
                   {userPasses.map((up) => {
                     const pass = passes.find((p) => p.id === up.passId);
                     const qr = up.qr_token as string | null | undefined;
-                    const qrPayloadUrl = qr ? `${process.env.NEXT_PUBLIC_QR_BASE_URL ?? "https://falak.mitblr.in"}/api/qr/verify?token=${encodeURIComponent(qr)}` : null;
+                    const qrPayloadUrl = qr ? `${process.env.NEXT_PUBLIC_QR_BASE_URL ?? "https://falak.mitblr.org"}/api/qr/verify?token=${encodeURIComponent(qr)}` : null;
                     return (
                       <li key={up.id ?? `${up.userId}-${up.passId}`} className={styles.passItem}>
                         <div className={styles.passDetails}>
