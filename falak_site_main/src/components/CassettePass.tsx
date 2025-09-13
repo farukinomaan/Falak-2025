@@ -32,8 +32,8 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
 
   return (
     <div
-      className="relative mx-auto z-40 select-none w-screen sm:w-[900px] md:w-[900px] lg:w-[1053px] aspect-[1053/631]"
-      style={{ perspective: '1000px' }}
+    className="relative mx-auto z-40 select-none w-[100vw] sm:w-[700px] md:w-[900px] lg:w-[1053px] aspect-[1053/631]"
+    style={{ perspective: "1000px" }}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
       onClick={toggle}
@@ -50,48 +50,13 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
   className="absolute inset-0"
   style={{ backfaceVisibility: "hidden", pointerEvents: flipped ? "none" : "auto" }}
 >
-  {/* Base cassette */}
-  <div
-    className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
-    style={{
-      backgroundImage: "url('/cassette.png')",
-      backgroundSize: "contain",
-      backgroundRepeat: "no-repeat",
-      backgroundPosition: "center",
-    }}
-  />
-
-  {/* Dark overlay ON CASSETTE ONLY */}
-  <div
-    className="absolute inset-0 pointer-events-none"
-    style={{
-      backgroundColor: "rgba(0,0,0,0)", // darkness level
-      WebkitMaskImage: "url('/cassette.png')", // clip overlay to cassette shape
-      WebkitMaskRepeat: "no-repeat",
-      WebkitMaskSize: "contain",
-      WebkitMaskPosition: "center",
-      maskImage: "url('/cassette.png')", // fallback for browsers
-      maskRepeat: "no-repeat",
-      maskSize: "contain",
-      maskPosition: "center",
-    }}
-  />
-
-  {/* Glow / shadow */}
-  <div
-    className="absolute inset-0 pointer-events-none"
-    style={{
-      backgroundImage: "url('/cassette.png')",
-      backgroundSize: "contain",
-      backgroundRepeat: "no-repeat",
-      backgroundPosition: "center",
-      filter: "drop-shadow(0 0 6px #d4cba6)",
-      borderRadius: "16px",
-    }}
-  />
+{/* Base cassette */}
+<div
+  className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none cassette-img"
+/>
 
   {/* Name */}
-<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[220%] px-2 text-center">
+<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[230%] px-2 text-center">
   <h3
     className="font-brasty font-bold text-center leading-snug mt-2"
     style={{
@@ -108,7 +73,9 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
 
   {/* Price */}
   {pass.cost && (
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-[100%] px-2">
+    <div
+    className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-[140%] sm:translate-y-[110%] px-2"
+  >  
       <p
         className="font-brasty font-bold text-center text-[#32212C]"
         style={{ fontSize: "clamp(1rem, 4.2vw, 3.75rem)" }}
@@ -146,7 +113,7 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
       </div>
       {/* Keep the Add to Cart button outside the rotating 3D plane so it never tilts */}
       {!flipped && (
-        <div className="absolute bottom-4 xs:bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 z-50" onClick={stop}>
+        <div className="absolute bottom-4 xs:bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 z-50 buy-button-wrapper" onClick={stop}>
           {isMahe ? (
             <Link
               href="https://payment.manipal.edu/falak-Login"
@@ -180,20 +147,82 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
         </div>
       )}
       <style jsx>{`
-        @keyframes cassette-whirl { 0% { transform: rotateY(0deg);} 65% { transform: rotateY(410deg);} 100% { transform: rotateY(240deg);} }
-        .animate-cassette-whirl { animation: cassette-whirl 2s ease-in-out; will-change: transform; }
-        /* Responsive mask sizing/positioning */
-        .glass-mask { width: 60%; height: 60%; top: 20%; left: 20%; padding: 16px 20px; }
-        @media (max-width: 640px) { /* sm- */
-          .glass-mask { width: 60%; height: 62%; top: 19%; left: 20%; padding: 12px 14px; }
-        }
-        @media (min-width: 768px) { /* md */
-          .glass-mask { width: 60%; height: 58%; top: 21%; left: 20%; padding: 18px 24px; }
-        }
-        @media (min-width: 1024px) { /* lg */
-          .glass-mask { width: 58%; height: 60%; top: 20%; left: 21%; padding: 22px 28px; }
-        }
-      `}</style>
+  @keyframes cassette-whirl {
+    0% { transform: rotateY(0deg);}
+    65% { transform: rotateY(410deg);}
+    100% { transform: rotateY(240deg);}
+  }
+
+  .animate-cassette-whirl {
+    animation: cassette-whirl 2s ease-in-out;
+    will-change: transform;
+  }
+
+  /* Cassette scaling */
+  .cassette-img {
+    background-image: url('/cassette.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  @media (max-width: 768px) {
+    .cassette-img {
+      transform: scale(1.2);
+    }
+  }
+  @media (max-width: 480px) {
+    .cassette-img {
+      transform: scale(1.35);
+    }
+  }
+
+  /* Responsive mask sizing/positioning */
+  .glass-mask {
+    width: 60%;
+    height: 60%;
+    top: 20%;
+    left: 20%;
+    padding: 16px 20px;
+  }
+  @media (max-width: 640px) {
+    .glass-mask { width: 60%; height: 62%; top: 19%; left: 20%; padding: 12px 14px; }
+  }
+  @media (min-width: 768px) {
+    .glass-mask { width: 60%; height: 58%; top: 21%; left: 20%; padding: 18px 24px; }
+  }
+  @media (min-width: 1024px) {
+    .glass-mask { width: 58%; height: 60%; top: 20%; left: 21%; padding: 22px 28px; }
+  }
+
+  @media (max-width: 480px) {
+    .buy-button-wrapper {
+      bottom: 0.7rem !important; /* push it down more on mobiles */
+    }
+  }
+  /* Increase text size on small mobiles */
+  @media (max-width: 480px) {
+    /* Pass name */
+    h3 {
+      font-size: clamp(0.9rem, 4vw, 3.2rem) !important;
+    }
+
+    /* Price */
+    p.font-brasty {
+      font-size: clamp(1.2rem, 5vw, 4rem) !important;
+    }
+
+    /* Description */
+    .glass-mask p {
+      font-size: 1rem !important;
+    }
+
+    .glass-mask h4 {
+      font-size: 1.5rem !important;
+    }
+  }
+`}</style>
+
+
     </div>
   );    
 }

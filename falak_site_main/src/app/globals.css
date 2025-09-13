@@ -242,3 +242,24 @@ main {
   border-bottom: 2px solid #1a0e07;
   border-right: 2px solid #1a0e07;
 }
+
+/* Make the whole cassette fill more space on small screens */
+@media (max-width: 640px) {
+  .cassette-pass {
+    margin-bottom: 1rem;   /* tighten spacing between passes */
+  }
+}
+
+/* Tablet */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .cassette-pass {
+    margin-bottom: 1.5rem; /* moderate gap */
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .cassette-pass {
+    margin-bottom: 2rem; /* larger gap only on big screens */
+  }
+}
