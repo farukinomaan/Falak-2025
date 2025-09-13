@@ -63,7 +63,7 @@ const RetroAnimations = () => {
   }, []);
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', overflow: 'hidden', zIndex: 0, pointerEvents:'none'}}>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', overflow: 'hidden', zIndex: -1, pointerEvents:'none'}}>
       <div ref={cassetteRef} style={{ visibility: 'hidden' }}>
         <Cassette />
       </div>
