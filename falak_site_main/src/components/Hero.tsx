@@ -111,9 +111,15 @@ const Hero: React.FC = () => {
         </div>
 
         {/* Foreground Text */}
-        <h1 className="vintage-font absolute bottom-5 right-5 z-40 text-[#DBAAA6] sm:text-2xl md:text-5xl pointer-events-none">
-          <b>JOIN US</b>
-        </h1>
+        <div className="absolute bottom-5 right-5 z-40 flex flex-col items-end pointer-events-none space-y-1">
+  <h3 className="vintage-font text-[#D7897D] sm:text-xl md:text-3xl">
+    <b>6-12 Oct'25</b>
+  </h3>
+  <h1 className="vintage-font text-[#DBAAA6] sm:text-2xl md:text-5xl">
+    <b>JOIN US</b>
+  </h1>
+</div>
+
 
         {/* Overlay Content */}
 {/* Overlay Content */}
