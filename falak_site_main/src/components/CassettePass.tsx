@@ -90,7 +90,7 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
           {/* BACK */}
           <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', pointerEvents: flipped ? 'auto' : 'none' }}>
             <div className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none" style={{ backgroundImage: "url('/cassette.png')", backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' }} />
-    <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "url('/cassette.png')", backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', filter: 'drop-shadow(0 0 6px #d4cba6)', borderRadius: '16px' }} />
+    <div className="absolute back-cassette-img inset-0 pointer-events-none" style={{ backgroundImage: "url('/cassette.png')", backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', filter: 'drop-shadow(0 0 6px #d4cba6)', borderRadius: '16px' }} />
     {/* Darker glass mask aligned with cassette; responsive dimensions via CSS */}
     <div className="absolute z-10 glass-mask" style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: '24px', border: '1.5px solid rgba(212,203,166,0.55)', boxShadow: '0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {pass.description ? (
@@ -220,6 +220,57 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
       font-size: 1.5rem !important;
     }
   }
+  @media (max-width: 480px) {
+    /* Front PNG already scales */
+    .cassette-img {
+      transform: scale(1.35);
+    }
+  
+    /* Back PNG: match the front scale */
+    .back-cassette-img {
+      transform: scale(1.35);
+    }
+  
+    /* Back description overlay to match PNG */
+    .glass-mask {
+      width: 80%;
+      height: 88%;
+      top: 8%;
+      left: 10%;
+      padding: 0;
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  @media (max-width: 1024px) { /* tablets and below */
+  /* Target back description heading */
+  .glass-mask h4 {
+    margin-bottom: 0.5rem; /* reduce spacing below heading */
+    transform: translateY(-0.3rem); /* move heading slightly up */
+  }
+}
+
+@media (max-width: 480px) { /* mobiles */
+  .glass-mask h4 {
+    margin-bottom: 0.1rem;
+    transform: translateY(-1rem);
+  }
+}
+@media (max-width: 1024px) { /* tablets and below */
+  .glass-mask p {
+    transform: translateY(-0.3rem); /* move description text up slightly */
+  }
+}
+
+@media (max-width: 480px) { /* mobiles */
+  .glass-mask p {
+    transform: translateY(-1rem); 
+  }
+}
+
+
 `}</style>
 
 
