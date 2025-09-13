@@ -155,6 +155,7 @@ const Hero: React.FC = () => {
         <b>JOIN US</b>
       </h1>
     </div>
+    
   );
 };
 
