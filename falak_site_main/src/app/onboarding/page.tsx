@@ -165,7 +165,7 @@ export default function OnboardingPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2">
           <p className="pl-4 text-[10px] sm:text-xs leading-snug text-neutral-400 max-w-xs">
-            <span className="font-semibold text-[#DBAAA6]">Note:</span> Registration opens when passes go <span className="text-[#F4CA8E] font-medium">Live</span>. You can logout for now and return later.
+            <span className="font-semibold text-[#DBAAA6]">Note:</span> Refresh if you see this page again after regestraion.
           </p>
           <Button
             type="button"
