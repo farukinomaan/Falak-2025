@@ -5,6 +5,7 @@ import RegisteredTicketForm from "../../components/tickets/ti_register";
 import UnregisteredNotice from "../../components/tickets/ti_unreg";
 import { redirect } from "next/navigation";
 import { Orbitron } from "next/font/google"; 
+import Footer from "@/components/Footer";
 
 const orbitron = Orbitron({ 
   subsets: ["latin"], 
@@ -22,46 +23,48 @@ export default async function TicketsPage() {
 
   async function submit(formData: FormData) {
     "use server";
-  if (!registered || !userId) return;
+    if (!registered || !userId) return;
     const category = String(formData.get("category") || "other");
     const issue = String(formData.get("issue") || "");
     if (!issue || issue.trim().length < 5) return;
-  await createTicket({ userId, category, issue });
+    await createTicket({ userId, category, issue });
     redirect("/tickets?submitted=1");
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center
-  pt-24 sm:pt-28 md:pt-16  
-  py-6 sm:py-8 px-4 sm:px-6 md:px-8 lg:px-12"
->
-  {/* Base background color */}
-  <div
-    className="absolute inset-0 bg-[#32212C] z-[-3]"
-  />
+    <div className="relative min-h-screen flex flex-col">
+      {/* Base background color */}
+      <div className="absolute inset-0 bg-[#32212C] z-[-3]" />
 
-  {/* SVG overlay */}
-  <div
-    className="absolute inset-0 bg-cover bg-center opacity-20 z-[-2]"
-    style={{ backgroundImage: "url('/bg.svg')" }}
-  />
+      {/* SVG overlay */}
+      <div
+        className="absolute inset-0 bg-cover bg-center opacity-20 z-[-2]"
+        style={{ backgroundImage: "url('/bg.svg')" }}
+      />
 
-  {/* Optional dark overlay */}
-  <div className="absolute inset-0 bg-black/50 z-[-1]" />
+      {/* Optional dark overlay */}
+      <div className="absolute inset-0 bg-black/50 z-[-1]" />
 
-  {/* Page content */}
-  <div className="relative z-10 w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-auto">
-    <h1 className={`vintage-font text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-neutral-100 font-semibold mb-6 sm:mb-8 text-center ${orbitron.variable}`}>
-      Support Ticket
-    </h1>
+      {/* Page content */}
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center
+        pt-24 sm:pt-28 md:pt-16  
+        py-6 sm:py-8 px-4 sm:px-6 md:px-8 lg:px-12"
+      >
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-auto">
+          <h1 className={`vintage-font text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-neutral-100 font-semibold mb-6 sm:mb-8 text-center ${orbitron.variable}`}>
+            Support Ticket
+          </h1>
 
-    {!session || !registered ? (
-      <UnregisteredNotice />
-    ) : (
-      <RegisteredTicketForm action={submit} />
-    )}
-  </div>
-</div>
+          {!session || !registered ? (
+            <UnregisteredNotice />
+          ) : (
+            <RegisteredTicketForm action={submit} />
+          )}
+        </div>
+      </main>
 
+      {/* Footer stays full width */}
+      <Footer />
+    </div>
   );  
 }

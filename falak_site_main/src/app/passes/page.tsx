@@ -3,6 +3,7 @@ import Vinyl from "@/components/profile/Vinyl";
 import { saListProshowPasses } from "@/lib/actions/adminAggregations";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import Footer from "@/components/Footer";
 
 export const revalidate = 60;
 
@@ -104,6 +105,10 @@ export default async function PassesPage() {
           <Vinyl />
         </div>
       </div>
+      <div className="relative z-20">
+  <Footer />
+</div>
+
     </div>
   );
 }

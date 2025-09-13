@@ -382,6 +382,7 @@
   width: 900px;
   height: auto;
   transform: rotate(-25deg) scale(1);
+  z-index: 0;
 }
 
 /* Tablet adjustments */
@@ -417,4 +418,8 @@
     margin-left: auto;
     margin-right: auto;
   }
+}
+.footer {
+  position: relative;
+  z-index: 5; /* higher than wave images / background */
 }

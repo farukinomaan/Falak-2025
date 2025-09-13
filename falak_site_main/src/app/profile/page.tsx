@@ -15,6 +15,8 @@ import ManualVerifyButton from "@/components/payments/ManualVerifyButton";
 import { PageBackground } from "../_clusterPages/clusterPages";
 import styles from "./page.module.css";
 import LogoutButton from "@/components/auth/LogoutButton";
+import Footer from "@/components/Footer";
+
 
 export default async function ProfilePage() {
    const session = await getServerSession(authOptions);
@@ -85,7 +87,7 @@ export default async function ProfilePage() {
                 backdropFilter:'blur(6px)'
               }}>
                 <p style={{fontSize:14,lineHeight:1.4,color:'#e2e8f0'}}>
-                  <strong style={{color:'#fff'}}>Note:</strong> If you do not see a pass immediately after purchase, do not panic. Please got to footer and contact HR, show them your reciept. Devs also have mid-sems—thanks for understanding.
+                  <strong style={{color:'#fff'}}>Note:</strong> If you do not see a pass immediately after purchase, do not panic. Please scroll down to footer and contact HR, show them your reciept. Devs also have mid-sems—thanks for understanding.
                 </p>
                 <div className="mt-3 mb-1">
                   <ManualVerifyButton label="Verify Purchases" />
@@ -173,8 +175,12 @@ export default async function ProfilePage() {
           <LogoutButton />
         </div>
   <Image src="/wave.svg" alt="decorative wave" width={400} height={200} className={`${styles.waveImg} ${styles.waveTopLeft}`} />
-  <Image src="/wave.svg" alt="decorative wave" width={400} height={200} className={`${styles.waveImg} ${styles.waveBottomRight}`} />
+  <Image src="/wave.svg" alt="decorative wave" width={400} height={200} className={`${styles.waveImg} ${styles.waveBottomRight} z-0`} />
       </div>
+<div id="site-footer-wrapper" style={{ position: 'relative', zIndex: 99999 }}>
+  <Footer />
+</div>
+
     </>
   );
 }

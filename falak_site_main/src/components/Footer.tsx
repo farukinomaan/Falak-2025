@@ -55,7 +55,7 @@ const Footer: React.FC = () => {
                 <Phone size={18} aria-hidden="true" />
                 <span className="text-sm">+91 95353 90081</span>
               </div>
-              <span className="text-xs font-semibold text-[#2e1a47]/80">
+              <span className="text-xs font-semibold text-[#DBAAA6]">
                 Aishani Sharma, HR Head
               </span>
             </li>
@@ -65,7 +65,7 @@ const Footer: React.FC = () => {
                 <Phone size={18} aria-hidden="true" />
                 <span className="text-sm">+91 90281 86267</span>
               </div>
-              <span className="text-xs font-semibold text-[#2e1a47]/80">
+              <span className="text-xs font-semibold text-[#DBAAA6]">
                 Swaraj Shewale, HR Head
               </span>
             </li>
