@@ -4,6 +4,8 @@ import { saListProshowPasses } from "@/lib/actions/adminAggregations";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Footer from "@/components/Footer";
+import ManualVerifyButton from "@/components/payments/ManualVerifyButton";
+import styles from "../profile/page.module.css";
 
 export const revalidate = 60;
 
@@ -104,6 +106,24 @@ export default async function PassesPage() {
         <div className="w-28 h-28 sm:w-40 sm:h-40 md:w-52 md:h-52 opacity-90">
           <Vinyl />
         </div>
+      </div>
+      <div className={styles.infoCard} style={{
+                background:'rgba(0,0,0,0.35)',
+                border:'1px solid rgba(255,255,255,0.15)',
+                borderRadius:12,
+                padding:'12px 16px',
+                marginBottom:16,
+                backdropFilter:'blur(6px)'
+              }}>
+                <p style={{fontSize:14,lineHeight:1.4,color:'#e2e8f0'}}>
+                  <strong style={{color:'#fff'}}>Note:</strong> If you do not see a pass immediately after purchase, do not panic. Please scroll down to footer and contact HR, show them your reciept. Devs also have mid-sems—thanks for understanding.
+                </p>
+                <div className="mt-3 mb-1">
+                  <ManualVerifyButton label="Verify Purchases" />
+                </div>
+                <span className="pl-3" style={{fontSize:12,lineHeight:1.8,color:'#e2e8f0'}}>
+                  <p style={{color:'#fff'}}>Wait a little after clicking</p> 
+                </span>
       </div>
       <div className="relative z-20">
   <Footer />

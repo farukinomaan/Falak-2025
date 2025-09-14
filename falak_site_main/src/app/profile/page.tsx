@@ -125,7 +125,7 @@ export default async function ProfilePage() {
             <section className={styles.section}>
               <h2>Registered Events</h2>
               {events.length === 0 ? (
-                <EmptyState message="You haven’t registered for any events yet." ctaHref="/sports_events" ctaLabel="Explore Events" />
+                <EmptyState message="You haven’t registered for any events yet." ctaHref="/sports" ctaLabel="Explore Events" />
               ) : (
                 <ul className={styles.eventList}>
                   {events.map((e) => {
