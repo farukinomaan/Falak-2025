@@ -19,6 +19,11 @@ const sponsors = [
     logo: "/sponsors/inbuddy.png",
     url: "https://interviewbuddy.com/",
   },
+  {
+    name: "Finlatics",
+    logo: "/sponsors/finlatics.png",
+    url: "https://finlatics.com/",
+  },
 ];
 
 const Sponsor: React.FC = () => {
