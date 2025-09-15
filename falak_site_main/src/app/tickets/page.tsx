@@ -6,6 +6,7 @@ import UnregisteredNotice from "../../components/tickets/ti_unreg";
 import { redirect } from "next/navigation";
 import { Orbitron } from "next/font/google"; 
 import Footer from "@/components/Footer";
+import styles from "../profile/page.module.css";
 
 const orbitron = Orbitron({ 
   subsets: ["latin"], 
@@ -50,7 +51,7 @@ export default async function TicketsPage() {
         pt-24 sm:pt-28 md:pt-16  
         py-6 sm:py-8 px-4 sm:px-6 md:px-8 lg:px-12"
       >
-        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-auto">
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-auto sm:mt-10 mb-10">
           <h1 className={`vintage-font text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-neutral-100 font-semibold mb-6 sm:mb-8 text-center ${orbitron.variable}`}>
             Support Ticket
           </h1>
@@ -61,6 +62,18 @@ export default async function TicketsPage() {
             <RegisteredTicketForm action={submit} />
           )}
         </div>
+        <div className={styles.infoCard} style={{
+                background:'rgba(0,0,0,0.35)',
+                border:'1px solid rgba(255,255,255,0.15)',
+                borderRadius:12,
+                padding:'12px 16px',
+                marginBottom:16,
+                backdropFilter:'blur(6px)'
+              }}>
+                <p style={{fontSize:12,lineHeight:1.4,color:'#e2e8f0'}}>
+                  <strong style={{color:'#fff'}}>Note:</strong> Support tickets raised will be resolved after mid-sems. If you do not see your pass immediately after purchase, try going to your profile page and click on Verify Purchases button.
+                </p>
+              </div>
       </main>
 
       {/* Footer stays full width */}
