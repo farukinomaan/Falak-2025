@@ -2,6 +2,8 @@
 
 import { getServiceClient } from "./supabaseClient";
 import { z } from "zod";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import {
   EventCreateSchema,
   EventUpdateSchema,
@@ -571,4 +573,69 @@ export async function saListUserTeamEventIds(userId: string) {
   for (const r of (captainRes.data as Array<{ eventId: string }> || [])) ids.add(r.eventId);
   for (const r of (memberRes.data as Array<{ eventId: string }> || [])) ids.add(r.eventId);
   return { ok: true as const, data: Array.from(ids) };
+}
+
+// Ticket admin: list unresolved tickets
+export async function listUnresolvedTickets(limit = 200) {
+  const supabase = getServiceClient();
+  const { data, error } = await supabase
+    .from("Tickets")
+    .select("id, userId, category, issue, created_at, solved")
+    .eq("solved", false)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) return { ok: false as const, error: error.message };
+  // Augment tickets with reporter name/email by batching a Users lookup
+  const tickets = (data || []) as Array<{ id: string; userId?: string | null; category?: string | null; issue?: string | null; created_at?: string | null; solved?: boolean | null }>;
+  const userIds = Array.from(new Set(tickets.map((t) => t.userId).filter(Boolean))) as string[];
+  if (userIds.length === 0) return { ok: true as const, data: tickets };
+  const { data: usersData, error: usersError } = await supabase.from("Users").select("id, name, email").in("id", userIds);
+  if (usersError) return { ok: false as const, error: usersError.message };
+  type UserRow = { id: string; name?: string | null; email?: string };
+  const userById = new Map<string, UserRow>();
+  for (const u of (usersData || []) as UserRow[]) {
+    if (u && u.id) userById.set(u.id, u);
+  }
+  const augmented = tickets.map((t) => ({
+    ...t,
+    reporter_name: userById.get(t.userId || "")?.name ?? null,
+    reporter_email: userById.get(t.userId || "")?.email ?? null,
+  }));
+  return { ok: true as const, data: augmented };
+}
+
+// Assign a pass to the ticket's user (grants pass to user). Does not mark the ticket solved.
+export async function assignPassToTicket(ticketId: string, passId: string) {
+  const tOk = uuid.safeParse(ticketId);
+  const pOk = uuid.safeParse(passId);
+  if (!tOk.success || !pOk.success) return { ok: false as const, error: "Invalid ids" };
+  const supabase = getServiceClient();
+  const { data: ticket, error } = await supabase.from("Tickets").select("id, userId").eq("id", ticketId).maybeSingle();
+  if (error) return { ok: false as const, error: error.message };
+  if (!ticket) return { ok: false as const, error: "ticket_not_found" };
+  const userId = (ticket as { userId?: string }).userId;
+  if (!userId) return { ok: false as const, error: "ticket_has_no_user" };
+  // Reuse existing assign logic which handles pass availability and QR token generation
+  const res = await assignPassToUser(userId, passId);
+  if (!res.ok) return res;
+  return { ok: true as const, data: res.data };
+}
+
+// Mark ticket as solved
+export async function markTicketSolved(ticketId: string, markTranscriptVerified = false) {
+  const tOk = uuid.safeParse(ticketId);
+  if (!tOk.success) return { ok: false as const, error: "Invalid id" };
+  const supabase = getServiceClient();
+  const updatePayload: Record<string, unknown> = { solved: true };
+  if (markTranscriptVerified) {
+    // Resolve admin email from server session
+  const sessionRaw = await getServerSession(authOptions);
+  const session = sessionRaw as unknown as { user?: { email?: string } } | null;
+  const email = session?.user?.email;
+    if (!email) return { ok: false as const, error: "Not authenticated" };
+    updatePayload.status = `Transaction transcript verified by ${email}`;
+  }
+  const { data, error } = await supabase.from("Tickets").update(updatePayload).eq("id", ticketId).select("*").maybeSingle();
+  if (error) return { ok: false as const, error: error.message };
+  return { ok: true as const, data };
 }

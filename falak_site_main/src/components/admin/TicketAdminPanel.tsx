@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { assignPassToUser, getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData } from "@/lib/actions/adminAggregations";
+import { assignPassToUser, getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, assignPassToTicket, markTicketSolved } from "@/lib/actions/adminAggregations";
 import type { SearchUserRow } from "@/lib/actions/adminAggregations";
 
 // Define a Pass summary type for this component
@@ -18,26 +18,42 @@ export default function TicketAdminPanel() {
   const [passes, setPasses] = useState<PassSummary[]>([]);
   const [passToAssign, setPassToAssign] = useState<string>("");
   const [pending, setPending] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+  type TicketRow = { id: string; userId?: string | null; category?: string | null; issue?: string | null; created_at?: string | null; solved?: boolean | null; reporter_name?: string | null; reporter_email?: string | null };
+  const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [loadingPending, setLoadingPending] = useState(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [resolvePass, setResolvePass] = useState<Record<string,string>>({});
+  const [assigningTicket, setAssigningTicket] = useState<string | null>(null);
+  const [ticketAssignPass, setTicketAssignPass] = useState<Record<string,string>>({});
+  const [manualCheck, setManualCheck] = useState<Record<string, boolean>>({});
 
-  async function loadPending() {
+  const loadPending = useCallback(async () => {
     setLoadingPending(true);
     try {
       const res = await listPendingPaymentLogs(150);
       if (!res.ok) toast.error(res.error);
       else setPending(res.data as any[]); // eslint-disable-line @typescript-eslint/no-explicit-any
     } finally { setLoadingPending(false); }
-  }
+  }, []);
+
+  const loadTickets = useCallback(async () => {
+    try {
+      const res = await listUnresolvedTickets(200);
+      if (!res.ok) toast.error(res.error || 'Failed to load tickets');
+      else setTickets(res.data as TicketRow[]);
+    } catch {
+      toast.error('Failed to load tickets');
+    }
+  }, []);
 
   useEffect(() => {
     (async () => {
       const pr = await saListPasses();
       if (pr.ok) setPasses(((pr.data as unknown) as PassSummary[]).map((p) => ({ id: p.id, pass_name: p.pass_name, enable: p.enable, status: p.status })));
-  await loadPending();
+      await loadPending();
+      await loadTickets();
     })();
-  }, []);
+  }, [loadPending, loadTickets]);
 
   async function runSearch() {
     const res = await searchUsers(q);
@@ -71,6 +87,33 @@ export default function TicketAdminPanel() {
       else {
         toast.success('Mapped & granted');
         setPending(prev => prev.filter(p => p.payment_log_id !== paymentLogId));
+      }
+    } finally { setResolvingId(null); }
+  }
+
+  async function assignToTicket(ticketId: string) {
+    const passId = ticketAssignPass[ticketId];
+    if (!passId) { toast.error('Select a pass'); return; }
+    setAssigningTicket(ticketId);
+    try {
+      const res = await assignPassToTicket(ticketId, passId);
+      if (!res.ok) toast.error(res.error || 'Assign failed');
+      else {
+        toast.success('Pass assigned to ticket user');
+        // reload tickets
+        await loadTickets();
+      }
+    } finally { setAssigningTicket(null); }
+  }
+
+  async function resolveTicket(ticketId: string) {
+    setResolvingId(ticketId);
+    try {
+  const res = await markTicketSolved(ticketId, !!manualCheck[ticketId]);
+      if (!res.ok) toast.error(res.error || 'Failed to mark solved');
+      else {
+        toast.success('Ticket marked solved');
+        setTickets(prev => prev.filter(t => t.id !== ticketId));
       }
     } finally { setResolvingId(null); }
   }
@@ -203,6 +246,69 @@ export default function TicketAdminPanel() {
           </div>
         )}
         <p className="text-xs text-muted-foreground">Mapping creates whitelist entry then grants pass (idempotent). Ownership skipped if already granted.</p>
+      </div>
+
+      <div className="rounded border p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-medium">Unresolved Tickets</h2>
+          <Button variant="outline" onClick={loadTickets}>Refresh</Button>
+        </div>
+        {tickets.length === 0 && (
+          <div className="text-sm text-muted-foreground">No unresolved tickets</div>
+        )}
+        {tickets.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="text-left border-b">
+                  <th className="py-2 pr-3">ID</th>
+                  <th className="py-2 pr-3">User</th>
+                  <th className="py-2 pr-3">Manual Transcript Check</th>
+                  <th className="py-2 pr-3">Category</th>
+                  <th className="py-2 pr-3">Issue</th>
+                  <th className="py-2 pr-3">Assign Pass</th>
+                  <th className="py-2">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tickets.map(t => (
+                  <tr key={t.id} className="border-b last:border-b-0">
+                    <td className="py-2 pr-3 font-mono text-xs">{t.id.slice(0,8)}…</td>
+                    <td className="py-2 pr-3 text-xs">{t.reporter_name ? t.reporter_name : (t.reporter_email ? t.reporter_email : (t.userId ? t.userId.slice(0,8)+'…' : <span className="opacity-50">—</span>))}</td>
+                    <td className="py-2 pr-3">
+                      <input
+                        type="checkbox"
+                        checked={!!manualCheck[t.id]}
+                        onChange={(e) => setManualCheck(prev => ({ ...prev, [t.id]: e.target.checked }))}
+                        aria-label={`Manual transcript check for ${t.id}`}
+                      />
+                    </td>
+                    <td className="py-2 pr-3">{t.category || <span className="opacity-50">—</span>}</td>
+                    <td className="py-2 pr-3">{t.issue || <span className="opacity-50">—</span>}</td>
+                    <td className="py-2 pr-3">
+                      <select
+                        className="h-8 w-40 rounded-md border bg-background"
+                        value={ticketAssignPass[t.id]||''}
+                        onChange={e => setTicketAssignPass(prev => ({ ...prev, [t.id]: e.target.value }))}
+                      >
+                        <option value="">Select pass</option>
+                        {passes.filter(p => Boolean(p.enable ?? p.status)).map(p => (
+                          <option key={p.id} value={p.id}>{p.pass_name}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="py-2">
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => assignToTicket(t.id)} disabled={assigningTicket === t.id}>{assigningTicket === t.id ? 'Assigning…' : 'Assign'}</Button>
+                        <Button size="sm" variant="ghost" onClick={() => resolveTicket(t.id)} disabled={resolvingId === t.id}>{resolvingId === t.id ? 'Saving…' : 'Resolve'}</Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
