@@ -24,6 +24,11 @@ const sponsors = [
     logo: "/sponsors/finlatics.png",
     url: "https://finlatics.com/",
   },
+  {
+    name: "Lapcare",
+    logo: "/sponsors/Lapcare.png",
+    url: "https://lapcare.com/",
+  },
 ];
 
 const Sponsor: React.FC = () => {
