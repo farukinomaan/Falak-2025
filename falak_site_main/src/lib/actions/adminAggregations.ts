@@ -433,14 +433,18 @@ export async function saCreateTeamWithMembers(input: { eventId: string; captainI
   if (!input.eventId || !input.captainId || !input.name) return { ok: false as const, error: "Missing fields" };
   const supabase = getServiceClient();
   // Fetch event constraints
-  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, max_team_size").eq("id", input.eventId).maybeSingle();
+  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, min_team_size, max_team_size").eq("id", input.eventId).maybeSingle();
   if (evtErr) return { ok: false as const, error: evtErr.message };
   if (!evtRow) return { ok: false as const, error: "Event not found" };
+  const minTeamSize: number | null = (evtRow as { id: string; min_team_size?: number | null }).min_team_size ?? null;
   const maxTeamSize: number | null = (evtRow as { id: string; max_team_size?: number | null }).max_team_size ?? null;
+  const minAdditional: number = minTeamSize != null ? Math.max(minTeamSize - 1, 0) : 0; // minimum additional members beyond captain
+  const maxAdditional: number | null = maxTeamSize != null ? Math.max(maxTeamSize - 1, 0) : null; // maximum additional members beyond captain
   // Validate member uniqueness & size
   const uniqueMembers = Array.from(new Set(input.memberIds.filter(Boolean)));
   if (uniqueMembers.length !== input.memberIds.filter(Boolean).length) return { ok: false as const, error: "Duplicate member IDs" };
-  if (maxTeamSize && uniqueMembers.length > maxTeamSize) return { ok: false as const, error: `Team exceeds max size ${maxTeamSize}` };
+  if (uniqueMembers.length < minAdditional) return { ok: false as const, error: `Team needs at least ${minTeamSize ?? (minAdditional + 1)} member(s) including captain` };
+  if (maxAdditional != null && uniqueMembers.length > maxAdditional) return { ok: false as const, error: `Team exceeds max size ${maxTeamSize}` };
   // Ensure user does not already have a team for that event
   const existing = await supabase
     .from("Teams")
@@ -488,20 +492,27 @@ export async function saCreateTeamWithMemberEmails(input: { eventId: string; cap
   if (!input.eventId || !input.captainId || !input.name) return { ok: false as const, error: "Missing fields" };
   const emails = input.memberEmails.map(e => e.trim().toLowerCase()).filter(Boolean);
   const unique = Array.from(new Set(emails));
-  if (unique.length === 0) return { ok: false as const, error: "At least one member email required" };
   // Disallow captain email among members (retrieve captain email)
   const supabase = getServiceClient();
   // Fetch event constraints
-  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, max_team_size").eq("id", input.eventId).maybeSingle();
+  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, min_team_size, max_team_size").eq("id", input.eventId).maybeSingle();
   if (evtErr) return { ok: false as const, error: evtErr.message };
   if (!evtRow) return { ok: false as const, error: "Event not found" };
+  const minTeamSize: number | null = (evtRow as { id: string; min_team_size?: number | null }).min_team_size ?? null;
   const maxTeamSize: number | null = (evtRow as { id: string; max_team_size?: number | null }).max_team_size ?? null;
+  const minAdditional: number = minTeamSize != null ? Math.max(minTeamSize - 1, 0) : 0;
+  const maxAdditional: number | null = maxTeamSize != null ? Math.max(maxTeamSize - 1, 0) : null;
+  // If no additional emails provided, enforce minimum additional requirement
+  if (unique.length === 0 && minAdditional > 0) {
+    return { ok: false as const, error: `At least ${minAdditional} additional member email(s) required` };
+  }
   const { data: captainUser, error: capErr } = await supabase.from("Users").select("id, email").eq("id", input.captainId).maybeSingle();
   if (capErr) return { ok: false as const, error: capErr.message };
   const captainEmail = (captainUser as { email?: string } | null)?.email?.toLowerCase();
   const filtered = captainEmail ? unique.filter(e => e !== captainEmail) : unique;
-  if (filtered.length === 0) return { ok: false as const, error: "Members cannot only be captain" };
-  if (maxTeamSize && filtered.length > maxTeamSize) return { ok: false as const, error: `Team exceeds max size ${maxTeamSize}` };
+  // Enforce minimum additional members after excluding captain email
+  if (filtered.length < minAdditional) return { ok: false as const, error: `Team needs at least ${minTeamSize ?? (minAdditional + 1)} member(s) including captain` };
+  if (maxAdditional != null && filtered.length > maxAdditional) return { ok: false as const, error: `Team exceeds max size ${maxTeamSize}` };
   // Fetch users by emails
   const { data: userRows, error: uErr } = await supabase.from("Users").select("id, email").in("email", filtered);
   if (uErr) return { ok: false as const, error: uErr.message };
