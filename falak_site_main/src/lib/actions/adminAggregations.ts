@@ -634,6 +634,13 @@ export async function markTicketSolved(ticketId: string, markTranscriptVerified 
   const email = session?.user?.email;
     if (!email) return { ok: false as const, error: "Not authenticated" };
     updatePayload.status = `Transaction transcript verified by ${email}`;
+  } else {
+    // stamp resolved-only message with admin email
+    const sessionRaw2 = await getServerSession(authOptions);
+    const session2 = sessionRaw2 as unknown as { user?: { email?: string } } | null;
+    const email2 = session2?.user?.email;
+    if (!email2) return { ok: false as const, error: "Not authenticated" };
+    updatePayload.status = `Resolved only by ${email2}`;
   }
   const { data, error } = await supabase.from("Tickets").update(updatePayload).eq("id", ticketId).select("*").maybeSingle();
   if (error) return { ok: false as const, error: error.message };
