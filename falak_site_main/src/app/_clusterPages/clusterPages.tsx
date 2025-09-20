@@ -32,6 +32,7 @@ type EvtBase = {
   description?: string | null;
   rules?: string | null;
   venue: string;
+  time?: string | null;
   sub_cluster: string;
   cluster_name?: string | null;
   date?: string | Date | null;
@@ -305,7 +306,8 @@ export async function ClusterEvent({
   
   const date = event.date ? new Date(event.date) : null;
   const dateStr = date?.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  const timeStr = date?.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  // Use time from DB directly; it's authoritative and not derived from date
+  const timeStr = (typeof event.time === 'string' ? event.time : null) || undefined;
   const minTeamSize = typeof event.min_team_size === 'number' && event.min_team_size > 0 ? event.min_team_size : null;
   const maxTeamSize = typeof event.max_team_size === 'number' && event.max_team_size > 0 ? event.max_team_size : null;
   let teamSizeLabel: string | null = null;
@@ -441,8 +443,8 @@ export async function ClusterEvent({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-md border-t border-gray-600 pt-6">
               <p><span className="font-semibold text-gray-400">Category:</span> {event.sub_cluster}</p>
               <p><span className="font-semibold text-gray-400">Venue:</span> {event.venue}</p>
-              {dateStr && <p><span className="font-semibold text-gray-400">Date:</span> {dateStr} <span>*</span> </p>}
-              {timeStr && <p><span className="font-semibold text-gray-400">Time:</span> {timeStr} <span>*</span> </p>}
+              {dateStr && <p><span className="font-semibold text-gray-400">Date:</span> {dateStr} <span>*</span></p>}
+              {timeStr && <p><span className="font-semibold text-gray-400">Time:</span> {timeStr} <span>*</span></p>}
               {teamSizeLabel && (
                 <p><span className="font-semibold text-gray-400">Team Size:</span> {teamSizeLabel}</p>
               )}
