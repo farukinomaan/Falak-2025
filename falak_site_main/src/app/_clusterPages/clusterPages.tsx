@@ -441,8 +441,8 @@ export async function ClusterEvent({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-md border-t border-gray-600 pt-6">
               <p><span className="font-semibold text-gray-400">Category:</span> {event.sub_cluster}</p>
               <p><span className="font-semibold text-gray-400">Venue:</span> {event.venue}</p>
-              {dateStr && <p><span className="font-semibold text-gray-400">Date:</span> {dateStr}</p>}
-              {timeStr && <p><span className="font-semibold text-gray-400">Time:</span> {timeStr}</p>}
+              {dateStr && <p><span className="font-semibold text-gray-400">Date:</span> {dateStr} <span>*</span> </p>}
+              {timeStr && <p><span className="font-semibold text-gray-400">Time:</span> {timeStr} <span>*</span> </p>}
               {teamSizeLabel && (
                 <p><span className="font-semibold text-gray-400">Team Size:</span> {teamSizeLabel}</p>
               )}
