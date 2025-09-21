@@ -533,6 +533,20 @@ export async function ClusterEvent({
                 // Adjust min/max to account for captain already counted in event team size.
                 // If event requires 7 total, user should add only 6 additional members.
                 (() => {
+                  // Special-case: Shark Tank registration redirects to external link instead of in-app form
+                  const isSharkTank = (event.name || '').trim().toLowerCase() === 'shark tank';
+                  if (isSharkTank) {
+                    return (
+                      <a
+                        href="https://unstop.com/p/shark-tank-falak-2025-manipal-institute-of-technology-bengaluru-1561237"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="clusterButton"
+                      >
+                        Go to Unstop
+                      </a>
+                    );
+                  }
                   const adjustedMin = minTeamSize ? Math.max(minTeamSize - 1, 0) : 0;
                   const adjustedMax = maxTeamSize ? Math.max(maxTeamSize - 1, 0) : undefined;
                   return (
