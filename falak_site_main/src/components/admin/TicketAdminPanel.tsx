@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, markTicketSolved, adminManualFetchPayments, assignPassToTicket } from "@/lib/actions/adminAggregations";
+import { getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, markTicketSolved, adminManualFetchPayments, requestTicketApproval } from "@/lib/actions/adminAggregations";
 import type { SearchUserRow } from "@/lib/actions/adminAggregations";
 
 // Define a Pass summary type for this component
@@ -18,13 +18,12 @@ export default function TicketAdminPanel() {
   const [passes, setPasses] = useState<PassSummary[]>([]);
   // const [passToAssign, setPassToAssign] = useState<string>("");
   const [pending, setPending] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
-  type TicketRow = { id: string; userId?: string | null; category?: string | null; issue?: string | null; created_at?: string | null; solved?: boolean | null; reporter_name?: string | null; reporter_email?: string | null };
+  type TicketRow = { id: string; userId?: string | null; category?: string | null; issue?: string | null; created_at?: string | null; solved?: boolean | null; status?: string | null; reporter_name?: string | null; reporter_email?: string | null };
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [loadingPending, setLoadingPending] = useState(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [resolvePass, setResolvePass] = useState<Record<string,string>>({});
-  const [assigningTicket, setAssigningTicket] = useState<string | null>(null);
-  const [ticketAssignPass, setTicketAssignPass] = useState<Record<string,string>>({});
+  const [requestingId, setRequestingId] = useState<string | null>(null);
   const [manualCheck, setManualCheck] = useState<Record<string, boolean>>({});
   const [manualPhone, setManualPhone] = useState("");
   const [manualLoading, setManualLoading] = useState(false);
@@ -87,20 +86,7 @@ export default function TicketAdminPanel() {
     } finally { setResolvingId(null); }
   }
 
-  async function assignToTicket(ticketId: string) {
-    const passId = ticketAssignPass[ticketId];
-    if (!passId) { toast.error('Select a pass'); return; }
-    setAssigningTicket(ticketId);
-    try {
-      const res = await assignPassToTicket(ticketId, passId);
-      if (!res.ok) toast.error(res.error || 'Assign failed');
-      else {
-        toast.success('Pass assigned to ticket user');
-        // reload tickets
-        await loadTickets();
-      }
-    } finally { setAssigningTicket(null); }
-  }
+  // Removed: direct assign to ticket user; replaced by approval workflow
 
   async function resolveTicket(ticketId: string) {
     setResolvingId(ticketId);
@@ -313,8 +299,7 @@ export default function TicketAdminPanel() {
                   <th className="py-2 pr-3">Manual Transcript Check</th>
                   <th className="py-2 pr-3">Category</th>
                   <th className="py-2 pr-3">Issue</th>
-                  <th className="py-2 pr-3">Assign Pass</th>
-                  <th className="py-2">Action</th>
+                  <th className="py-2">Assign Pass</th>
                 </tr>
               </thead>
               <tbody>
@@ -332,22 +317,32 @@ export default function TicketAdminPanel() {
                     </td>
                     <td className="py-2 pr-3">{t.category || <span className="opacity-50">—</span>}</td>
                     <td className="py-2 pr-3">{t.issue || <span className="opacity-50">—</span>}</td>
-                    <td className="py-2 pr-3">
-                      <select
-                        className="h-8 w-40 rounded-md border bg-background"
-                        value={ticketAssignPass[t.id]||''}
-                        onChange={e => setTicketAssignPass(prev => ({ ...prev, [t.id]: e.target.value }))}
-                      >
-                        <option value="">Select pass</option>
-                        {passes.filter(p => Boolean(p.enable ?? p.status)).map(p => (
-                          <option key={p.id} value={p.id}>{p.pass_name}</option>
-                        ))}
-                      </select>
-                    </td>
                     <td className="py-2">
                       <div className="flex gap-2">
-                        <Button size="sm" onClick={() => assignToTicket(t.id)} disabled={assigningTicket === t.id}>{assigningTicket === t.id ? 'Assigning…' : 'Assign'}</Button>
-                        <Button size="sm" variant="ghost" onClick={() => resolveTicket(t.id)} disabled={resolvingId === t.id}>{resolvingId === t.id ? 'Saving…' : 'Resolve'}</Button>
+                        {String(t.status || '').toLowerCase().startsWith('approval_pending') ? (
+                          <span className="text-xs text-yellow-300 px-2 py-1 rounded border border-yellow-500/50">Pending approval…</span>
+                        ) : (
+                          <Button size="sm" onClick={async () => {
+                            setRequestingId(t.id);
+                            try {
+                              const res = await requestTicketApproval(t.id);
+                              if (!res.ok) toast.error(res.error || 'Failed to request');
+                              else {
+                                toast.success('Approval requested');
+                                await loadTickets();
+                              }
+                            } finally { setRequestingId(null); }
+                          }} disabled={requestingId === t.id}>{requestingId === t.id ? 'Requesting…' : 'Request Approval'}</Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => resolveTicket(t.id)}
+                          disabled={resolvingId === t.id || !!manualCheck[t.id]}
+                          title={!!manualCheck[t.id] ? 'Disable resolve when manual transcript check is ticked' : undefined}
+                        >
+                          {resolvingId === t.id ? 'Saving…' : 'Resolve'}
+                        </Button>
                       </div>
                     </td>
                   </tr>
