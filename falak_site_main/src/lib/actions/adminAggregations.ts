@@ -657,3 +657,69 @@ export async function markTicketSolved(ticketId: string, markTranscriptVerified 
   if (error) return { ok: false as const, error: error.message };
   return { ok: true as const, data };
 }
+
+// Admin utility: Manual Fetch from payment portal by phone
+export async function adminManualFetchPayments(phone: string) {
+  const p = (phone || "").trim();
+  if (!p) return { ok: false as const, error: "Phone required" };
+  const ACCESS_KEY = process.env.ACCESSKEY;
+  const ACCESS_TOKEN = process.env.ACCESSTOKEN;
+  const PAYMENT_ENDPOINT = process.env.VERIFICATION_URL || 'https://api.manipal.edu/api/v1/falak-single-payment-log';
+  if (!ACCESS_KEY || !ACCESS_TOKEN) {
+    return { ok: false as const, error: "Missing ACCESSKEY/ACCESSTOKEN in env" };
+  }
+  // Try raw plus +91 variant for convenience
+  const variants: string[] = [p];
+  const digits = p.replace(/[^0-9]/g, "");
+  if (!p.startsWith("+91") && digits.length === 10) variants.push("+91" + digits);
+  let docs: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
+  let lastError: string | null = null;
+  for (const v of variants) {
+    try {
+      const url = `${PAYMENT_ENDPOINT}?mobile=${encodeURIComponent(v)}`;
+      const r = await fetch(url, { headers: { accept: 'application/json', accesskey: ACCESS_KEY, accesstoken: ACCESS_TOKEN }, cache: 'no-store' });
+      if (!r.ok) { lastError = `remote_status_${r.status}`; continue; }
+      const j = await r.json();
+      const arr = Array.isArray(j?.data?.docs) ? j.data.docs : [];
+      if (arr.length > 0) { docs = arr; break; }
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : 'fetch_failed';
+    }
+  }
+  // Load mapping to show resolution info
+  const supabase = getServiceClient();
+  const mapRes = await supabase.from('external_pass_map').select('external_key, external_key_v2, pass_id, active').eq('active', true);
+  const mapping: Record<string, string | null> = {};
+  if (!mapRes.error && Array.isArray(mapRes.data)) {
+    for (const r of mapRes.data as any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      if (r.external_key) mapping[r.external_key] = r.pass_id as string | null;
+      if (r.external_key_v2) mapping[r.external_key_v2] = r.pass_id as string | null;
+    }
+  }
+  const simplify = (d: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const mt = (d?.membership_type || '').trim().toLowerCase();
+    const en = (d?.event_name || '').trim().toLowerCase();
+    const et = (d?.event_type || '').trim().toLowerCase();
+    const legacyKey = `${mt}|${en}`;
+    const v2Key = `${et}|${en}`;
+    const resolved = mapping[v2Key] ?? mapping[legacyKey] ?? null;
+    // attempt common amount fields
+    const total_amount = (d?.total_amount ?? d?.actual_amount ?? null);
+    return {
+      tracking_id: d?.tracking_id || d?.orderid || null,
+      order_status: d?.order_status || null,
+      membership_type: d?.membership_type || null,
+      event_name: d?.event_name || null,
+      event_type: d?.event_type || null,
+      created_at: d?.created_at || null,
+      total_amount,
+      legacyKey,
+      v2Key,
+      mapped: resolved != null,
+      pass_id: resolved,
+    };
+  };
+  const rows = (docs || []).map(simplify);
+  if (!rows.length && lastError) return { ok: false as const, error: lastError };
+  return { ok: true as const, data: rows };
+}
