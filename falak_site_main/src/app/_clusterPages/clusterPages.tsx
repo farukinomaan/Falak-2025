@@ -165,7 +165,7 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
   ]);
 
   const ownedPassIds = new Set<string>(ownedRes.ok ? ownedRes.data : []);
-  type PassLite = { id: string; event_id?: string | null; mahe?: boolean | null };
+  type PassLite = { id: string; event_id?: string | null; mahe?: boolean | null; cost?: number | string | null };
   const passes = passesRes.ok ? (passesRes.data as PassLite[]) : [];
   const ownedEventIds = new Set<string>();
   for (const p of passes) if (p.event_id && ownedPassIds.has(p.id)) ownedEventIds.add(p.event_id);
@@ -320,10 +320,14 @@ export async function ClusterEvent({
     teamSizeLabel = `Up to ${maxTeamSize}`;
   }
 
-  const priceStr =
-    typeof event.price === "number" || typeof event.price === "string"
-      ? String(event.price)
-      : undefined;
+  // Price comes from the Pass mapped to this event (not from the Event itself)
+  type PassWithCost = PassLite & { cost?: number | string | null };
+  const passesWithCost = (passes as unknown as PassWithCost[]);
+  const eventPasses = passesWithCost.filter(p => (p.event_id || "") === event.id);
+  const nonMaheEventPass = eventPasses.find(p => p.mahe !== true) || eventPasses[0];
+  const priceStr = (nonMaheEventPass && (typeof nonMaheEventPass.cost === "number" || typeof nonMaheEventPass.cost === "string"))
+    ? String(nonMaheEventPass.cost)
+    : undefined;
 
   interface ExistingTeamData {
     team: { id: string; name: string; captainId?: string };
@@ -451,7 +455,7 @@ export async function ClusterEvent({
               {userIsMahe ? (
                 <p><span className="font-semibold text-gray-400">Pass:</span> {(event.sub_cluster || '').toLowerCase() === 'esports' ? 'Esports Pass' : 'Pro-show Pass'}</p>
               ) : (
-                priceStr && <p><span className="font-semibold text-gray-400">Price:</span> ₹{priceStr}</p>
+                ""
               )}
             </div>
             {(() => {
@@ -485,7 +489,17 @@ export async function ClusterEvent({
               if (!owned) {
                 // Non-MAHE: always show Add to Cart for the specific event
                 if (!userIsMahe) {
-                  return <AddToCartButton passId={event.id} className="clusterButton" />;
+                  return (
+                    <div className="flex items-center justify-end gap-4">
+                      {priceStr && (
+                        <div className="text-3xl font-semibold text-white">
+                          <span className="mr-1">₹</span>{priceStr}{" "}
+                          <span className="text-xs text-gray-300 align-top">+gst</span>
+                        </div>
+                      )}
+                      <AddToCartButton passId={event.id} className="clusterButton" />
+                    </div>
+                  );
                 }
                 // MAHE: unified pass CTA
                 return (
