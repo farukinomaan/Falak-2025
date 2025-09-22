@@ -58,7 +58,7 @@ export async function joinEsportsTeam(params: { teamId: string; userId: string }
       if (cntErr) return { ok: false as const, error: cntErr.message };
       const currentMembers = typeof count === 'number' ? count : 0; // members only
       const totalWithCaptain = 1 + currentMembers; // add captain
-      if (totalWithCaptain > maxSize) {
+      if (totalWithCaptain >= maxSize) {
         return { ok: false as const, error: "Team is full" };
       }
     }

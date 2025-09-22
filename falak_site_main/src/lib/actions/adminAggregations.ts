@@ -83,10 +83,11 @@ export type UserDetailsData = { user: UserBasicRow; passes: PassDetailRow[]; tea
 // Aggregations for Super Admin
 export async function getTotals() {
   const supabase = getServiceClient();
+  // Use exact counts to avoid the default 1000-row limit on select()
   const [usersRes, teamsRes, userPassesRes] = await Promise.all([
-    supabase.from("Users").select("id"),
-    supabase.from("Teams").select("id"),
-    supabase.from("User_passes").select("id"),
+    supabase.from("Users").select("id", { count: 'exact', head: true }),
+    supabase.from("Teams").select("id", { count: 'exact', head: true }),
+    supabase.from("User_passes").select("id", { count: 'exact', head: true }),
   ]);
   if (usersRes.error) return { ok: false as const, error: usersRes.error.message };
   if (teamsRes.error) return { ok: false as const, error: teamsRes.error.message };
@@ -94,9 +95,9 @@ export async function getTotals() {
   return {
     ok: true as const,
     data: {
-      users: (usersRes.data as IdOnly[]).length,
-      teams: (teamsRes.data as IdOnly[]).length,
-      passesSold: (userPassesRes.data as IdOnly[]).length,
+      users: usersRes.count ?? 0,
+      teams: teamsRes.count ?? 0,
+      passesSold: userPassesRes.count ?? 0,
     },
   };
 }
