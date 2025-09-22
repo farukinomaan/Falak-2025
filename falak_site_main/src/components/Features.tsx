@@ -46,13 +46,15 @@ const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false }) => {
           </p>
         </div>
         <div className="flex flex-col gap-0">
-        {normalized.map(pass => (
-  <div
-    key={pass.id}  
-    className="flex justify-center items-center min-h-[40vh] lg:min-h-[90vh] -mt-10 sm:-mt-20 lg:-mt-40 tablet:min-h-[80vh]">
-    <CassettePass pass={pass} isMahe={sessionIsMahe} />
-  </div>
-))}
+        {normalized.map((pass, idx) => (
+          <div
+            key={pass.id}
+            className="flex justify-center items-center min-h-[40vh] lg:min-h-[90vh] -mt-10 sm:-mt-20 lg:-mt-40 tablet:min-h-[80vh] relative"
+            style={{ zIndex: normalized.length - idx }}
+          >
+            <CassettePass pass={pass} isMahe={sessionIsMahe} />
+          </div>
+        ))}
 
         </div>
       </div>
