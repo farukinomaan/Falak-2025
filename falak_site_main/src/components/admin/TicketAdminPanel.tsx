@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, markTicketSolved, adminManualFetchPayments, requestTicketApproval } from "@/lib/actions/adminAggregations";
+import { getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, markTicketSolved, adminManualFetchPayments, requestTicketApproval, adminUpdateUserPhone } from "@/lib/actions/adminAggregations";
 import type { SearchUserRow } from "@/lib/actions/adminAggregations";
 
 // Define a Pass summary type for this component
@@ -28,6 +28,9 @@ export default function TicketAdminPanel() {
   const [manualPhone, setManualPhone] = useState("");
   const [manualLoading, setManualLoading] = useState(false);
   const [manualRows, setManualRows] = useState<any[] | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [editPhone, setEditPhone] = useState<string>("");
+  const [savingPhone, setSavingPhone] = useState<boolean>(false);
+  const [editingPhone, setEditingPhone] = useState<boolean>(false);
 
   const loadPending = useCallback(async () => {
     setLoadingPending(true);
@@ -67,7 +70,29 @@ export default function TicketAdminPanel() {
     setSelected(id);
     const res = await getUserDetails(id);
     if (!res.ok) toast.error(res.error);
-    else setDetails(res.data);
+    else {
+      setDetails(res.data);
+      setEditPhone(res.data?.user?.phone || "");
+      setEditingPhone(false);
+    }
+  }
+
+  async function savePhone() {
+    if (!selected) return;
+    setSavingPhone(true);
+    try {
+      const res = await adminUpdateUserPhone(selected, editPhone);
+      if (!res.ok) {
+        toast.error(res.error || 'Failed to update phone');
+        return;
+      }
+      toast.success('Phone updated');
+      const updated = res.data as { phone?: string | null };
+      setDetails((prev) => (prev ? { ...prev, user: { ...prev.user, phone: updated.phone || '' } } : prev));
+      setEditingPhone(false);
+    } finally {
+      setSavingPhone(false);
+    }
   }
 
   // Removed: direct user pass assignment from search results
@@ -143,7 +168,30 @@ export default function TicketAdminPanel() {
             <div className="space-y-4">
               <div>
                 <div className="font-semibold">{details.user?.name}</div>
-                <div className="text-sm text-muted-foreground">{details.user?.email} • {details.user?.phone}</div>
+                <div className="text-sm text-muted-foreground">{details.user?.email}</div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="font-medium">Phone</div>
+                {!editingPhone ? (
+                  <div className="flex items-center gap-3 max-w-md">
+                    <div className="text-sm text-muted-foreground">{details.user?.phone || '—'}</div>
+                    <Button variant="outline" size="sm" onClick={()=> setEditingPhone(true)}>Edit</Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 max-w-md">
+                    <Input
+                      placeholder="Enter phone"
+                      value={editPhone}
+                      onChange={(e)=> setEditPhone(e.target.value)}
+                      onKeyDown={(e)=> { if (e.key === 'Enter') void savePhone(); }}
+                      autoFocus
+                    />
+                    <Button onClick={()=> void savePhone()} disabled={savingPhone || !selected}>
+                      {savingPhone ? 'Saving…' : 'Save'}
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <div>

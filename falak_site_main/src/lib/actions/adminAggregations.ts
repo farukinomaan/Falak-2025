@@ -375,6 +375,48 @@ export async function getRoleForEmail(email: string) {
   return { ok: true as const, data: (data?.role as string | undefined) };
 }
 
+// Admin: update a user's phone (ticket_admin or super_admin)
+export async function adminUpdateUserPhone(userId: string, phone: string) {
+  // Validate input
+  const uid = uuid.safeParse(userId);
+  if (!uid.success) return { ok: false as const, error: "Invalid userId" };
+  const raw = (phone || "").trim();
+  if (!raw) return { ok: false as const, error: "Phone required" };
+  // Normalize to digits (keep + at start if present and followed by country code)
+  let normalized = raw.replace(/\s+/g, "");
+  if (normalized.startsWith("+")) {
+    const digitsOnly = normalized.replace(/[^0-9+]/g, "");
+    normalized = digitsOnly;
+  } else {
+    normalized = raw.replace(/[^0-9]/g, "");
+  }
+  // Basic length check (10-15 digits typical)
+  const digitCount = normalized.replace(/\D/g, "").length;
+  if (digitCount < 10 || digitCount > 15) return { ok: false as const, error: "Invalid phone length" };
+
+  // Role check via session
+  const session = (await getServerSession(authOptions)) as { user?: { email?: string | null } } | null;
+  const email = session?.user?.email || null;
+  if (!email) return { ok: false as const, error: "Not authenticated" };
+  const roleRes = await getRoleForEmail(email);
+  const role = roleRes.ok ? roleRes.data : undefined;
+  if (!(role === 'ticket_admin' || role === 'super_admin')) {
+    return { ok: false as const, error: "Forbidden" };
+  }
+
+  // Update
+  const supabase = getServiceClient();
+  const { data, error } = await supabase
+    .from('Users')
+    .update({ phone: normalized })
+    .eq('id', userId)
+    .select('id, name, email, phone')
+    .maybeSingle();
+  if (error) return { ok: false as const, error: error.message };
+  if (!data) return { ok: false as const, error: 'user_not_found' };
+  return { ok: true as const, data };
+}
+
 // Lightweight helper: list only passIds owned by a user (for quick ownership checks in UI)
 export async function saListUserPassIds(userId: string) {
   const idOk = uuid.safeParse(userId);
