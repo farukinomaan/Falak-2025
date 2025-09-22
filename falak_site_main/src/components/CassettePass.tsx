@@ -26,7 +26,7 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
 
 
 
-  const bakchodi = useState(false);
+  const bakchodi = useState(true);
 
 
 
