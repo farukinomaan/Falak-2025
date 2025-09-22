@@ -27,7 +27,7 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
 
 
   // Manual toggle: when true, disable Buy Now navigation for MAHE link
-  const [bakchodi] = useState(true);
+  const [bakchodi] = useState(false);
 
 
 
