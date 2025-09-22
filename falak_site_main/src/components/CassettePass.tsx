@@ -26,7 +26,8 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
 
 
 
-  const bakchodi = useState(true);
+  // Manual toggle: when true, disable Buy Now navigation for MAHE link
+  const [bakchodi] = useState(true);
 
 
 
@@ -121,12 +122,21 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
       {!flipped && (
         <div className="absolute bottom-4 xs:bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 z-50 buy-button-wrapper" onClick={stop}>
           {isMahe ? (
-            <Link
-              href={bakchodi ? "" : "https://payment.manipal.edu/falak-Login"}
-              className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-white text-[#D7897D] font-semibold shadow-lg hover:bg-gray-100 transition-colors duration-200 text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D7897D]"
-            >
-              Buy Now
-            </Link>
+            bakchodi ? (
+              <Link
+                href=""
+                className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-white text-[#D7897D] font-semibold shadow-lg hover:bg-gray-100 transition-colors duration-200 text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D7897D]"
+              >
+                Buy Now
+              </Link>
+            ) : (
+              <Link
+                href="https://payment.manipal.edu/falak-Login"
+                className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-white text-[#D7897D] font-semibold shadow-lg hover:bg-gray-100 transition-colors duration-200 text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D7897D]"
+              >
+                Buy Now
+              </Link>
+            )
           ) : (
             <PassAddToCartButton
               passId={pass.id}
@@ -138,12 +148,21 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
       {flipped && (
         <div className="absolute bottom-4 xs:bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 z-50" onClick={stop}>
           {isMahe ? (
-            <Link
-              href={bakchodi ? "" : "https://payment.manipal.edu/falak-Login"}
-              className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-white text-[#D7897D] font-semibold shadow-lg hover:bg-gray-100 transition-colors duration-200 text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D7897D]"
-            >
-              Buy Now
-            </Link>
+            bakchodi ? (
+              <Link
+                href=""
+                className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-white text-[#D7897D] font-semibold shadow-lg hover:bg-gray-100 transition-colors duration-200 text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D7897D]"
+              >
+                Buy Now
+              </Link>
+            ) : (
+              <Link
+                href="https://payment.manipal.edu/falak-Login"
+                className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-white text-[#D7897D] font-semibold shadow-lg hover:bg-gray-100 transition-colors duration-200 text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D7897D]"
+              >
+                Buy Now
+              </Link>
+            )
           ) : (
             <PassAddToCartButton
               passId={pass.id}
