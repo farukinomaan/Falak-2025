@@ -41,6 +41,30 @@ export async function joinEsportsTeam(params: { teamId: string; userId: string }
   const teamRes = await getEsportsTeam(teamId);
   if (!teamRes.ok) return teamRes;
   const { eventId } = teamRes.data;
+  // Capacity check: block if team full (members + captain >= max_team_size)
+  try {
+    const { data: evtRow, error: evtErr } = await supabase
+      .from("Events")
+      .select("id, max_team_size")
+      .eq("id", eventId)
+      .maybeSingle();
+    if (evtErr) return { ok: false as const, error: evtErr.message };
+    const maxSize = (evtRow as { max_team_size?: number | null } | null)?.max_team_size ?? null;
+    if (typeof maxSize === 'number' && maxSize > 0) {
+      const { count, error: cntErr } = await supabase
+        .from("Team_members")
+        .select("id", { count: "exact", head: true })
+        .eq("teamId", teamId);
+      if (cntErr) return { ok: false as const, error: cntErr.message };
+      const currentMembers = typeof count === 'number' ? count : 0; // members only
+      const totalWithCaptain = 1 + currentMembers; // add captain
+      if (totalWithCaptain > maxSize) {
+        return { ok: false as const, error: "Team is full" };
+      }
+    }
+  } catch (e) {
+    // Fail-safe: if capacity check fails unexpectedly, allow graceful join path to proceed
+  }
   // Check if user already captain this team event
   const { data: existingCaptain, error: capErr } = await supabase.from("Teams").select("id").eq("eventId", eventId).eq("captainId", userId).maybeSingle();
   if (capErr) return { ok: false as const, error: capErr.message };

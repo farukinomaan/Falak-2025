@@ -47,6 +47,21 @@ export async function computeUserAccessibleEventIds(userId: string): Promise<Eve
   const hasBundleEventsPass = rows.some(r => !r.passes?.event_id && r.passes?.mahe === true);
   const hasBundleEsportsPass = rows.some(r => !r.passes?.event_id && r.passes?.mahe === false);
 
+  // Detect if user owns any specific event pass that is for an esports event.
+  // If yes, we will grant access to ALL esports events (global esports unlock by any esports pass).
+  const specificEventIds = Array.from(new Set(rows.map(r => r.passes?.event_id).filter((v): v is string => Boolean(v))));
+  let hasAnySpecificEsportsPass = false;
+  if (specificEventIds.length) {
+    const specEvQ = await service
+      .from('Events')
+      .select('id, sub_cluster')
+      .in('id', specificEventIds);
+    if (!specEvQ.error && Array.isArray(specEvQ.data)) {
+      hasAnySpecificEsportsPass = (specEvQ.data as Array<{ id: string; sub_cluster: string | null }>).
+        some(ev => (ev.sub_cluster || '').toLowerCase() === 'esports');
+    }
+  }
+
   // Check membership types via payment logs for proshow unlocking via esports membership_type
   interface MembershipRow { payment_logs?: { membership_type?: string | null; event_type?: string | null; event_name?: string | null } | null }
   const membershipQ = await service
@@ -71,7 +86,7 @@ export async function computeUserAccessibleEventIds(userId: string): Promise<Eve
   interface EventRow { id: string; sub_cluster: string | null }
   let allEvents: EventRow[] = [];
   // Include hasEsportsFullBundle (Falak25 + ESPORTS) so we actually load events to grant them.
-  if (hasBundleEventsPass || hasBundleEsportsPass || hasEsportsMembership || hasEsportsFullBundle) {
+  if (hasBundleEventsPass || hasBundleEsportsPass || hasEsportsMembership || hasEsportsFullBundle || hasAnySpecificEsportsPass) {
     const evQ = await service.from('Events').select('id, sub_cluster');
     if (!evQ.error && Array.isArray(evQ.data)) allEvents = evQ.data as EventRow[];
   }
@@ -92,6 +107,14 @@ export async function computeUserAccessibleEventIds(userId: string): Promise<Eve
   }
 
   if (hasBundleEsportsPass || hasEsportsFullBundle) {
+    for (const ev of allEvents) {
+      const sc = (ev.sub_cluster || '').toLowerCase();
+      if (sc === 'esports') allowed.add(ev.id);
+    }
+  }
+
+  // New rule: any specific esports event pass unlocks all esports events
+  if (hasAnySpecificEsportsPass) {
     for (const ev of allEvents) {
       const sc = (ev.sub_cluster || '').toLowerCase();
       if (sc === 'esports') allowed.add(ev.id);
