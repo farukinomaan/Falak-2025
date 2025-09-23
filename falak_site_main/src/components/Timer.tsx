@@ -104,7 +104,7 @@ const Timer: React.FC = () => {
         >
           Artist Reveal at 8:30 PM • 23rd September
         </h2>
-        <Countdown targetDate="2025-09-23T20:30:00+05:30" />
+        <Countdown targetDate="2025-09-23T21:30:00+05:30" />
       </div>
 
       {/* Second Timer
