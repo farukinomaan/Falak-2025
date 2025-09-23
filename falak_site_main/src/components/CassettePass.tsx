@@ -1,6 +1,7 @@
 "use client";
 
 import PassAddToCartButton from "@/components/cart/PassAddToCartButton";
+import { get } from "http";
 import Link from "next/link";
 import React, { useState, useCallback, useEffect } from "react";
 
@@ -28,6 +29,7 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
 
   // Manual toggle: when true, disable Buy Now navigation for MAHE link
   const [bakchodi] = useState(false);
+
 
 
 
@@ -88,6 +90,7 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
         style={{ fontSize: "clamp(1rem, 4.2vw, 3.75rem)" }}
       >
         ₹{typeof pass.cost === "number" ? pass.cost : pass.cost}
+        <span className="text-lg">{pass.pass_name == "Non-MAHE BLR" ? "+ 18% GST":""}</span>
       </p>
     </div>
   )}
