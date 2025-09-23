@@ -30,6 +30,7 @@ export default function CassettePass({ pass, isMahe = false }: CassettePassProps
   const [bakchodi] = useState(false);
 
 
+  
 
   // Initial whirl animation then settle front
   useEffect(() => {
