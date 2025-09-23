@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, markTicketSolved, adminManualFetchPayments, requestTicketApproval, adminUpdateUserPhone } from "@/lib/actions/adminAggregations";
+import { getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, markTicketSolved, adminManualFetchPayments, requestTicketApproval, adminUpdateUserPhone, adminIngestPaymentsForUser } from "@/lib/actions/adminAggregations";
 import type { SearchUserRow } from "@/lib/actions/adminAggregations";
 
 // Define a Pass summary type for this component
@@ -31,6 +31,7 @@ export default function TicketAdminPanel() {
   const [editPhone, setEditPhone] = useState<string>("");
   const [savingPhone, setSavingPhone] = useState<boolean>(false);
   const [editingPhone, setEditingPhone] = useState<boolean>(false);
+  const [syncing, setSyncing] = useState<boolean>(false);
 
   const loadPending = useCallback(async () => {
     setLoadingPending(true);
@@ -74,6 +75,22 @@ export default function TicketAdminPanel() {
       setDetails(res.data);
       setEditPhone(res.data?.user?.phone || "");
       setEditingPhone(false);
+    }
+  }
+
+  async function syncPayments() {
+    if (!selected) { toast.error('Select a user first'); return; }
+    setSyncing(true);
+    try {
+      const res = await adminIngestPaymentsForUser(selected);
+      if (!res.ok) {
+        toast.error(res.error || 'Sync failed');
+      } else {
+        toast.success('Payments synced');
+        await Promise.all([loadPending(), loadDetails(selected)]);
+      }
+    } finally {
+      setSyncing(false);
     }
   }
 
@@ -161,7 +178,14 @@ export default function TicketAdminPanel() {
         </div>
 
         <div className="rounded border p-3">
-          <div className="font-medium mb-2">User details</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="font-medium">User details</div>
+            {selected && (
+              <Button variant="outline" size="sm" onClick={syncPayments} disabled={syncing}>
+                {syncing ? 'Syncing…' : 'Sync payments'}
+              </Button>
+            )}
+          </div>
           {!details ? (
             <div className="text-sm text-muted-foreground">Select a user</div>
           ) : (

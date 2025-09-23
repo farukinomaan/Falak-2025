@@ -264,8 +264,8 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
     } catch {/* ignore fallback errors */}
   }
 
-  // Dev override (only non-production) to ease local mock testing when no auth session
-  if (!userId && opts?.devUserId && process.env.NODE_ENV !== 'production') {
+  // Admin override: if a caller supplies devUserId, honor it to target a specific user (guard at call-site)
+  if (opts?.devUserId) {
     userId = opts.devUserId;
   }
   if (!userId) return { ok:false, error:"unauthenticated" };

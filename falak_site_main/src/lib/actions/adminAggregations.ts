@@ -4,6 +4,7 @@ import { getServiceClient } from "./supabaseClient";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { ingestAndListUserPasses } from "@/lib/actions/payments";
 import {
   EventCreateSchema,
   EventUpdateSchema,
@@ -285,23 +286,32 @@ interface PendingPaymentRow {
 // List payment_logs that are Success but have no active mapping (neither legacy nor v2) resolved.
 export async function listPendingPaymentLogs(limit = 200) {
   const supabase = getServiceClient();
-  const pl = await supabase.from('payment_logs').select('id, user_id, tracking_id, membership_type, event_name, event_type, external_created_at').eq('status','Success').limit(limit * 3);
+  // Include common legacy success variants to avoid missing rows stored historically
+  const SUCCESS_STATUSES = ['Success','success','Paid','paid','Completed','completed','successfull','Successfull','successfull payment','Successfull payment','successfull_payment','Successfull_payment'];
+  const pl = await supabase
+    .from('payment_logs')
+    .select('id, user_id, tracking_id, membership_type, event_name, event_type, external_created_at')
+    .in('status', SUCCESS_STATUSES)
+    .limit(limit * 3);
   if (pl.error) return { ok:false as const, error: pl.error.message };
   const mapRes = await supabase.from('external_pass_map').select('external_key, external_key_v2, pass_id, active').eq('active', true);
   if (mapRes.error) return { ok:false as const, error: mapRes.error.message };
-  const mapping = new Set<string>();
-  for (const r of (mapRes.data||[]) as any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
-    // Only treat a key as mapped if it points to a real pass_id (non-null). If pass_id is null,
-    // the admin intentionally left the key unresolved and we should surface those logs as pending.
-    if (r.pass_id == null) continue;
-    if (r.external_key) mapping.add((r.external_key as string).toLowerCase());
-    if (r.external_key_v2) mapping.add((r.external_key_v2 as string).toLowerCase());
+  // Build mapping from key -> pass_id (may be null). Only consider a log "mapped" if pass_id is non-null.
+  const mapping: Record<string, string | null> = {};
+  for (const r of (mapRes.data||[]) as Array<{ external_key?: string | null; external_key_v2?: string | null; pass_id?: string | null }>) {
+    const k1 = (r.external_key || '').toLowerCase();
+    const k2 = (r.external_key_v2 || '').toLowerCase();
+    if (k1) mapping[k1] = r.pass_id ?? null;
+    if (k2) mapping[k2] = r.pass_id ?? null;
   }
   const pending: PendingPaymentRow[] = [];
-  for (const row of (pl.data||[]) as any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  for (const row of (pl.data||[]) as Array<{ id: string; user_id: string | null; tracking_id: string | null; membership_type: string | null; event_name: string | null; event_type: string | null; external_created_at: string | null }>) {
     const legacy_key = `${(row.membership_type||'').trim().toLowerCase()}|${(row.event_name||'').trim().toLowerCase()}`;
     const v2_key = `${(row.event_type||'').trim().toLowerCase()}|${(row.event_name||'').trim().toLowerCase()}`;
-    if (!mapping.has(v2_key) && !mapping.has(legacy_key)) {
+    const resolved = (v2_key && Object.prototype.hasOwnProperty.call(mapping, v2_key) ? mapping[v2_key] : undefined)
+                  ?? (legacy_key && Object.prototype.hasOwnProperty.call(mapping, legacy_key) ? mapping[legacy_key] : undefined);
+    // Include in pending when no mapping exists OR mapping exists but pass_id is null
+    if (resolved == null) {
       pending.push({
         payment_log_id: row.id,
         user_id: row.user_id,
@@ -316,6 +326,17 @@ export async function listPendingPaymentLogs(limit = 200) {
     }
     if (pending.length >= limit) break;
   }
+  // Newest first by created_at (string ISO) fallback by tracking
+  pending.sort((a, b) => {
+    const ta = a.created_at || '';
+    const tb = b.created_at || '';
+    if (ta && tb) return tb.localeCompare(ta);
+    if (ta) return -1;
+    if (tb) return 1;
+    const xa = a.tracking_id || '';
+    const xb = b.tracking_id || '';
+    return xb.localeCompare(xa);
+  });
   return { ok:true as const, data: pending };
 }
 
@@ -420,6 +441,23 @@ export async function adminUpdateUserPhone(userId: string, phone: string) {
   return { ok: true as const, data };
 }
 
+// Admin: trigger ingestion for a user (ticket_admin or super_admin)
+export async function adminIngestPaymentsForUser(userId: string) {
+  const uid = uuid.safeParse(userId);
+  if (!uid.success) return { ok: false as const, error: "Invalid userId" };
+  const session = (await getServerSession(authOptions)) as { user?: { email?: string | null } } | null;
+  const email = session?.user?.email || null;
+  if (!email) return { ok: false as const, error: "Not authenticated" };
+  const roleRes = await getRoleForEmail(email);
+  const role = roleRes.ok ? roleRes.data : undefined;
+  if (!(role === 'ticket_admin' || role === 'super_admin')) {
+    return { ok: false as const, error: "Forbidden" };
+  }
+  // Use dev override to target the specific userId irrespective of auth session.
+  const res = await ingestAndListUserPasses({ devUserId: userId });
+  if (!res.ok) return { ok: false as const, error: res.error || 'ingestion_failed' };
+  return { ok: true as const, data: res.data };
+}
 
 // Lightweight helper: list only passIds owned by a user (for quick ownership checks in UI)
 export async function saListUserPassIds(userId: string) {
