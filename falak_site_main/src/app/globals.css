@@ -263,3 +263,7 @@ main {
     margin-bottom: 2rem; /* larger gap only on big screens */
   }
 }
+/* .text-outline {
+  -webkit-text-stroke: 1px #D7897D; 
+  color: transparent;             
+} */

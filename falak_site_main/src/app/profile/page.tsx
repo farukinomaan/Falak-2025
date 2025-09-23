@@ -78,6 +78,7 @@ export default async function ProfilePage() {
           <div className={styles.detailsColumn}>
             <section className={styles.section}>
               <h2>Your Passes</h2>
+              <h3>Please note: The QR generated is your pass. Show it on the day of event to get entry.</h3>
               <div className={styles.infoCard} style={{
                 background:'rgba(0,0,0,0.35)',
                 border:'1px solid rgba(255,255,255,0.15)',
@@ -125,7 +126,7 @@ export default async function ProfilePage() {
             <section className={styles.section}>
               <h2>Registered Events</h2>
               {events.length === 0 ? (
-                <EmptyState message="You haven’t registered for any events yet." ctaHref="/sports" ctaLabel="Explore Events" />
+                <EmptyState message="You haven’ t registered for any events yet." ctaHref="/sports" ctaLabel="Explore Events" />
               ) : (
                 <ul className={styles.eventList}>
                   {events.map((e) => {

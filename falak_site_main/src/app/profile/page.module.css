@@ -120,6 +120,15 @@
   margin-bottom: 1rem;
   text-align: center;
 }
+.section h3 {
+  font-family: 'Brasty Vintage', sans-serif;
+  font-size: 1.5rem;
+  color: #fff;
+  -webkit-text-stroke: 2.5px #000;
+  paint-order: stroke fill;
+  margin-bottom: 1rem;
+  text-align: center;
+}
 
 .emptyState {
   text-align: center;
@@ -382,6 +391,7 @@
   width: 900px;
   height: auto;
   transform: rotate(-25deg) scale(1);
+
   z-index: 0;
 }
 

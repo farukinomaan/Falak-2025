@@ -8,6 +8,7 @@ const Timeline = dynamic(() => import("@/components/Timeline"));
 const Trailer = dynamic(() => import("@/components/Trailer"));
 const About = dynamic(() => import("@/components/About"));
 const Sponsor = dynamic(() => import("@/components/Sponsor"));
+const Timer = dynamic(() => import("@/components/Timer"));
 
 const orbitron = Orbitron({
   subsets: ["latin"],
@@ -43,6 +44,7 @@ export default function Home() {
       {/* Page content */}
       <div className="relative z-10">
         <Suspense fallback={<SectionSkeleton title="Welcome" />}> <Hero /> </Suspense>
+        <Suspense fallback={<SectionSkeleton title="Welcome" />}> <Timer /> </Suspense>
         <Suspense fallback={<SectionSkeleton title="About" />}> <About /> </Suspense>
         <Suspense fallback={<SectionSkeleton title="Artist" />}> <Artist /> </Suspense>
         <Suspense fallback={<SectionSkeleton title="Timeline" />}> <Timeline /> </Suspense>
