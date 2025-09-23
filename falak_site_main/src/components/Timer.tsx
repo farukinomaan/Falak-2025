@@ -107,7 +107,7 @@ const Timer: React.FC = () => {
         <Countdown targetDate="2025-09-23T20:30:00+05:30" />
       </div>
 
-      {/* Second Timer */}
+      {/* Second Timer
       <div className="space-y-1.5 xs:space-y-2 sm:space-y-3 md:space-y-4">
         <h2
           className="
@@ -128,7 +128,7 @@ const Timer: React.FC = () => {
           This is your last chance to grab your passes at the lowest price!
         </p>
         <Countdown targetDate="2025-09-23T16:00:00+05:30" />
-      </div>
+      </div> */}
     </section>
   );
 };
