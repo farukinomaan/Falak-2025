@@ -7,7 +7,7 @@ import { createUser, getUserByEmail } from "@/lib/actions";
 import { getUserByPhone, updateUser } from "@/lib/actions";
 import { UserCreateSchema } from "@/lib/actions/schemas";
 
-// Reverted schema: require verified phone directly (Firebase OTP flow)
+// OTP verification disabled: accept phone as provided (basic length check only)
 const OnboardSchema = z
   .object({
     name: z.string().min(2),

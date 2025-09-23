@@ -1,26 +1,36 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getTotals, getPassSalesByPass, getTeamsPerEvent, listUsersWithPurchasedPasses } from "@/lib/actions/adminAggregations";
+import { getTotals, getPassSalesByPass, getTeamsPerEvent, listUsersWithPurchasedPasses, listApprovalPendingTickets, saListPasses, approveTicketAndAssign } from "@/lib/actions/adminAggregations";
 
 export default function SuperAdminDashboard() {
   const [totals, setTotals] = useState<{ users: number; teams: number; passesSold: number } | null>(null);
   const [sales, setSales] = useState<Array<{ passId: string; pass_name: string; count: number }>>([]);
   const [teamsPerEvent, setTeamsPerEvent] = useState<Array<{ eventId: string; event_name: string; count: number }>>([]);
   const [buyers, setBuyers] = useState<Array<{ id: string; name: string; email: string; phone: string; passes: string[] }>>([]);
+  const [buyersShown, setBuyersShown] = useState(10);
+  type ApprovalRow = { id: string; userId: string | null; category: string | null; issue: string | null; created_at: string | null; status: string | null; reporter_name: string | null; reporter_email: string | null; raised_by: string | null };
+  const [approvals, setApprovals] = useState<ApprovalRow[]>([]);
+  const [passes, setPasses] = useState<Array<{ id: string; pass_name: string; enable?: boolean | null; status?: boolean | null }>>([]);
+  const [assignSel, setAssignSel] = useState<Record<string,string>>({});
+  const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
-      const [t, s, te, b] = await Promise.all([
+      const [t, s, te, b, ap, ps] = await Promise.all([
         getTotals(),
         getPassSalesByPass(),
         getTeamsPerEvent(),
         listUsersWithPurchasedPasses(),
+        listApprovalPendingTickets(200),
+        saListPasses(),
       ]);
       if (t.ok) setTotals(t.data);
       if (s.ok) setSales(s.data);
       if (te.ok) setTeamsPerEvent(te.data);
       if (b.ok) setBuyers(b.data);
+  if (ap.ok) setApprovals((ap.data as unknown as ApprovalRow[]) || []);
+      if (ps.ok) setPasses(((ps.data as unknown) as Array<{ id: string; pass_name: string; enable?: boolean | null; status?: boolean | null }>) || []);
     })();
   }, []);
 
@@ -33,10 +43,73 @@ export default function SuperAdminDashboard() {
         <CardStat title="Passes Sold" value={totals?.passesSold ?? 0} />
       </div>
 
+      
+
+      
+
+      <div className="space-y-3">
+        <h3 className="font-medium">Approval Requests (From Ticket Admin)</h3>
+        {approvals.length === 0 ? (
+          <div className="text-sm text-muted-foreground">No approval pending tickets</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b">
+                  <th className="p-2">Ticket</th>
+                  <th className="p-2">User</th>
+                  <th className="p-2">Raised By</th>
+                  <th className="p-2">Category</th>
+                  <th className="p-2">Issue</th>
+                  <th className="p-2">Assign Pass</th>
+                  <th className="p-2">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {approvals.map((t) => (
+                  <tr key={t.id} className="border-b">
+                    <td className="p-2 font-mono text-xs">{t.id.slice(0,8)}…</td>
+                    <td className="p-2">{t.reporter_name || t.reporter_email || t.userId?.slice(0,8) || '—'}</td>
+                    <td className="p-2 text-xs">{t.raised_by || '—'}</td>
+                    <td className="p-2">{t.category || '—'}</td>
+                    <td className="p-2 max-w-md truncate" title={t.issue || undefined}>{t.issue || '—'}</td>
+                    <td className="p-2">
+                      <select className="h-8 w-44 rounded-md border bg-background" value={assignSel[t.id]||''} onChange={e => setAssignSel(prev => ({ ...prev, [t.id]: e.target.value }))}>
+                        <option value="">Select pass</option>
+                        {passes.filter(p => Boolean(p.enable ?? p.status)).map(p => (
+                          <option key={p.id} value={p.id}>{p.pass_name}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="p-2">
+                      <button className="px-3 py-1 rounded bg-primary text-black disabled:opacity-50" disabled={busy === t.id || !assignSel[t.id]} onClick={async ()=>{
+                        if (!assignSel[t.id]) return;
+                        setBusy(t.id);
+                        try {
+                          const res = await approveTicketAndAssign(t.id, assignSel[t.id]);
+                          if (!res.ok) {
+                            const errMsg: string = (res as { ok: false; error?: string }).error || 'Failed';
+                            alert(errMsg);
+                          } else {
+                            setApprovals(prev => prev.filter(x => x.id !== t.id));
+                          }
+                        } finally { setBusy(null); }
+                      }}>{busy === t.id ? 'Assigning…' : 'Assign + Resolve'}</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+
       <div className="grid md:grid-cols-2 gap-6">
         <BarChart title="Pass sales" data={sales.map((s) => ({ label: s.pass_name, value: s.count }))} />
         <BarChart title="Teams per event" data={teamsPerEvent.map((t) => ({ label: t.event_name, value: t.count }))} />
       </div>
+
 
       <div className="space-y-3">
         <h3 className="font-medium">Users who bought passes</h3>
@@ -51,7 +124,7 @@ export default function SuperAdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {buyers.map((u) => (
+              {buyers.slice(0, buyersShown).map((u) => (
                 <tr key={u.id} className="border-b">
                   <td className="p-2">{u.name}</td>
                   <td className="p-2">{u.email}</td>
@@ -62,6 +135,16 @@ export default function SuperAdminDashboard() {
             </tbody>
           </table>
         </div>
+        {buyersShown < buyers.length && (
+          <div className="pt-2">
+            <button
+              className="px-3 py-1 rounded border bg-background hover:bg-muted text-sm"
+              onClick={() => setBuyersShown((n) => Math.min(n + 10, buyers.length))}
+            >
+              Load more
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

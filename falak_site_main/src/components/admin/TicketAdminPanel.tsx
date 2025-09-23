@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { assignPassToUser, getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, assignPassToTicket, markTicketSolved } from "@/lib/actions/adminAggregations";
+import { getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, markTicketSolved, adminManualFetchPayments, requestTicketApproval, adminUpdateUserPhone } from "@/lib/actions/adminAggregations";
 import type { SearchUserRow } from "@/lib/actions/adminAggregations";
 
 // Define a Pass summary type for this component
@@ -16,16 +16,21 @@ export default function TicketAdminPanel() {
   const [selected, setSelected] = useState<string | null>(null);
   const [details, setDetails] = useState<UserDetailsData | null>(null);
   const [passes, setPasses] = useState<PassSummary[]>([]);
-  const [passToAssign, setPassToAssign] = useState<string>("");
+  // const [passToAssign, setPassToAssign] = useState<string>("");
   const [pending, setPending] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
-  type TicketRow = { id: string; userId?: string | null; category?: string | null; issue?: string | null; created_at?: string | null; solved?: boolean | null; reporter_name?: string | null; reporter_email?: string | null };
+  type TicketRow = { id: string; userId?: string | null; category?: string | null; issue?: string | null; created_at?: string | null; solved?: boolean | null; status?: string | null; reporter_name?: string | null; reporter_email?: string | null };
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [loadingPending, setLoadingPending] = useState(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [resolvePass, setResolvePass] = useState<Record<string,string>>({});
-  const [assigningTicket, setAssigningTicket] = useState<string | null>(null);
-  const [ticketAssignPass, setTicketAssignPass] = useState<Record<string,string>>({});
+  const [requestingId, setRequestingId] = useState<string | null>(null);
   const [manualCheck, setManualCheck] = useState<Record<string, boolean>>({});
+  const [manualPhone, setManualPhone] = useState("");
+  const [manualLoading, setManualLoading] = useState(false);
+  const [manualRows, setManualRows] = useState<any[] | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [editPhone, setEditPhone] = useState<string>("");
+  const [savingPhone, setSavingPhone] = useState<boolean>(false);
+  const [editingPhone, setEditingPhone] = useState<boolean>(false);
 
   const loadPending = useCallback(async () => {
     setLoadingPending(true);
@@ -65,17 +70,32 @@ export default function TicketAdminPanel() {
     setSelected(id);
     const res = await getUserDetails(id);
     if (!res.ok) toast.error(res.error);
-    else setDetails(res.data);
+    else {
+      setDetails(res.data);
+      setEditPhone(res.data?.user?.phone || "");
+      setEditingPhone(false);
+    }
   }
 
-  async function assign() {
-    if (!selected || !passToAssign) return;
-    const res = await assignPassToUser(selected, passToAssign);
-    if (!res.ok) toast.error(res.error);
-    else toast.success("Pass assigned");
-    // refresh details
-    if (selected) loadDetails(selected);
+  async function savePhone() {
+    if (!selected) return;
+    setSavingPhone(true);
+    try {
+      const res = await adminUpdateUserPhone(selected, editPhone);
+      if (!res.ok) {
+        toast.error(res.error || 'Failed to update phone');
+        return;
+      }
+      toast.success('Phone updated');
+      const updated = res.data as { phone?: string | null };
+      setDetails((prev) => (prev ? { ...prev, user: { ...prev.user, phone: updated.phone || '' } } : prev));
+      setEditingPhone(false);
+    } finally {
+      setSavingPhone(false);
+    }
   }
+
+  // Removed: direct user pass assignment from search results
 
   async function resolve(paymentLogId: string) {
     const passId = resolvePass[paymentLogId];
@@ -91,20 +111,7 @@ export default function TicketAdminPanel() {
     } finally { setResolvingId(null); }
   }
 
-  async function assignToTicket(ticketId: string) {
-    const passId = ticketAssignPass[ticketId];
-    if (!passId) { toast.error('Select a pass'); return; }
-    setAssigningTicket(ticketId);
-    try {
-      const res = await assignPassToTicket(ticketId, passId);
-      if (!res.ok) toast.error(res.error || 'Assign failed');
-      else {
-        toast.success('Pass assigned to ticket user');
-        // reload tickets
-        await loadTickets();
-      }
-    } finally { setAssigningTicket(null); }
-  }
+  // Removed: direct assign to ticket user; replaced by approval workflow
 
   async function resolveTicket(ticketId: string) {
     setResolvingId(ticketId);
@@ -116,6 +123,21 @@ export default function TicketAdminPanel() {
         setTickets(prev => prev.filter(t => t.id !== ticketId));
       }
     } finally { setResolvingId(null); }
+  }
+
+  async function manualFetch() {
+    const p = manualPhone.trim();
+    if (!p) { toast.error('Enter a phone number'); return; }
+    setManualLoading(true);
+    try {
+      const res = await adminManualFetchPayments(p);
+      if (!res.ok) {
+        toast.error(res.error || 'Fetch failed');
+        setManualRows(null);
+      } else {
+        setManualRows(res.data as any[]); // eslint-disable-line @typescript-eslint/no-explicit-any
+      }
+    } finally { setManualLoading(false); }
   }
 
   return (
@@ -146,7 +168,30 @@ export default function TicketAdminPanel() {
             <div className="space-y-4">
               <div>
                 <div className="font-semibold">{details.user?.name}</div>
-                <div className="text-sm text-muted-foreground">{details.user?.email} • {details.user?.phone}</div>
+                <div className="text-sm text-muted-foreground">{details.user?.email}</div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="font-medium">Phone</div>
+                {!editingPhone ? (
+                  <div className="flex items-center gap-3 max-w-md">
+                    <div className="text-sm text-muted-foreground">{details.user?.phone || '—'}</div>
+                    <Button variant="outline" size="sm" onClick={()=> setEditingPhone(true)}>Edit</Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 max-w-md">
+                    <Input
+                      placeholder="Enter phone"
+                      value={editPhone}
+                      onChange={(e)=> setEditPhone(e.target.value)}
+                      onKeyDown={(e)=> { if (e.key === 'Enter') void savePhone(); }}
+                      autoFocus
+                    />
+                    <Button onClick={()=> void savePhone()} disabled={savingPhone || !selected}>
+                      {savingPhone ? 'Saving…' : 'Save'}
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -167,21 +212,57 @@ export default function TicketAdminPanel() {
                 </ul>
               </div>
 
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <div className="text-sm mb-1">Assign pass</div>
-                  <select value={passToAssign} onChange={(e) => setPassToAssign(e.target.value)} className="w-full h-9 rounded-md border px-3">
-                    <option value="">Select a pass</option>
-                    {passes.filter((p) => Boolean(p.enable ?? p.status)).map((p) => (
-                      <option key={p.id} value={p.id}>{p.pass_name}</option>
-                    ))}
-                  </select>
-                </div>
-                <Button onClick={assign}>Assign</Button>
-              </div>
+              {/* Removed: assign pass to user */}
             </div>
           )}
         </div>
+      </div>
+
+      <div className="rounded border p-4 space-y-3">
+        <h2 className="font-medium">Manual Fetch</h2>
+        <p className="text-sm text-muted-foreground">Lookup payments from the portal by phone (queries VERIFICATION_URL on the server).</p>
+        <div className="flex gap-2 max-w-lg">
+          <Input placeholder="Enter phone number" value={manualPhone} onChange={(e)=>setManualPhone(e.target.value)} onKeyDown={(e)=> e.key==='Enter' && manualFetch()} />
+          <Button onClick={manualFetch} disabled={manualLoading}>{manualLoading ? 'Looking up…' : 'Lookup'}</Button>
+        </div>
+        {manualRows && (
+          manualRows.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No results found for this phone.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="text-left border-b">
+                    <th className="py-2 pr-3">Tracking</th>
+                    <th className="py-2 pr-3">Status</th>
+                    <th className="py-2 pr-3">Membership</th>
+                    <th className="py-2 pr-3">Event</th>
+                    <th className="py-2 pr-3">Type</th>
+                    <th className="py-2 pr-3">Amount</th>
+                    <th className="py-2 pr-3">Created At</th>
+                    <th className="py-2 pr-3">Mapped</th>
+                    <th className="py-2 pr-3">Pass Id</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {manualRows.map((r, idx) => (
+                    <tr key={r.tracking_id || idx} className="border-b last:border-b-0">
+                      <td className="py-2 pr-3 font-mono text-xs">{r.tracking_id || '—'}</td>
+                      <td className="py-2 pr-3">{r.order_status || '—'}</td>
+                      <td className="py-2 pr-3">{r.membership_type || '—'}</td>
+                      <td className="py-2 pr-3">{r.event_name || '—'}</td>
+                      <td className="py-2 pr-3">{r.event_type || '—'}</td>
+                      <td className="py-2 pr-3">{r.total_amount ?? '—'}</td>
+                      <td className="py-2 pr-3">{r.created_at || '—'}</td>
+                      <td className="py-2 pr-3">{r.mapped ? 'Yes' : 'No'}</td>
+                      <td className="py-2 pr-3 font-mono text-[11px]">{r.pass_id || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        )}
       </div>
 
       <div className="rounded border p-4 space-y-4">
@@ -266,8 +347,7 @@ export default function TicketAdminPanel() {
                   <th className="py-2 pr-3">Manual Transcript Check</th>
                   <th className="py-2 pr-3">Category</th>
                   <th className="py-2 pr-3">Issue</th>
-                  <th className="py-2 pr-3">Assign Pass</th>
-                  <th className="py-2">Action</th>
+                  <th className="py-2">Assign Pass</th>
                 </tr>
               </thead>
               <tbody>
@@ -285,22 +365,32 @@ export default function TicketAdminPanel() {
                     </td>
                     <td className="py-2 pr-3">{t.category || <span className="opacity-50">—</span>}</td>
                     <td className="py-2 pr-3">{t.issue || <span className="opacity-50">—</span>}</td>
-                    <td className="py-2 pr-3">
-                      <select
-                        className="h-8 w-40 rounded-md border bg-background"
-                        value={ticketAssignPass[t.id]||''}
-                        onChange={e => setTicketAssignPass(prev => ({ ...prev, [t.id]: e.target.value }))}
-                      >
-                        <option value="">Select pass</option>
-                        {passes.filter(p => Boolean(p.enable ?? p.status)).map(p => (
-                          <option key={p.id} value={p.id}>{p.pass_name}</option>
-                        ))}
-                      </select>
-                    </td>
                     <td className="py-2">
                       <div className="flex gap-2">
-                        <Button size="sm" onClick={() => assignToTicket(t.id)} disabled={assigningTicket === t.id}>{assigningTicket === t.id ? 'Assigning…' : 'Assign'}</Button>
-                        <Button size="sm" variant="ghost" onClick={() => resolveTicket(t.id)} disabled={resolvingId === t.id}>{resolvingId === t.id ? 'Saving…' : 'Resolve'}</Button>
+                        {String(t.status || '').toLowerCase().startsWith('approval_pending') ? (
+                          <span className="text-xs text-yellow-300 px-2 py-1 rounded border border-yellow-500/50">Pending approval…</span>
+                        ) : (
+                          <Button size="sm" onClick={async () => {
+                            setRequestingId(t.id);
+                            try {
+                              const res = await requestTicketApproval(t.id);
+                              if (!res.ok) toast.error(res.error || 'Failed to request');
+                              else {
+                                toast.success('Approval requested');
+                                await loadTickets();
+                              }
+                            } finally { setRequestingId(null); }
+                          }} disabled={requestingId === t.id}>{requestingId === t.id ? 'Requesting…' : 'Request Approval'}</Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => resolveTicket(t.id)}
+                          disabled={resolvingId === t.id || !!manualCheck[t.id]}
+                          title={!!manualCheck[t.id] ? 'Disable resolve when manual transcript check is ticked' : undefined}
+                        >
+                          {resolvingId === t.id ? 'Saving…' : 'Resolve'}
+                        </Button>
                       </div>
                     </td>
                   </tr>

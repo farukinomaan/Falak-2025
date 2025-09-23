@@ -83,10 +83,11 @@ export type UserDetailsData = { user: UserBasicRow; passes: PassDetailRow[]; tea
 // Aggregations for Super Admin
 export async function getTotals() {
   const supabase = getServiceClient();
+  // Use exact counts to avoid the default 1000-row limit on select()
   const [usersRes, teamsRes, userPassesRes] = await Promise.all([
-    supabase.from("Users").select("id"),
-    supabase.from("Teams").select("id"),
-    supabase.from("User_passes").select("id"),
+    supabase.from("Users").select("id", { count: 'exact', head: true }),
+    supabase.from("Teams").select("id", { count: 'exact', head: true }),
+    supabase.from("User_passes").select("id", { count: 'exact', head: true }),
   ]);
   if (usersRes.error) return { ok: false as const, error: usersRes.error.message };
   if (teamsRes.error) return { ok: false as const, error: teamsRes.error.message };
@@ -94,9 +95,9 @@ export async function getTotals() {
   return {
     ok: true as const,
     data: {
-      users: (usersRes.data as IdOnly[]).length,
-      teams: (teamsRes.data as IdOnly[]).length,
-      passesSold: (userPassesRes.data as IdOnly[]).length,
+      users: usersRes.count ?? 0,
+      teams: teamsRes.count ?? 0,
+      passesSold: userPassesRes.count ?? 0,
     },
   };
 }
@@ -374,6 +375,48 @@ export async function getRoleForEmail(email: string) {
   return { ok: true as const, data: (data?.role as string | undefined) };
 }
 
+// Admin: update a user's phone (ticket_admin or super_admin)
+export async function adminUpdateUserPhone(userId: string, phone: string) {
+  // Validate input
+  const uid = uuid.safeParse(userId);
+  if (!uid.success) return { ok: false as const, error: "Invalid userId" };
+  const raw = (phone || "").trim();
+  if (!raw) return { ok: false as const, error: "Phone required" };
+  // Normalize to digits (keep + at start if present and followed by country code)
+  let normalized = raw.replace(/\s+/g, "");
+  if (normalized.startsWith("+")) {
+    const digitsOnly = normalized.replace(/[^0-9+]/g, "");
+    normalized = digitsOnly;
+  } else {
+    normalized = raw.replace(/[^0-9]/g, "");
+  }
+  // Basic length check (10-15 digits typical)
+  const digitCount = normalized.replace(/\D/g, "").length;
+  if (digitCount < 10 || digitCount > 15) return { ok: false as const, error: "Invalid phone length" };
+
+  // Role check via session
+  const session = (await getServerSession(authOptions)) as { user?: { email?: string | null } } | null;
+  const email = session?.user?.email || null;
+  if (!email) return { ok: false as const, error: "Not authenticated" };
+  const roleRes = await getRoleForEmail(email);
+  const role = roleRes.ok ? roleRes.data : undefined;
+  if (!(role === 'ticket_admin' || role === 'super_admin')) {
+    return { ok: false as const, error: "Forbidden" };
+  }
+
+  // Update
+  const supabase = getServiceClient();
+  const { data, error } = await supabase
+    .from('Users')
+    .update({ phone: normalized })
+    .eq('id', userId)
+    .select('id, name, email, phone')
+    .maybeSingle();
+  if (error) return { ok: false as const, error: error.message };
+  if (!data) return { ok: false as const, error: 'user_not_found' };
+  return { ok: true as const, data };
+}
+
 // Lightweight helper: list only passIds owned by a user (for quick ownership checks in UI)
 export async function saListUserPassIds(userId: string) {
   const idOk = uuid.safeParse(userId);
@@ -433,14 +476,18 @@ export async function saCreateTeamWithMembers(input: { eventId: string; captainI
   if (!input.eventId || !input.captainId || !input.name) return { ok: false as const, error: "Missing fields" };
   const supabase = getServiceClient();
   // Fetch event constraints
-  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, max_team_size").eq("id", input.eventId).maybeSingle();
+  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, min_team_size, max_team_size").eq("id", input.eventId).maybeSingle();
   if (evtErr) return { ok: false as const, error: evtErr.message };
   if (!evtRow) return { ok: false as const, error: "Event not found" };
+  const minTeamSize: number | null = (evtRow as { id: string; min_team_size?: number | null }).min_team_size ?? null;
   const maxTeamSize: number | null = (evtRow as { id: string; max_team_size?: number | null }).max_team_size ?? null;
+  const minAdditional: number = minTeamSize != null ? Math.max(minTeamSize - 1, 0) : 0; // minimum additional members beyond captain
+  const maxAdditional: number | null = maxTeamSize != null ? Math.max(maxTeamSize - 1, 0) : null; // maximum additional members beyond captain
   // Validate member uniqueness & size
   const uniqueMembers = Array.from(new Set(input.memberIds.filter(Boolean)));
   if (uniqueMembers.length !== input.memberIds.filter(Boolean).length) return { ok: false as const, error: "Duplicate member IDs" };
-  if (maxTeamSize && uniqueMembers.length > maxTeamSize) return { ok: false as const, error: `Team exceeds max size ${maxTeamSize}` };
+  if (uniqueMembers.length < minAdditional) return { ok: false as const, error: `Team needs at least ${minTeamSize ?? (minAdditional + 1)} member(s) including captain` };
+  if (maxAdditional != null && uniqueMembers.length > maxAdditional) return { ok: false as const, error: `Team exceeds max size ${maxTeamSize}` };
   // Ensure user does not already have a team for that event
   const existing = await supabase
     .from("Teams")
@@ -488,20 +535,27 @@ export async function saCreateTeamWithMemberEmails(input: { eventId: string; cap
   if (!input.eventId || !input.captainId || !input.name) return { ok: false as const, error: "Missing fields" };
   const emails = input.memberEmails.map(e => e.trim().toLowerCase()).filter(Boolean);
   const unique = Array.from(new Set(emails));
-  if (unique.length === 0) return { ok: false as const, error: "At least one member email required" };
   // Disallow captain email among members (retrieve captain email)
   const supabase = getServiceClient();
   // Fetch event constraints
-  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, max_team_size").eq("id", input.eventId).maybeSingle();
+  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, min_team_size, max_team_size").eq("id", input.eventId).maybeSingle();
   if (evtErr) return { ok: false as const, error: evtErr.message };
   if (!evtRow) return { ok: false as const, error: "Event not found" };
+  const minTeamSize: number | null = (evtRow as { id: string; min_team_size?: number | null }).min_team_size ?? null;
   const maxTeamSize: number | null = (evtRow as { id: string; max_team_size?: number | null }).max_team_size ?? null;
+  const minAdditional: number = minTeamSize != null ? Math.max(minTeamSize - 1, 0) : 0;
+  const maxAdditional: number | null = maxTeamSize != null ? Math.max(maxTeamSize - 1, 0) : null;
+  // If no additional emails provided, enforce minimum additional requirement
+  if (unique.length === 0 && minAdditional > 0) {
+    return { ok: false as const, error: `At least ${minAdditional} additional member email(s) required` };
+  }
   const { data: captainUser, error: capErr } = await supabase.from("Users").select("id, email").eq("id", input.captainId).maybeSingle();
   if (capErr) return { ok: false as const, error: capErr.message };
   const captainEmail = (captainUser as { email?: string } | null)?.email?.toLowerCase();
   const filtered = captainEmail ? unique.filter(e => e !== captainEmail) : unique;
-  if (filtered.length === 0) return { ok: false as const, error: "Members cannot only be captain" };
-  if (maxTeamSize && filtered.length > maxTeamSize) return { ok: false as const, error: `Team exceeds max size ${maxTeamSize}` };
+  // Enforce minimum additional members after excluding captain email
+  if (filtered.length < minAdditional) return { ok: false as const, error: `Team needs at least ${minTeamSize ?? (minAdditional + 1)} member(s) including captain` };
+  if (maxAdditional != null && filtered.length > maxAdditional) return { ok: false as const, error: `Team exceeds max size ${maxTeamSize}` };
   // Fetch users by emails
   const { data: userRows, error: uErr } = await supabase.from("Users").select("id, email").in("email", filtered);
   if (uErr) return { ok: false as const, error: uErr.message };
@@ -580,13 +634,13 @@ export async function listUnresolvedTickets(limit = 200) {
   const supabase = getServiceClient();
   const { data, error } = await supabase
     .from("Tickets")
-    .select("id, userId, category, issue, created_at, solved")
+    .select("id, userId, category, issue, created_at, solved, status")
     .eq("solved", false)
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) return { ok: false as const, error: error.message };
   // Augment tickets with reporter name/email by batching a Users lookup
-  const tickets = (data || []) as Array<{ id: string; userId?: string | null; category?: string | null; issue?: string | null; created_at?: string | null; solved?: boolean | null }>;
+  const tickets = (data || []) as Array<{ id: string; userId?: string | null; category?: string | null; issue?: string | null; created_at?: string | null; solved?: boolean | null; status?: string | null }>;
   const userIds = Array.from(new Set(tickets.map((t) => t.userId).filter(Boolean))) as string[];
   if (userIds.length === 0) return { ok: true as const, data: tickets };
   const { data: usersData, error: usersError } = await supabase.from("Users").select("id, name, email").in("id", userIds);
@@ -602,6 +656,96 @@ export async function listUnresolvedTickets(limit = 200) {
     reporter_email: userById.get(t.userId || "")?.email ?? null,
   }));
   return { ok: true as const, data: augmented };
+}
+
+// Ticket Admin: request approval for pass assignment by super admin
+export async function requestTicketApproval(ticketId: string) {
+  const tOk = uuid.safeParse(ticketId);
+  if (!tOk.success) return { ok: false as const, error: "Invalid id" };
+  const sessionRaw = await getServerSession(authOptions);
+  const session = sessionRaw as unknown as { user?: { email?: string } } | null;
+  const email = session?.user?.email;
+  if (!email) return { ok: false as const, error: "Not authenticated" };
+  const supabase = getServiceClient();
+  const status = `Approval_pending,raised by ${email}`;
+  const { data, error } = await supabase.from("Tickets").update({ status }).eq("id", ticketId).select("*").maybeSingle();
+  if (error) return { ok: false as const, error: error.message };
+  return { ok: true as const, data };
+}
+
+// Super Admin: list tickets awaiting approval
+export async function listApprovalPendingTickets(limit = 200) {
+  const supabase = getServiceClient();
+  // Fetch unresolved tickets whose status starts with Approval_pending
+  const { data, error } = await supabase
+    .from("Tickets")
+    .select("id, userId, category, issue, created_at, solved, status")
+    .eq("solved", false)
+    .ilike("status", "Approval_pending%")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) return { ok: false as const, error: error.message };
+  const tickets = (data || []) as Array<{ id: string; userId?: string | null; category?: string | null; issue?: string | null; created_at?: string | null; solved?: boolean | null; status?: string | null }>;
+  const userIds = Array.from(new Set(tickets.map((t) => t.userId).filter(Boolean))) as string[];
+  let usersData: Array<{ id: string; name: string | null; email: string | null }> = [];
+  if (userIds.length) {
+    const res = await supabase.from("Users").select("id, name, email").in("id", userIds);
+    if (res.error) return { ok: false as const, error: res.error.message };
+    usersData = (res.data || []) as Array<{ id: string; name: string | null; email: string | null }>;
+  }
+  const byId = new Map(usersData.map(u => [u.id, u] as const));
+  const rows = tickets.map(t => {
+    const reporter = byId.get(t.userId || "");
+    const status = (t.status || "").trim();
+    // Parse raiser email from formatted string: "Approval_pending,raised by {email}"
+    let raised_by: string | null = null;
+    const marker = "raised by ";
+    const idx = status.toLowerCase().indexOf(marker);
+    if (idx >= 0) raised_by = status.slice(idx + marker.length).trim();
+    return {
+      id: t.id,
+      userId: t.userId || null,
+      category: t.category || null,
+      issue: t.issue || null,
+      created_at: t.created_at || null,
+      status: t.status || null,
+      reporter_name: reporter?.name ?? null,
+      reporter_email: reporter?.email ?? null,
+      raised_by,
+    };
+  });
+  return { ok: true as const, data: rows };
+}
+
+// Super Admin: approve and assign pass, then resolve ticket with combined status message
+export async function approveTicketAndAssign(ticketId: string, passId: string) {
+  const tOk = uuid.safeParse(ticketId);
+  const pOk = uuid.safeParse(passId);
+  if (!tOk.success || !pOk.success) return { ok: false as const, error: "Invalid ids" };
+  const supabase = getServiceClient();
+  const sessionRaw = await getServerSession(authOptions);
+  const session = sessionRaw as unknown as { user?: { email?: string } } | null;
+  const superEmail = session?.user?.email;
+  if (!superEmail) return { ok: false as const, error: "Not authenticated" };
+  // Load ticket to get userId and original status (to parse ticket_admin email)
+  const { data: tRow, error: tErr } = await supabase.from("Tickets").select("id, userId, status").eq("id", ticketId).maybeSingle();
+  if (tErr) return { ok: false as const, error: tErr.message };
+  if (!tRow) return { ok: false as const, error: "ticket_not_found" };
+  const userId = (tRow as { userId?: string | null }).userId;
+  if (!userId) return { ok: false as const, error: "ticket_has_no_user" };
+  const statusStr = ((tRow as { status?: string | null }).status || "").trim();
+  let ticketAdminEmail: string | null = null;
+  const marker = "raised by ";
+  const idx = statusStr.toLowerCase().indexOf(marker);
+  if (idx >= 0) ticketAdminEmail = statusStr.slice(idx + marker.length).trim();
+  // Assign the pass to the user (idempotent checks inside)
+  const assignRes = await assignPassToUser(userId, passId);
+  if (!assignRes.ok) return assignRes;
+  // Mark ticket solved with composite status
+  const composite = `Transaction transcript verified by ${ticketAdminEmail || "ticket_admin"} and assigned by ${superEmail}`;
+  const { data, error } = await supabase.from("Tickets").update({ solved: true, status: composite }).eq("id", ticketId).select("*").maybeSingle();
+  if (error) return { ok: false as const, error: error.message };
+  return { ok: true as const, data };
 }
 
 // Assign a pass to the ticket's user (grants pass to user). Does not mark the ticket solved.
@@ -634,8 +778,81 @@ export async function markTicketSolved(ticketId: string, markTranscriptVerified 
   const email = session?.user?.email;
     if (!email) return { ok: false as const, error: "Not authenticated" };
     updatePayload.status = `Transaction transcript verified by ${email}`;
+  } else {
+    // stamp resolved-only message with admin email
+    const sessionRaw2 = await getServerSession(authOptions);
+    const session2 = sessionRaw2 as unknown as { user?: { email?: string } } | null;
+    const email2 = session2?.user?.email;
+    if (!email2) return { ok: false as const, error: "Not authenticated" };
+    updatePayload.status = `Resolved only by ${email2}`;
   }
   const { data, error } = await supabase.from("Tickets").update(updatePayload).eq("id", ticketId).select("*").maybeSingle();
   if (error) return { ok: false as const, error: error.message };
   return { ok: true as const, data };
+}
+
+// Admin utility: Manual Fetch from payment portal by phone
+export async function adminManualFetchPayments(phone: string) {
+  const p = (phone || "").trim();
+  if (!p) return { ok: false as const, error: "Phone required" };
+  const ACCESS_KEY = process.env.ACCESSKEY;
+  const ACCESS_TOKEN = process.env.ACCESSTOKEN;
+  const PAYMENT_ENDPOINT = process.env.VERIFICATION_URL || 'https://api.manipal.edu/api/v1/falak-single-payment-log';
+  if (!ACCESS_KEY || !ACCESS_TOKEN) {
+    return { ok: false as const, error: "Missing ACCESSKEY/ACCESSTOKEN in env" };
+  }
+  // Try raw plus +91 variant for convenience
+  const variants: string[] = [p];
+  const digits = p.replace(/[^0-9]/g, "");
+  if (!p.startsWith("+91") && digits.length === 10) variants.push("+91" + digits);
+  let docs: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
+  let lastError: string | null = null;
+  for (const v of variants) {
+    try {
+      const url = `${PAYMENT_ENDPOINT}?mobile=${encodeURIComponent(v)}`;
+      const r = await fetch(url, { headers: { accept: 'application/json', accesskey: ACCESS_KEY, accesstoken: ACCESS_TOKEN }, cache: 'no-store' });
+      if (!r.ok) { lastError = `remote_status_${r.status}`; continue; }
+      const j = await r.json();
+      const arr = Array.isArray(j?.data?.docs) ? j.data.docs : [];
+      if (arr.length > 0) { docs = arr; break; }
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : 'fetch_failed';
+    }
+  }
+  // Load mapping to show resolution info
+  const supabase = getServiceClient();
+  const mapRes = await supabase.from('external_pass_map').select('external_key, external_key_v2, pass_id, active').eq('active', true);
+  const mapping: Record<string, string | null> = {};
+  if (!mapRes.error && Array.isArray(mapRes.data)) {
+    for (const r of mapRes.data as any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      if (r.external_key) mapping[r.external_key] = r.pass_id as string | null;
+      if (r.external_key_v2) mapping[r.external_key_v2] = r.pass_id as string | null;
+    }
+  }
+  const simplify = (d: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const mt = (d?.membership_type || '').trim().toLowerCase();
+    const en = (d?.event_name || '').trim().toLowerCase();
+    const et = (d?.event_type || '').trim().toLowerCase();
+    const legacyKey = `${mt}|${en}`;
+    const v2Key = `${et}|${en}`;
+    const resolved = mapping[v2Key] ?? mapping[legacyKey] ?? null;
+    // attempt common amount fields
+    const total_amount = (d?.total_amount ?? d?.actual_amount ?? null);
+    return {
+      tracking_id: d?.tracking_id || d?.orderid || null,
+      order_status: d?.order_status || null,
+      membership_type: d?.membership_type || null,
+      event_name: d?.event_name || null,
+      event_type: d?.event_type || null,
+      created_at: d?.created_at || null,
+      total_amount,
+      legacyKey,
+      v2Key,
+      mapped: resolved != null,
+      pass_id: resolved,
+    };
+  };
+  const rows = (docs || []).map(simplify);
+  if (!rows.length && lastError) return { ok: false as const, error: lastError };
+  return { ok: true as const, data: rows };
 }

@@ -6,7 +6,7 @@ import UnregisteredNotice from "../../components/tickets/ti_unreg";
 import { redirect } from "next/navigation";
 import { Orbitron } from "next/font/google"; 
 import Footer from "@/components/Footer";
-import styles from "../profile/page.module.css";
+import localStyles from "./tickets.module.css";
 
 const orbitron = Orbitron({ 
   subsets: ["latin"], 
@@ -35,16 +35,16 @@ export default async function TicketsPage() {
   return (
     <div className="relative min-h-screen flex flex-col">
       {/* Base background color */}
-      <div className="absolute inset-0 bg-[#32212C] z-[-3]" />
+  <div className="absolute inset-0 bg-[#32212C] z-[-3] will-change-transform" />
 
       {/* SVG overlay */}
       <div
-        className="absolute inset-0 bg-cover bg-center opacity-20 z-[-2]"
+        className="absolute inset-0 bg-cover bg-center opacity-20 z-[-2] will-change-transform"
         style={{ backgroundImage: "url('/bg.svg')" }}
       />
 
       {/* Optional dark overlay */}
-      <div className="absolute inset-0 bg-black/50 z-[-1]" />
+  <div className="absolute inset-0 bg-black/50 z-[-1] will-change-transform" />
 
       {/* Page content */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center
@@ -62,18 +62,11 @@ export default async function TicketsPage() {
             <RegisteredTicketForm action={submit} />
           )}
         </div>
-        <div className={styles.infoCard} style={{
-                background:'rgba(0,0,0,0.35)',
-                border:'1px solid rgba(255,255,255,0.15)',
-                borderRadius:12,
-                padding:'12px 16px',
-                marginBottom:16,
-                backdropFilter:'blur(6px)'
-              }}>
-                <p style={{fontSize:12,lineHeight:1.4,color:'#e2e8f0'}}>
-                  <strong style={{color:'#fff'}}>Note:</strong> Support tickets raised will be resolved after mid-sems. If you do not see your pass immediately after purchase, try going to your profile page and click on Verify Purchases button.
-                </p>
-              </div>
+        <div className={localStyles.noteCard}>
+          <p className={localStyles.noteText}>
+            <strong>Note:</strong>If you do not see your pass immediately after purchase, try going to your profile page and click on Verify Purchases button.
+          </p>
+        </div>
       </main>
 
       {/* Footer stays full width */}

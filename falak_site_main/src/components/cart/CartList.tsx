@@ -197,8 +197,11 @@ export default function CartList() {
                             <div className="flex items-center gap-4">
                               {/* Check if p.cost exists */}
                               {p.cost !== null && typeof p.cost !== 'undefined' && (
-                                <div className="text-xl font-bold font-mono" style={{ color: '#DBAAA6' }}>
-                                  ₹{typeof p.cost === 'number' ? p.cost.toLocaleString() : p.cost}
+                                <div className="text-right">
+                                  <div className="text-xl font-bold font-mono" style={{ color: '#DBAAA6' }}>
+                                    ₹{typeof p.cost === 'number' ? p.cost.toLocaleString() : p.cost}
+                                  </div>
+                                  <div className="text-[10px] leading-tight text-gray-300 text-right">+gst</div>
                                 </div>
                               )}
                               <button
@@ -224,13 +227,21 @@ export default function CartList() {
                 <div className="border-t pt-4 mt-4" style={{ borderColor: '#DBAAA6' }}>
                   <div className="flex items-center justify-between py-2">
                     <span className="text-gray-400">Items ({view.length})</span>
-                    <span className="text-lg font-mono text-white">
-                      ₹{view.reduce((sum, p) => sum + (typeof p.cost === 'number' ? p.cost : 0), 0).toLocaleString()}
+                    <span className="text-right">
+                      <span className="text-lg font-mono text-white block">
+                        ₹{view.reduce((sum, p) => sum + (typeof p.cost === 'number' ? p.cost : 0), 0).toLocaleString()}
+                      </span>
+                      <span className="text-[10px] leading-tight text-gray-300 block text-right">+gst</span>
                     </span>
                   </div>
                   <div className="flex items-center justify-between font-bold text-xl pt-2">
                     <span className="text-white">Total</span>
-                    <span className="font-mono" style={{ color: '#DBAAA6' }}>₹{view.reduce((sum, p) => sum + (typeof p.cost === 'number' ? p.cost : 0), 0).toLocaleString()}</span>
+                    <span className="text-right">
+                      <span className="font-mono block" style={{ color: '#DBAAA6' }}>
+                        ₹{view.reduce((sum, p) => sum + (typeof p.cost === 'number' ? p.cost : 0), 0).toLocaleString()}
+                      </span>
+                      <span className="text-[10px] leading-tight text-gray-300 block text-right">+gst</span>
+                    </span>
                   </div>
                 </div>
                 <button

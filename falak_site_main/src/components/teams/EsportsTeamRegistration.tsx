@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
 import { createEsportsTeam, joinEsportsTeam, getEsportsTeam } from "@/lib/actions/esportsTeams";
+import { getServiceClient } from "@/lib/actions/supabaseClient";
 
 interface Props {
   eventId: string;
@@ -20,6 +21,7 @@ export default function EsportsTeamRegistration({ eventId, userId }: Props) {
   const [joinCode, setJoinCode] = useState("");
   const [lookupResult, setLookupResult] = useState<{ id: string; name: string } | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
+  const [isFull, setIsFull] = useState(false);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -42,13 +44,31 @@ export default function EsportsTeamRegistration({ eventId, userId }: Props) {
     setLookupLoading(true);
     const res = await getEsportsTeam(trimmed);
     setLookupLoading(false);
-    if (!res.ok) { setLookupResult(null); return; }
+    if (!res.ok) { setLookupResult(null); setIsFull(false); return; }
     setLookupResult({ id: res.data.id, name: res.data.name });
+    // Client hint: check capacity to inform user early (non-authoritative; server will enforce)
+    try {
+      const supabase = getServiceClient();
+      const teamId = res.data.id;
+      const { data: evtRow } = await supabase.from("Events").select("id, max_team_size").eq("id", res.data.eventId).maybeSingle();
+      const maxSize = (evtRow as { max_team_size?: number | null } | null)?.max_team_size ?? null;
+      if (typeof maxSize === 'number' && maxSize > 0) {
+        const { count } = await supabase.from("Team_members").select("id", { count: 'exact', head: true }).eq("teamId", teamId);
+        const currentMembers = typeof count === 'number' ? count : 0;
+        const totalWithCaptain = currentMembers + 1;
+        setIsFull(totalWithCaptain >= maxSize);
+      } else {
+        setIsFull(false);
+      }
+    } catch {
+      setIsFull(false);
+    }
   }
 
   async function handleJoin(e: React.FormEvent) {
     e.preventDefault();
     if (!joinCode.trim()) { toast.error("Enter code"); return; }
+    if (isFull) { toast.error("Team is full"); return; }
     startJoin(async () => {
   const res = await joinEsportsTeam({ teamId: joinCode.trim(), userId });
   if (!res.ok) { toast.error(res.error); return; }
@@ -143,6 +163,7 @@ export default function EsportsTeamRegistration({ eventId, userId }: Props) {
               <div className="text-sm space-y-1">
                 <p className="font-medium">{lookupResult.name}</p>
                 <p className="text-xs opacity-70">ID: {lookupResult.id}</p>
+                {isFull && <p className="text-xs text-red-300">Team is full</p>}
               </div>
             )}
           </div>
