@@ -291,6 +291,9 @@ export async function listPendingPaymentLogs(limit = 200) {
   if (mapRes.error) return { ok:false as const, error: mapRes.error.message };
   const mapping = new Set<string>();
   for (const r of (mapRes.data||[]) as any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    // Only treat a key as mapped if it points to a real pass_id (non-null). If pass_id is null,
+    // the admin intentionally left the key unresolved and we should surface those logs as pending.
+    if (r.pass_id == null) continue;
     if (r.external_key) mapping.add((r.external_key as string).toLowerCase());
     if (r.external_key_v2) mapping.add((r.external_key_v2 as string).toLowerCase());
   }
