@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "fix:non-mahe-proshow": "node scripts/fix-non-mahe-proshow.mjs"
   },
   "dependencies": {
     "@gsap/react": "2.1.1",
@@ -33,7 +34,8 @@
     "split-type": "^0.3.4",
     "tailwind-merge": "^3.3.1",
     "twilio": "^5.8.2",
-    "zod": "4.0.15"
+    "zod": "4.0.15",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
