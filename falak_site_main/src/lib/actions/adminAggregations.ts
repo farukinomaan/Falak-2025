@@ -1190,7 +1190,7 @@ export async function adminAssignDuplicateLogToPhone(paymentLogId: string, targe
   const granted = await assignPassToUser(targetUserId, passId);
   if (!granted.ok) return { ok: false as const, error: granted.error || 'grant_failed' } as const;
   return { ok: true as const, data: { reassigned_to: targetUserId, passId, tracking_id: (logRow as any).tracking_id || null } } as const; // eslint-disable-line @typescript-eslint/no-explicit-any
-
+}
 // Helper to get current admin role from session
 export async function getCurrentAdminRole() {
   const session = (await getServerSession(authOptions)) as { user?: { email?: string | null } } | null;
