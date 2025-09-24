@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, markTicketSolved, adminManualFetchPayments, requestTicketApproval, adminUpdateUserPhone } from "@/lib/actions/adminAggregations";
+import { getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, markTicketSolved, adminManualFetchPayments, requestTicketApproval, adminUpdateUserPhone, adminIngestPaymentsForUser } from "@/lib/actions/adminAggregations";
 import type { SearchUserRow } from "@/lib/actions/adminAggregations";
 
 // Define a Pass summary type for this component
@@ -31,6 +31,7 @@ export default function TicketAdminPanel() {
   const [editPhone, setEditPhone] = useState<string>("");
   const [savingPhone, setSavingPhone] = useState<boolean>(false);
   const [editingPhone, setEditingPhone] = useState<boolean>(false);
+  const [syncing, setSyncing] = useState<boolean>(false);
 
   const loadPending = useCallback(async () => {
     setLoadingPending(true);
@@ -74,6 +75,22 @@ export default function TicketAdminPanel() {
       setDetails(res.data);
       setEditPhone(res.data?.user?.phone || "");
       setEditingPhone(false);
+    }
+  }
+
+  async function syncPayments() {
+    if (!selected) return;
+    setSyncing(true);
+    try {
+      const res = await adminIngestPaymentsForUser(selected);
+      if (!res.ok) toast.error(res.error || 'Sync failed');
+      else {
+        toast.success('Payments synced');
+        await loadDetails(selected);
+        await loadPending();
+      }
+    } finally {
+      setSyncing(false);
     }
   }
 
@@ -196,6 +213,11 @@ export default function TicketAdminPanel() {
 
               <div>
                 <div className="font-medium">Passes</div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Button size="sm" variant="outline" onClick={()=> void syncPayments()} disabled={!selected || syncing}>
+                    {syncing ? 'Syncing…' : 'Sync payments'}
+                  </Button>
+                </div>
                 <ul className="list-disc pl-6 text-sm">
                   {(details.passes || []).map((p) => (
                     <li key={p.id}>{p.pass_name}</li>

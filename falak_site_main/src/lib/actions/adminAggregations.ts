@@ -27,6 +27,7 @@ import {
   listAllPassesRaw as _listAllPassesRaw,
 } from "./tables/pass";
 import { createUserPass as _createUserPass } from "./tables/userPasses";
+import { ingestAndListUserPasses } from "@/lib/actions/payments";
 // (Team create/list functions imported on demand elsewhere if needed)
 
 // Wrapper Server Actions for Events
@@ -415,6 +416,25 @@ export async function adminUpdateUserPhone(userId: string, phone: string) {
   if (error) return { ok: false as const, error: error.message };
   if (!data) return { ok: false as const, error: 'user_not_found' };
   return { ok: true as const, data };
+}
+
+// Admin: trigger payments ingestion for a specific user (server-only)
+export async function adminIngestPaymentsForUser(userId: string) {
+  const uid = uuid.safeParse(userId);
+  if (!uid.success) return { ok: false as const, error: "Invalid userId" };
+  // Role check via session
+  const session = (await getServerSession(authOptions)) as { user?: { email?: string | null } } | null;
+  const email = session?.user?.email || null;
+  if (!email) return { ok: false as const, error: "Not authenticated" };
+  const roleRes = await getRoleForEmail(email);
+  const role = roleRes.ok ? roleRes.data : undefined;
+  if (!(role === 'ticket_admin' || role === 'super_admin')) {
+    return { ok: false as const, error: "Forbidden" };
+  }
+  // Call ingestion and return minimal status
+  const res = await ingestAndListUserPasses({ forceUserId: userId });
+  if (!res.ok) return { ok: false as const, error: res.error || 'ingestion_failed' };
+  return { ok: true as const, data: { synced: true } };
 }
 
 // Lightweight helper: list only passIds owned by a user (for quick ownership checks in UI)

@@ -118,6 +118,7 @@ interface ExternalPaymentDoc {
   event_name?: string;
   event_type?: string; // NEW: some upstream payloads may include explicit event_type (e.g., ESPORTS)
   user_type?: string; // Upstream field indicating MAHE/NONMAHE
+  user_status?: string; // Some payloads use user_status instead of user_type
   total_amount?: string | number;
   created_at?: string; // date string
   // Additional untyped fields from upstream; store in raw JSON.
@@ -131,6 +132,24 @@ let NON_MAHE_PROSHOW_PASS_ID: string | null | undefined = undefined; // undefine
 
 function normalizeUserType(v: unknown): string {
   return String(v ?? '').trim().toLowerCase().replace(/[^a-z]/g, '');
+}
+
+// Some upstreams send user_type, others user_status; support camelCase as well
+function getNormalizedUserTypeFromDoc(d: { [k: string]: unknown } | null | undefined): string | null {
+  if (!d) return null;
+  const candidates: unknown[] = [
+    d['user_type'],
+    d['userType'],
+    d['user_status'],
+    d['userStatus'],
+    d['usertype'],
+    d['userstatus'],
+  ];
+  for (const c of candidates) {
+    const n = normalizeUserType(c);
+    if (n) return n;
+  }
+  return null;
 }
 
 type PassMetaRow = { mahe: boolean | null; event_id: string | null };
@@ -283,13 +302,18 @@ async function fetchRemoteLogs(phone: string): Promise<ExternalPaymentDoc[]> {
 // Soft lock helpers removed.
 
 // Public server action style function
-export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug?: boolean }): Promise<FetchResult> {
+export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug?: boolean; forceUserId?: string }): Promise<FetchResult> {
   const debug: string[] = [];
   // Resolve user id via (1) Supabase auth, (2) NextAuth session email -> Users table lookup, (3) dev override.
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   const { data: { user: supaUser } } = await supabase.auth.getUser();
   let userId: string | null = supaUser?.id || null;
+
+  // Admin override: when called by a privileged server action, allow forcing a specific userId
+  if (opts?.forceUserId) {
+    userId = opts.forceUserId;
+  }
 
   // Fallback: NextAuth session email -> Users table
   if (!userId) {
@@ -416,13 +440,27 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
     // Conditional override: if upstream marks user as NONMAHE and mapped pass is MAHE Proshow (event_id null, mahe=true),
     // re-route to Non-MAHE Proshow pass id.
     if (passId) {
-      const ut = normalizeUserType(d.user_type || d.userType);
+      const ut = getNormalizedUserTypeFromDoc(d);
       if (ut === 'nonmahe') {
         try {
           const meta = await getPassMeta(service, passId);
-          if (meta && meta.mahe === true && meta.event_id == null) {
+          if (meta && meta.event_id == null) {
+            // For any proshow bundle under NONMAHE, force to Non‑MAHE BLR and cleanup stray MAHE proshow
             const nonMaheId = await getNonMaheProshowPassId(service);
             if (nonMaheId) passId = nonMaheId;
+            // Remove any existing MAHE=true proshow passes to avoid dual ownership
+            const stray = await service
+              .from('User_passes')
+              .select('id, passes:passId(mahe, event_id)')
+              .eq('userId', userId);
+            if (!stray.error && Array.isArray(stray.data)) {
+              for (const s of stray.data as Array<{ id: string; passes?: { mahe?: boolean | null; event_id?: string | null } }>) {
+                const p = s.passes;
+                if (p && p.event_id == null && p.mahe === true) {
+                  await service.from('User_passes').delete().eq('id', s.id);
+                }
+              }
+            }
           }
         } catch {/* ignore override errors */}
       }
@@ -525,16 +563,29 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
   const legacyKey = buildLegacyKey(mt, en);
   const v2Key = buildV2Key(et, en);
   let passId = mapping[v2Key] ?? mapping[legacyKey];
-      // Apply same NONMAHE override during backfill if raw.user_type indicates Non-MAHE and pass is MAHE Proshow
+      // Apply same NONMAHE override during backfill if raw.user_type indicates Non-MAHE and pass is Proshow
       if (passId) {
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const ut = normalizeUserType((pl as any)?.raw?.user_type || (pl as any)?.raw?.userType);
+          const ut = getNormalizedUserTypeFromDoc((pl as any)?.raw);
           if (ut === 'nonmahe') {
             const meta = await getPassMeta(service, passId);
-            if (meta && meta.mahe === true && meta.event_id == null) {
+            if (meta && meta.event_id == null) {
               const nonMaheId = await getNonMaheProshowPassId(service);
               if (nonMaheId) passId = nonMaheId;
+              // Also cleanup any stray MAHE proshow already assigned
+              const stray = await service
+                .from('User_passes')
+                .select('id, passes:passId(mahe, event_id)')
+                .eq('userId', userId);
+              if (!stray.error && Array.isArray(stray.data)) {
+                for (const s of stray.data as Array<{ id: string; passes?: { mahe?: boolean | null; event_id?: string | null } }>) {
+                  const p = s.passes;
+                  if (p && p.event_id == null && p.mahe === true) {
+                    await service.from('User_passes').delete().eq('id', s.id);
+                  }
+                }
+              }
             }
           }
         } catch {/* ignore override errors */}
