@@ -4,6 +4,7 @@ import { getServiceClient } from "./supabaseClient";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { ingestAndListUserPasses } from "@/lib/actions/payments";
 import {
   EventCreateSchema,
   EventUpdateSchema,
@@ -78,7 +79,7 @@ interface UserPassRow extends IdOnly { userId: string; passId: string }
 interface TeamRow extends IdOnly { eventId: string; name: string; captainId?: string | null }
 interface TeamMemberRow extends IdOnly { teamId: string; memberId: string; eventId: string }
 interface PassDetailRow extends IdOnly { pass_name: string | null; enable?: boolean | null; status?: boolean | null; quanatity?: number | string | null }
-export type UserDetailsData = { user: UserBasicRow; passes: PassDetailRow[]; teams: Array<{ teamId: string; teamName: string; eventId: string; eventName: string; isCaptain: boolean }>; }
+export type UserDetailsData = { user: UserBasicRow & { reg_no?: string | null; mahe?: boolean | null }; passes: PassDetailRow[]; teams: Array<{ teamId: string; teamName: string; eventId: string; eventName: string; isCaptain: boolean }>; }
 
 // Aggregations for Super Admin
 export async function getTotals() {
@@ -198,7 +199,7 @@ export async function getUserDetails(userId: string) {
   if (!idOk.success) return { ok: false as const, error: "Invalid userId" };
   const supabase = getServiceClient();
   const [userRes, upRes, passRes, tmRes, teamRes, evtRes] = await Promise.all([
-    supabase.from("Users").select("id, name, email, phone").eq("id", userId).maybeSingle(),
+    supabase.from("Users").select("id, name, email, phone, reg_no, mahe").eq("id", userId).maybeSingle(),
     supabase.from("User_passes").select("id, userId, passId").eq("userId", userId),
     supabase.from("Pass").select("id, pass_name, enable, status, quanatity"),
     supabase.from("Team_members").select("id, teamId, memberId, eventId").eq("memberId", userId),
@@ -238,7 +239,7 @@ export async function getUserDetails(userId: string) {
     })
     .filter(Boolean) as Array<{ teamId: string; teamName: string; eventId: string; eventName: string; isCaptain: boolean }>;
 
-  return { ok: true as const, data: { user: userRes.data as UserBasicRow, passes, teams } as UserDetailsData };
+  return { ok: true as const, data: { user: userRes.data as UserBasicRow & { reg_no?: string | null; mahe?: boolean | null }, passes, teams } as UserDetailsData };
 }
 
 export async function assignPassToUser(userId: string, passId: string) {
@@ -273,6 +274,7 @@ export async function assignPassToUser(userId: string, passId: string) {
 interface PendingPaymentRow {
   payment_log_id: string;
   user_id: string | null;
+  user_phone?: string | null;
   tracking_id: string | null;
   membership_type: string | null;
   event_name: string | null;
@@ -285,23 +287,45 @@ interface PendingPaymentRow {
 // List payment_logs that are Success but have no active mapping (neither legacy nor v2) resolved.
 export async function listPendingPaymentLogs(limit = 200) {
   const supabase = getServiceClient();
-  const pl = await supabase.from('payment_logs').select('id, user_id, tracking_id, membership_type, event_name, event_type, external_created_at').eq('status','Success').limit(limit * 3);
+  // Include common legacy success variants to avoid missing rows stored historically
+  const SUCCESS_STATUSES = ['Success','success','Paid','paid','Completed','completed','successfull','Successfull','successfull payment','Successfull payment','successfull_payment','Successfull_payment'];
+  const pl = await supabase
+    .from('payment_logs')
+    .select('id, user_id, tracking_id, membership_type, event_name, event_type, external_created_at')
+    .in('status', SUCCESS_STATUSES)
+    .limit(limit * 3);
   if (pl.error) return { ok:false as const, error: pl.error.message };
+  // Preload user phones for associated user_ids
+  const userIds = Array.from(new Set(((pl.data||[]) as Array<{ user_id: string | null }>).map(r => r.user_id).filter(Boolean))) as string[];
+  let phoneByUser: Map<string, string | null> = new Map();
+  if (userIds.length) {
+    const usersRes = await supabase.from('Users').select('id, phone').in('id', userIds);
+    if (!usersRes.error && usersRes.data) {
+      phoneByUser = new Map((usersRes.data as Array<{ id: string; phone: string | null }>).map(u => [u.id, u.phone ?? null] as const));
+    }
+  }
   const mapRes = await supabase.from('external_pass_map').select('external_key, external_key_v2, pass_id, active').eq('active', true);
   if (mapRes.error) return { ok:false as const, error: mapRes.error.message };
-  const mapping = new Set<string>();
-  for (const r of (mapRes.data||[]) as any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
-    if (r.external_key) mapping.add((r.external_key as string).toLowerCase());
-    if (r.external_key_v2) mapping.add((r.external_key_v2 as string).toLowerCase());
+  // Build mapping from key -> pass_id (may be null). Only consider a log "mapped" if pass_id is non-null.
+  const mapping: Record<string, string | null> = {};
+  for (const r of (mapRes.data||[]) as Array<{ external_key?: string | null; external_key_v2?: string | null; pass_id?: string | null }>) {
+    const k1 = (r.external_key || '').toLowerCase();
+    const k2 = (r.external_key_v2 || '').toLowerCase();
+    if (k1) mapping[k1] = r.pass_id ?? null;
+    if (k2) mapping[k2] = r.pass_id ?? null;
   }
   const pending: PendingPaymentRow[] = [];
-  for (const row of (pl.data||[]) as any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  for (const row of (pl.data||[]) as Array<{ id: string; user_id: string | null; tracking_id: string | null; membership_type: string | null; event_name: string | null; event_type: string | null; external_created_at: string | null }>) {
     const legacy_key = `${(row.membership_type||'').trim().toLowerCase()}|${(row.event_name||'').trim().toLowerCase()}`;
     const v2_key = `${(row.event_type||'').trim().toLowerCase()}|${(row.event_name||'').trim().toLowerCase()}`;
-    if (!mapping.has(v2_key) && !mapping.has(legacy_key)) {
+    const resolved = (v2_key && Object.prototype.hasOwnProperty.call(mapping, v2_key) ? mapping[v2_key] : undefined)
+                  ?? (legacy_key && Object.prototype.hasOwnProperty.call(mapping, legacy_key) ? mapping[legacy_key] : undefined);
+    // Include in pending when no mapping exists OR mapping exists but pass_id is null
+    if (resolved == null) {
       pending.push({
         payment_log_id: row.id,
         user_id: row.user_id,
+        user_phone: row.user_id ? (phoneByUser.get(row.user_id) ?? null) : null,
         tracking_id: row.tracking_id,
         membership_type: row.membership_type,
         event_name: row.event_name,
@@ -313,6 +337,17 @@ export async function listPendingPaymentLogs(limit = 200) {
     }
     if (pending.length >= limit) break;
   }
+  // Newest first by created_at (string ISO) fallback by tracking
+  pending.sort((a, b) => {
+    const ta = a.created_at || '';
+    const tb = b.created_at || '';
+    if (ta && tb) return tb.localeCompare(ta);
+    if (ta) return -1;
+    if (tb) return 1;
+    const xa = a.tracking_id || '';
+    const xb = b.tracking_id || '';
+    return xb.localeCompare(xa);
+  });
   return { ok:true as const, data: pending };
 }
 
@@ -415,6 +450,74 @@ export async function adminUpdateUserPhone(userId: string, phone: string) {
   if (error) return { ok: false as const, error: error.message };
   if (!data) return { ok: false as const, error: 'user_not_found' };
   return { ok: true as const, data };
+}
+
+// Admin: update a user's registration number (ticket_admin or super_admin)
+export async function adminUpdateUserRegNo(userId: string, regNo: string) {
+  const uid = uuid.safeParse(userId);
+  if (!uid.success) return { ok: false as const, error: "Invalid userId" };
+  const reg = (regNo || "").trim();
+  if (!reg) return { ok: false as const, error: "reg_no required" };
+  const session = (await getServerSession(authOptions)) as { user?: { email?: string | null } } | null;
+  const email = session?.user?.email || null;
+  if (!email) return { ok: false as const, error: "Not authenticated" };
+  const roleRes = await getRoleForEmail(email);
+  const role = roleRes.ok ? roleRes.data : undefined;
+  if (!(role === 'ticket_admin' || role === 'super_admin')) {
+    return { ok: false as const, error: "Forbidden" };
+  }
+  const supabase = getServiceClient();
+  const { data, error } = await supabase
+    .from('Users')
+    .update({ reg_no: reg })
+    .eq('id', userId)
+    .select('id, name, email, phone, reg_no, mahe')
+    .maybeSingle();
+  if (error) return { ok: false as const, error: error.message };
+  if (!data) return { ok: false as const, error: 'user_not_found' };
+  return { ok: true as const, data };
+}
+
+// Admin: update a user's MAHE boolean (ticket_admin or super_admin)
+export async function adminUpdateUserMahe(userId: string, mahe: boolean) {
+  const uid = uuid.safeParse(userId);
+  if (!uid.success) return { ok: false as const, error: "Invalid userId" };
+  const session = (await getServerSession(authOptions)) as { user?: { email?: string | null } } | null;
+  const email = session?.user?.email || null;
+  if (!email) return { ok: false as const, error: "Not authenticated" };
+  const roleRes = await getRoleForEmail(email);
+  const role = roleRes.ok ? roleRes.data : undefined;
+  if (!(role === 'ticket_admin' || role === 'super_admin')) {
+    return { ok: false as const, error: "Forbidden" };
+  }
+  const supabase = getServiceClient();
+  const { data, error } = await supabase
+    .from('Users')
+    .update({ mahe })
+    .eq('id', userId)
+    .select('id, name, email, phone, reg_no, mahe')
+    .maybeSingle();
+  if (error) return { ok: false as const, error: error.message };
+  if (!data) return { ok: false as const, error: 'user_not_found' };
+  return { ok: true as const, data };
+}
+
+// Admin: trigger ingestion for a user (ticket_admin or super_admin)
+export async function adminIngestPaymentsForUser(userId: string) {
+  const uid = uuid.safeParse(userId);
+  if (!uid.success) return { ok: false as const, error: "Invalid userId" };
+  const session = (await getServerSession(authOptions)) as { user?: { email?: string | null } } | null;
+  const email = session?.user?.email || null;
+  if (!email) return { ok: false as const, error: "Not authenticated" };
+  const roleRes = await getRoleForEmail(email);
+  const role = roleRes.ok ? roleRes.data : undefined;
+  if (!(role === 'ticket_admin' || role === 'super_admin')) {
+    return { ok: false as const, error: "Forbidden" };
+  }
+  // Use dev override to target the specific userId irrespective of auth session.
+  const res = await ingestAndListUserPasses({ devUserId: userId });
+  if (!res.ok) return { ok: false as const, error: res.error || 'ingestion_failed' };
+  return { ok: true as const, data: res.data };
 }
 
 // Lightweight helper: list only passIds owned by a user (for quick ownership checks in UI)
@@ -643,23 +746,53 @@ export async function listUnresolvedTickets(limit = 200) {
   const tickets = (data || []) as Array<{ id: string; userId?: string | null; category?: string | null; issue?: string | null; created_at?: string | null; solved?: boolean | null; status?: string | null }>;
   const userIds = Array.from(new Set(tickets.map((t) => t.userId).filter(Boolean))) as string[];
   if (userIds.length === 0) return { ok: true as const, data: tickets };
-  const { data: usersData, error: usersError } = await supabase.from("Users").select("id, name, email").in("id", userIds);
+  const { data: usersData, error: usersError } = await supabase.from("Users").select("id, name, email, phone").in("id", userIds);
   if (usersError) return { ok: false as const, error: usersError.message };
-  type UserRow = { id: string; name?: string | null; email?: string };
+  type UserRow = { id: string; name?: string | null; email?: string | null; phone?: string | null };
   const userById = new Map<string, UserRow>();
   for (const u of (usersData || []) as UserRow[]) {
     if (u && u.id) userById.set(u.id, u);
   }
-  const augmented = tickets.map((t) => ({
-    ...t,
-    reporter_name: userById.get(t.userId || "")?.name ?? null,
-    reporter_email: userById.get(t.userId || "")?.email ?? null,
-  }));
+  // Parse requested passId from status string and later attach pass name
+  const parseRequestedPassId = (status: string | null | undefined) => {
+    if (!status) return null;
+    const s = status.toLowerCase();
+    if (!s.startsWith('approval_pending')) return null;
+    const m = status.match(/passid=([0-9a-f\-]{36})/i);
+    return m ? m[1] : null;
+  };
+  const augmented = tickets.map((t) => {
+    const u = userById.get(t.userId || "");
+    const requested_pass_id = parseRequestedPassId(t.status);
+    return {
+      ...t,
+      reporter_name: u?.name ?? null,
+      reporter_email: u?.email ?? null,
+      reporter_phone: u?.phone ?? null,
+      requested_pass_id,
+    };
+  });
+  // Attach pass names for requested_pass_id where present
+  const passIds = Array.from(new Set(augmented.map(a => a.requested_pass_id).filter(Boolean))) as string[];
+  if (passIds.length) {
+    const { data: passRows, error: pErr } = await supabase.from('Pass').select('id, pass_name').in('id', passIds);
+    if (!pErr && passRows) {
+      const nameById = new Map<string, string>();
+      for (const r of passRows as Array<{ id: string; pass_name: string | null }>) {
+        nameById.set(r.id, r.pass_name || r.id);
+      }
+      for (const row of augmented) {
+        if (row.requested_pass_id) {
+          (row as any).requested_pass_name = nameById.get(row.requested_pass_id) || row.requested_pass_id; // eslint-disable-line @typescript-eslint/no-explicit-any
+        }
+      }
+    }
+  }
   return { ok: true as const, data: augmented };
 }
 
 // Ticket Admin: request approval for pass assignment by super admin
-export async function requestTicketApproval(ticketId: string) {
+export async function requestTicketApproval(ticketId: string, passId?: string) {
   const tOk = uuid.safeParse(ticketId);
   if (!tOk.success) return { ok: false as const, error: "Invalid id" };
   const sessionRaw = await getServerSession(authOptions);
@@ -667,7 +800,7 @@ export async function requestTicketApproval(ticketId: string) {
   const email = session?.user?.email;
   if (!email) return { ok: false as const, error: "Not authenticated" };
   const supabase = getServiceClient();
-  const status = `Approval_pending,raised by ${email}`;
+  const status = `Approval_pending${passId ? `(passId=${passId})` : ''},raised by ${email}`;
   const { data, error } = await supabase.from("Tickets").update({ status }).eq("id", ticketId).select("*").maybeSingle();
   if (error) return { ok: false as const, error: error.message };
   return { ok: true as const, data };
@@ -702,6 +835,10 @@ export async function listApprovalPendingTickets(limit = 200) {
     const marker = "raised by ";
     const idx = status.toLowerCase().indexOf(marker);
     if (idx >= 0) raised_by = status.slice(idx + marker.length).trim();
+    // Extract requested passId if present
+    let requested_pass_id: string | null = null;
+    const m = status.match(/passid=([0-9a-f\-]{36})/i);
+    if (m) requested_pass_id = m[1];
     return {
       id: t.id,
       userId: t.userId || null,
@@ -712,6 +849,7 @@ export async function listApprovalPendingTickets(limit = 200) {
       reporter_name: reporter?.name ?? null,
       reporter_email: reporter?.email ?? null,
       raised_by,
+      requested_pass_id,
     };
   });
   return { ok: true as const, data: rows };
@@ -855,4 +993,14 @@ export async function adminManualFetchPayments(phone: string) {
   const rows = (docs || []).map(simplify);
   if (!rows.length && lastError) return { ok: false as const, error: lastError };
   return { ok: true as const, data: rows };
+}
+
+// Helper to get current admin role from session
+export async function getCurrentAdminRole() {
+  const session = (await getServerSession(authOptions)) as { user?: { email?: string | null } } | null;
+  const email = session?.user?.email || null;
+  if (!email) return { ok: true as const, data: null as string | null };
+  const r = await getRoleForEmail(email);
+  if (!r.ok) return { ok: false as const, error: r.error } as const;
+  return { ok: true as const, data: (r.data || null) as string | null };
 }

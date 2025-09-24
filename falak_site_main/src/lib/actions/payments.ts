@@ -117,11 +117,54 @@ interface ExternalPaymentDoc {
   membership_type?: string;
   event_name?: string;
   event_type?: string; // NEW: some upstream payloads may include explicit event_type (e.g., ESPORTS)
+  user_type?: string; // Upstream field indicating MAHE/NONMAHE
   total_amount?: string | number;
   created_at?: string; // date string
   // Additional untyped fields from upstream; store in raw JSON.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [k: string]: any;
+}
+
+// Cache for pass meta lookups to avoid repeated selects when applying conditional remaps
+const PASS_META_CACHE: Record<string, { mahe: boolean | null; event_id: string | null } | undefined> = {};
+let NON_MAHE_PROSHOW_PASS_ID: string | null | undefined = undefined; // undefined=unresolved, null=not found
+
+function normalizeUserType(v: unknown): string {
+  return String(v ?? '').trim().toLowerCase().replace(/[^a-z]/g, '');
+}
+
+type PassMetaRow = { mahe: boolean | null; event_id: string | null };
+
+async function getPassMeta(service: ReturnType<typeof createServiceClient>, passId: string) {
+  if (PASS_META_CACHE[passId] !== undefined) return PASS_META_CACHE[passId];
+  const res = await service.from('passes').select('mahe, event_id').eq('id', passId).maybeSingle<PassMetaRow>();
+  if (res.error || !res.data) { PASS_META_CACHE[passId] = undefined; return undefined; }
+  const meta: PassMetaRow = { mahe: res.data.mahe ?? null, event_id: res.data.event_id ?? null };
+  PASS_META_CACHE[passId] = meta;
+  return meta;
+}
+
+async function getNonMaheProshowPassId(service: ReturnType<typeof createServiceClient>): Promise<string | null> {
+  if (NON_MAHE_PROSHOW_PASS_ID !== undefined) return NON_MAHE_PROSHOW_PASS_ID;
+  // Allow explicit override via env
+  if (process.env.NON_MAHE_PROSHOW_PASS_ID) {
+    NON_MAHE_PROSHOW_PASS_ID = process.env.NON_MAHE_PROSHOW_PASS_ID as string;
+    return NON_MAHE_PROSHOW_PASS_ID;
+  }
+  // Heuristic: public proshow pass -> event_id NULL and mahe=false
+  const find = await service
+    .from('passes')
+    .select('id')
+    .is('event_id', null)
+    .eq('mahe', false)
+    .limit(1)
+    .maybeSingle<{ id: string }>();
+  if (!find.error && find.data) {
+    NON_MAHE_PROSHOW_PASS_ID = find.data.id as string;
+  } else {
+    NON_MAHE_PROSHOW_PASS_ID = null;
+  }
+  return NON_MAHE_PROSHOW_PASS_ID;
 }
 
 interface FetchResult {
@@ -264,8 +307,8 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
     } catch {/* ignore fallback errors */}
   }
 
-  // Dev override (only non-production) to ease local mock testing when no auth session
-  if (!userId && opts?.devUserId && process.env.NODE_ENV !== 'production') {
+  // Admin override: if a caller supplies devUserId, honor it to target a specific user (guard at call-site)
+  if (opts?.devUserId) {
     userId = opts.devUserId;
   }
   if (!userId) return { ok:false, error:"unauthenticated" };
@@ -369,7 +412,21 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
   if (!insertLog.error && insertLog.data) insertedLogId = insertLog.data.id as string;
 
   // Precedence: v2 key first, then legacy
-  const passId = mapping[v2Key] ?? mapping[legacyKey];
+  let passId = mapping[v2Key] ?? mapping[legacyKey];
+    // Conditional override: if upstream marks user as NONMAHE and mapped pass is MAHE Proshow (event_id null, mahe=true),
+    // re-route to Non-MAHE Proshow pass id.
+    if (passId) {
+      const ut = normalizeUserType(d.user_type || d.userType);
+      if (ut === 'nonmahe') {
+        try {
+          const meta = await getPassMeta(service, passId);
+          if (meta && meta.mahe === true && meta.event_id == null) {
+            const nonMaheId = await getNonMaheProshowPassId(service);
+            if (nonMaheId) passId = nonMaheId;
+          }
+        } catch {/* ignore override errors */}
+      }
+    }
     if (passId) {
       if (granted.has(passId)) continue;
       const manualInsert = async () => {
@@ -455,7 +512,7 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
 
   const logsRes = await service
     .from('payment_logs')
-    .select('id, tracking_id, order_id, membership_type, event_name, event_type')
+    .select('id, tracking_id, order_id, membership_type, event_name, event_type, raw')
 	.eq('user_id', userId)
     .eq('status', 'Success');
   if (!logsRes.error && logsRes.data) {
@@ -467,7 +524,21 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
   const et = row.event_type || undefined;
   const legacyKey = buildLegacyKey(mt, en);
   const v2Key = buildV2Key(et, en);
-  const passId = mapping[v2Key] ?? mapping[legacyKey];
+  let passId = mapping[v2Key] ?? mapping[legacyKey];
+      // Apply same NONMAHE override during backfill if raw.user_type indicates Non-MAHE and pass is MAHE Proshow
+      if (passId) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const ut = normalizeUserType((pl as any)?.raw?.user_type || (pl as any)?.raw?.userType);
+          if (ut === 'nonmahe') {
+            const meta = await getPassMeta(service, passId);
+            if (meta && meta.mahe === true && meta.event_id == null) {
+              const nonMaheId = await getNonMaheProshowPassId(service);
+              if (nonMaheId) passId = nonMaheId;
+            }
+          }
+        } catch {/* ignore override errors */}
+      }
       if (!passId) continue; // still unmapped
       if (granted.has(passId)) continue; // already ensured
       const manualBackfill = async () => {
