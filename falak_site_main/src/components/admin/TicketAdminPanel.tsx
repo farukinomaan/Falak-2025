@@ -135,7 +135,7 @@ export default function TicketAdminPanel() {
         setDupes(prev => prev.filter(r => r.payment_log_id !== paymentLogId));
       }
     } finally { setAssigningId(null); }
-
+  }
   async function saveRegNo() {
     if (!selected) return;
     setSavingRegNo(true);
