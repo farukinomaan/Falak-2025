@@ -876,3 +876,195 @@ export async function adminManualFetchPayments(phone: string) {
   if (!rows.length && lastError) return { ok: false as const, error: lastError };
   return { ok: true as const, data: rows };
 }
+
+// ---------------- Duplicate Proshow Purchases (same phone) ----------------
+
+type DuplicateLogRow = {
+  payment_log_id: string;
+  user_id: string | null;
+  phone: string | null;
+  tracking_id: string | null;
+  membership_type: string | null;
+  event_name: string | null;
+  event_type: string | null;
+  created_at: string | null;
+  pass_id: string;
+};
+
+function normalizeKeyParts(s?: string | null) {
+  return (s || "").trim().toLowerCase();
+}
+
+// List logs for a given user that resolve to a pass already owned by that user (i.e., duplicates).
+// Filtered to "proshow-like" passes (passes.event_id is null). We keep the original log untouched and
+// surface these extras for manual assignment to another user via phone.
+export async function listDuplicateProshowLogsForUser(userId: string, limit = 200) {
+  const uid = uuid.safeParse(userId);
+  if (!uid.success) return { ok: false as const, error: "Invalid userId" };
+  const supabase = getServiceClient();
+  // Fetch successful logs for user (include raw to later check source linkage if needed)
+  interface PLRow { id: string; user_id: string | null; phone: string | null; tracking_id: string | null; membership_type: string | null; event_name: string | null; event_type: string | null; external_created_at: string | null }
+  const { data: logs, error: logErr } = await supabase
+    .from('payment_logs')
+    .select('id, user_id, phone, tracking_id, membership_type, event_name, event_type, external_created_at')
+    .eq('user_id', userId)
+    .eq('status', 'Success')
+    .order('external_created_at', { ascending: true });
+  if (logErr) return { ok: false as const, error: logErr.message };
+  // Load active mapping
+  const mapRes = await supabase.from('external_pass_map').select('external_key, external_key_v2, pass_id, active').eq('active', true);
+  if (mapRes.error) return { ok: false as const, error: mapRes.error.message };
+  const mapping: Record<string, string | null> = {};
+  for (const r of (mapRes.data || []) as any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (r.external_key) mapping[(r.external_key as string).toLowerCase()] = r.pass_id as string | null;
+    if (r.external_key_v2) mapping[(r.external_key_v2 as string).toLowerCase()] = r.pass_id as string | null;
+  }
+  // Build list of passIds already owned by the user
+  const { data: owned, error: ownedErr } = await supabase
+    .from('User_passes')
+    .select('passId')
+    .eq('userId', userId);
+  if (ownedErr) return { ok: false as const, error: ownedErr.message };
+  const ownedSet = new Set<string>((owned || []).map((r: any) => r.passId as string)); // eslint-disable-line @typescript-eslint/no-explicit-any
+  if (!logs || logs.length === 0 || ownedSet.size === 0) return { ok: true as const, data: [] as DuplicateLogRow[] };
+
+  // Resolve passId per log and filter to proshow-like passes (event_id is null)
+  const rows: Array<DuplicateLogRow & { _mt: string; _en: string; _et: string }> = [];
+  // Cache for pass meta to avoid repetitive fetches
+  const passMetaCache = new Map<string, { event_id: string | null } | null>();
+  async function getPassEventNull(pid: string): Promise<boolean> {
+    if (passMetaCache.has(pid)) return passMetaCache.get(pid)?.event_id == null || false;
+    const { data, error } = await supabase.from('Pass').select('id, event_id').eq('id', pid).maybeSingle();
+    if (error || !data) { passMetaCache.set(pid, null); return false; }
+    passMetaCache.set(pid, { event_id: (data as any).event_id ?? null }); // eslint-disable-line @typescript-eslint/no-explicit-any
+    return ((data as any).event_id ?? null) == null; // eslint-disable-line @typescript-eslint/no-explicit-any
+  }
+
+  for (const pl of (logs as PLRow[])) {
+    const mt = normalizeKeyParts(pl.membership_type);
+    const en = normalizeKeyParts(pl.event_name);
+    const et = normalizeKeyParts(pl.event_type);
+    const legacyKey = `${mt}|${en}`;
+    const v2Key = `${et}|${en}`;
+    const passId = (mapping[v2Key] ?? mapping[legacyKey]) || null;
+    if (!passId) continue; // unmapped
+    if (!ownedSet.has(passId)) continue; // not a duplicate if user doesn't own this pass
+    // Filter to proshow-like: passes where event_id is null
+    const isProshowLike = await getPassEventNull(passId);
+    if (!isProshowLike) continue;
+    rows.push({
+      payment_log_id: pl.id,
+      user_id: pl.user_id,
+      phone: pl.phone ?? null,
+      tracking_id: pl.tracking_id ?? null,
+      membership_type: pl.membership_type ?? null,
+      event_name: pl.event_name ?? null,
+      event_type: pl.event_type ?? null,
+      created_at: pl.external_created_at ?? null,
+      pass_id: passId,
+      _mt: mt, _en: en, _et: et,
+    });
+    if (rows.length >= limit) break;
+  }
+
+  // Attempt to exclude the earliest log per (pass_id) as the primary one that likely granted ownership.
+  const byPass = new Map<string, DuplicateLogRow[]>();
+  for (const r of rows) {
+    const arr = byPass.get(r.pass_id) || [];
+    arr.push(r);
+    byPass.set(r.pass_id, arr);
+  }
+  const duplicates: DuplicateLogRow[] = [];
+  for (const [, arr] of byPass) {
+    // Sort by created_at asc and drop the first one from duplicates list
+    const sorted = arr.slice().sort((a, b) => {
+      const t1 = a.created_at ? Date.parse(a.created_at) : 0;
+      const t2 = b.created_at ? Date.parse(b.created_at) : 0;
+      return t1 - t2;
+    });
+    if (sorted.length <= 1) continue;
+    duplicates.push(...sorted.slice(1));
+  }
+  return { ok: true as const, data: duplicates };
+}
+
+// Assign a duplicate log (proshow-like) to another user by phone. Updates the log's user_id and grants pass to target.
+export async function adminAssignDuplicateLogToPhone(paymentLogId: string, targetPhone: string) {
+  const pid = uuid.safeParse(paymentLogId);
+  if (!pid.success) return { ok: false as const, error: 'Invalid paymentLogId' };
+  const phoneRaw = (targetPhone || '').trim();
+  if (!phoneRaw) return { ok: false as const, error: 'Phone required' };
+  // Role check
+  const session = (await getServerSession(authOptions)) as { user?: { email?: string | null } } | null;
+  const email = session?.user?.email || null;
+  if (!email) return { ok: false as const, error: 'Not authenticated' };
+  const roleRes = await getRoleForEmail(email);
+  const role = roleRes.ok ? roleRes.data : undefined;
+  if (!(role === 'ticket_admin' || role === 'super_admin')) {
+    return { ok: false as const, error: 'Forbidden' };
+  }
+  const supabase = getServiceClient();
+  // Load log
+  const { data: logRow, error: logErr } = await supabase
+    .from('payment_logs')
+    .select('id, user_id, phone, membership_type, event_name, event_type, tracking_id')
+    .eq('id', paymentLogId)
+    .maybeSingle();
+  if (logErr) return { ok: false as const, error: logErr.message };
+  if (!logRow) return { ok: false as const, error: 'payment_log_not_found' };
+
+  // Resolve mapping for this log
+  interface LogRow { membership_type: string | null; event_name: string | null; event_type: string | null; tracking_id: string | null }
+  const lr = logRow as unknown as LogRow;
+  const mt = normalizeKeyParts(lr.membership_type);
+  const en = normalizeKeyParts(lr.event_name);
+  const et = normalizeKeyParts(lr.event_type);
+  const legacyKey = `${mt}|${en}`;
+  const v2Key = `${et}|${en}`;
+  const mapRes = await supabase.from('external_pass_map').select('external_key, external_key_v2, pass_id, active').eq('active', true);
+  if (mapRes.error) return { ok: false as const, error: mapRes.error.message };
+  const mapping: Record<string, string | null> = {};
+  for (const r of (mapRes.data || []) as any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (r.external_key) mapping[(r.external_key as string).toLowerCase()] = r.pass_id as string | null;
+    if (r.external_key_v2) mapping[(r.external_key_v2 as string).toLowerCase()] = r.pass_id as string | null;
+  }
+  const passId = (mapping[v2Key] ?? mapping[legacyKey]) || null;
+  if (!passId) return { ok: false as const, error: 'mapping_not_found' };
+  // Ensure pass is proshow-like (event_id null)
+  const { data: passRow, error: passErr } = await supabase.from('Pass').select('id, event_id').eq('id', passId).maybeSingle();
+  if (passErr) return { ok: false as const, error: passErr.message };
+  if (!passRow || (passRow as any).event_id !== null) return { ok: false as const, error: 'not_proshow_like' }; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  // Normalize phone and find target user
+  const normalized = phoneRaw.startsWith('+') ? phoneRaw.replace(/[^0-9+]/g, '') : phoneRaw.replace(/[^0-9]/g, '');
+  const { data: targetUser, error: uErr } = await supabase
+    .from('Users')
+    .select('id, phone')
+    .eq('phone', normalized)
+    .maybeSingle();
+  if (uErr) return { ok: false as const, error: uErr.message };
+  if (!targetUser) return { ok: false as const, error: 'target_user_not_found' };
+
+  const targetUserId = (targetUser as any).id as string; // eslint-disable-line @typescript-eslint/no-explicit-any
+  // Ensure target does not already own this pass
+  const { data: hasRow, error: hasErr } = await supabase
+    .from('User_passes')
+    .select('id')
+    .eq('userId', targetUserId)
+    .eq('passId', passId)
+    .maybeSingle();
+  if (hasErr) return { ok: false as const, error: hasErr.message };
+  if (hasRow) return { ok: false as const, error: 'target_already_has_pass' };
+
+  // Update log owner and grant pass
+  const { error: updErr } = await supabase
+    .from('payment_logs')
+    .update({ user_id: targetUserId })
+    .eq('id', paymentLogId);
+  if (updErr) return { ok: false as const, error: updErr.message };
+
+  // Grant pass via central assigner (enforces enable/sellout and QR token)
+  const granted = await assignPassToUser(targetUserId, passId);
+  if (!granted.ok) return { ok: false as const, error: granted.error || 'grant_failed' } as const;
+  return { ok: true as const, data: { reassigned_to: targetUserId, passId, tracking_id: (logRow as any).tracking_id || null } } as const; // eslint-disable-line @typescript-eslint/no-explicit-any
+}

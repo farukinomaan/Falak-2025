@@ -379,6 +379,28 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
   // Track newly granted passIds to avoid duplicate inserts inside same ingestion
   const granted = new Set<string>();
 
+  // Phone-level proshow ownership guard: ensure only one proshow-like pass (event_id null) is auto-assigned per phone across all users.
+  // Determine if any user with this same phone already owns a proshow-like pass, and who that is.
+  let phoneProshowOwnedBy: string | null = null;
+  try {
+    // Find all user IDs with this exact phone
+    const samePhone = await service.from('Users').select('id').eq('phone', userRow.phone as string);
+    if (!samePhone.error && Array.isArray(samePhone.data) && samePhone.data.length) {
+      const ids = (samePhone.data as Array<{ id: string }>).map(r => r.id);
+      const existing = await service
+        .from('User_passes')
+        .select('userId, passes:passId(event_id)')
+        .in('userId', ids);
+      if (!existing.error && Array.isArray(existing.data)) {
+        for (const r of existing.data as Array<{ userId: string; passes?: { event_id?: string | null } }>) {
+          const evt = r.passes?.event_id ?? null;
+          if (evt == null) { phoneProshowOwnedBy = r.userId; break; }
+        }
+      }
+    }
+  } catch {/* ignore phone-scan errors */}
+  let phoneProshowConsumed = phoneProshowOwnedBy != null;
+
   for (const d of docs) {
     const validationError = validateDoc(d);
     if (validationError) continue; // skip non-success or malformed
@@ -466,6 +488,17 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
       }
     }
     if (passId) {
+      // Determine if this mapped pass is proshow-like (event_id null)
+      let isProshowLike = false;
+      try {
+        const meta = await getPassMeta(service, passId);
+        if (meta && meta.event_id == null) isProshowLike = true;
+      } catch {/* ignore meta errors */}
+      // If a different user with the same phone already owns a proshow-like pass, skip auto-grant for this user.
+      if (isProshowLike && phoneProshowConsumed && phoneProshowOwnedBy && phoneProshowOwnedBy !== userId) {
+        // keep payment_logs intact but do not grant ownership
+        continue;
+      }
       if (granted.has(passId)) continue;
       const manualInsert = async () => {
         const existing = await service.from('User_passes').select('passId').eq('userId', userId).eq('passId', passId).maybeSingle();
@@ -527,6 +560,8 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
             }
           } else if (upsert && !upsert.error) {
             granted.add(passId);
+            // Mark phone as consumed for proshow-like so subsequent logs won't auto-grant again this run
+            if (isProshowLike && !phoneProshowConsumed) { phoneProshowConsumed = true; phoneProshowOwnedBy = userId; }
           }
         } catch (e) {
           if (opts?.debug) debug.push(`upsert_exception_passId=${passId} msg=${(e as Error).message}`);
@@ -591,6 +626,15 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
         } catch {/* ignore override errors */}
       }
       if (!passId) continue; // still unmapped
+      // Skip backfill auto-grant if proshow already consumed for this phone by another user
+      let isProshowLike2 = false;
+      try {
+        const meta2 = await getPassMeta(service, passId);
+        if (meta2 && meta2.event_id == null) isProshowLike2 = true;
+      } catch {/* ignore */}
+      if (isProshowLike2 && phoneProshowConsumed && phoneProshowOwnedBy && phoneProshowOwnedBy !== userId) {
+        continue;
+      }
       if (granted.has(passId)) continue; // already ensured
       const manualBackfill = async () => {
         const existing = await service.from('User_passes').select('passId').eq('userId', userId).eq('passId', passId).maybeSingle();
@@ -650,6 +694,7 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
             }
           } else if (up2 && !up2.error) {
             granted.add(passId);
+            if (isProshowLike2 && !phoneProshowConsumed) { phoneProshowConsumed = true; phoneProshowOwnedBy = userId; }
           }
         } catch (e) {
           if (opts?.debug) debug.push(`backfill_upsert_exception_passId=${passId} msg=${(e as Error).message}`);
