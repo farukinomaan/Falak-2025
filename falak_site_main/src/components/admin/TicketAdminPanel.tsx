@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, markTicketSolved, adminManualFetchPayments, requestTicketApproval, adminUpdateUserPhone, adminIngestPaymentsForUser } from "@/lib/actions/adminAggregations";
+import { getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, markTicketSolved, adminManualFetchPayments, requestTicketApproval, adminUpdateUserPhone, adminIngestPaymentsForUser, adminUpdateUserRegNo, adminUpdateUserMahe, getCurrentAdminRole } from "@/lib/actions/adminAggregations";
 import type { SearchUserRow } from "@/lib/actions/adminAggregations";
 
 // Define a Pass summary type for this component
@@ -18,7 +18,7 @@ export default function TicketAdminPanel() {
   const [passes, setPasses] = useState<PassSummary[]>([]);
   // const [passToAssign, setPassToAssign] = useState<string>("");
   const [pending, setPending] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
-  type TicketRow = { id: string; userId?: string | null; category?: string | null; issue?: string | null; created_at?: string | null; solved?: boolean | null; status?: string | null; reporter_name?: string | null; reporter_email?: string | null };
+  type TicketRow = { id: string; userId?: string | null; category?: string | null; issue?: string | null; created_at?: string | null; solved?: boolean | null; status?: string | null; reporter_name?: string | null; reporter_email?: string | null; reporter_phone?: string | null; requested_pass_id?: string | null; requested_pass_name?: string | null };
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [loadingPending, setLoadingPending] = useState(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
@@ -32,6 +32,15 @@ export default function TicketAdminPanel() {
   const [savingPhone, setSavingPhone] = useState<boolean>(false);
   const [editingPhone, setEditingPhone] = useState<boolean>(false);
   const [syncing, setSyncing] = useState<boolean>(false);
+  const [adminRole, setAdminRole] = useState<string | null>(null);
+  // reg_no + mahe editing
+  const [editingRegNo, setEditingRegNo] = useState<boolean>(false);
+  const [editRegNo, setEditRegNo] = useState<string>("");
+  const [savingRegNo, setSavingRegNo] = useState<boolean>(false);
+  const [editMahe, setEditMahe] = useState<boolean>(false);
+  const [savingMahe, setSavingMahe] = useState<boolean>(false);
+  // Ticket pass selection (ticket_admin only)
+  const [ticketPass, setTicketPass] = useState<Record<string,string>>({});
 
   const loadPending = useCallback(async () => {
     setLoadingPending(true);
@@ -56,6 +65,9 @@ export default function TicketAdminPanel() {
     (async () => {
       const pr = await saListPasses();
       if (pr.ok) setPasses(((pr.data as unknown) as PassSummary[]).map((p) => ({ id: p.id, pass_name: p.pass_name, enable: p.enable, status: p.status })));
+      // load admin role for conditional UI
+      const rr = await getCurrentAdminRole();
+      if (rr.ok) setAdminRole(rr.data as string | null);
       await loadPending();
       await loadTickets();
     })();
@@ -75,6 +87,9 @@ export default function TicketAdminPanel() {
       setDetails(res.data);
       setEditPhone(res.data?.user?.phone || "");
       setEditingPhone(false);
+  setEditRegNo((res.data?.user as UserDetailsData['user']).reg_no || "");
+      setEditingRegNo(false);
+  setEditMahe(!!(res.data?.user as UserDetailsData['user']).mahe);
     }
   }
 
@@ -92,6 +107,31 @@ export default function TicketAdminPanel() {
     } finally {
       setSyncing(false);
     }
+  }
+
+  async function saveRegNo() {
+    if (!selected) return;
+    setSavingRegNo(true);
+    try {
+      const res = await adminUpdateUserRegNo(selected, editRegNo);
+      if (!res.ok) { toast.error(res.error || 'Failed to update reg_no'); return; }
+      toast.success('reg_no updated');
+      const updated = res.data as { reg_no?: string | null };
+      setDetails((prev) => (prev ? { ...prev, user: { ...prev.user, reg_no: updated.reg_no || '' } } : prev));
+      setEditingRegNo(false);
+    } finally { setSavingRegNo(false); }
+  }
+
+  async function saveMahe() {
+    if (!selected) return;
+    setSavingMahe(true);
+    try {
+      const res = await adminUpdateUserMahe(selected, !!editMahe);
+      if (!res.ok) { toast.error(res.error || 'Failed to update MAHE'); return; }
+      toast.success('MAHE updated');
+      const updated = res.data as { mahe?: boolean | null };
+      setDetails((prev) => (prev ? { ...prev, user: { ...prev.user, mahe: !!updated.mahe } } : prev));
+    } finally { setSavingMahe(false); }
   }
 
   async function savePhone() {
@@ -218,6 +258,39 @@ export default function TicketAdminPanel() {
                 )}
               </div>
 
+              <div className="space-y-2">
+                <div className="font-medium">Registration number</div>
+                {!editingRegNo ? (
+                  <div className="flex items-center gap-3 max-w-md">
+                    <div className="text-sm text-muted-foreground">{(details.user as UserDetailsData['user']).reg_no || '—'}</div>
+                    <Button variant="outline" size="sm" onClick={()=> setEditingRegNo(true)}>Edit</Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 max-w-md">
+                    <Input
+                      placeholder="Enter reg_no"
+                      value={editRegNo}
+                      onChange={(e)=> setEditRegNo(e.target.value)}
+                      onKeyDown={(e)=> { if (e.key === 'Enter') void saveRegNo(); }}
+                      autoFocus
+                    />
+                    <Button onClick={()=> void saveRegNo()} disabled={savingRegNo || !selected}>
+                      {savingRegNo ? 'Saving…' : 'Save'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <div className="font-medium">MAHE</div>
+                <div className="flex items-center gap-3 max-w-md">
+                  <input type="checkbox" checked={!!(details.user as UserDetailsData['user']).mahe} onChange={(e)=> setEditMahe(e.target.checked)} />
+                  <Button variant="outline" size="sm" onClick={()=> void saveMahe()} disabled={savingMahe || !selected}>
+                    {savingMahe ? 'Saving…' : 'Save'}
+                  </Button>
+                </div>
+              </div>
+
               <div>
                 <div className="font-medium">Passes</div>
                 <ul className="list-disc pl-6 text-sm">
@@ -304,6 +377,7 @@ export default function TicketAdminPanel() {
                 <tr className="text-left border-b">
                   <th className="py-2 pr-3">Tracking</th>
                   <th className="py-2 pr-3">User</th>
+                  <th className="py-2 pr-3">Phone</th>
                   <th className="py-2 pr-3">Membership</th>
                   <th className="py-2 pr-3">Event</th>
                   <th className="py-2 pr-3">Event Type</th>
@@ -318,6 +392,7 @@ export default function TicketAdminPanel() {
                   <tr key={row.payment_log_id} className="border-b last:border-b-0">
                     <td className="py-2 pr-3 font-mono text-xs">{row.tracking_id || '—'}</td>
                     <td className="py-2 pr-3 text-xs">{row.user_id?.slice(0,8)}…</td>
+                    <td className="py-2 pr-3 text-xs">{row.user_phone || '—'}</td>
                     <td className="py-2 pr-3">{row.membership_type || <span className="opacity-50">—</span>}</td>
                     <td className="py-2 pr-3">{row.event_name || <span className="opacity-50">—</span>}</td>
                     <td className="py-2 pr-3">{row.event_type || <span className="opacity-50">—</span>}</td>
@@ -368,6 +443,7 @@ export default function TicketAdminPanel() {
                 <tr className="text-left border-b">
                   <th className="py-2 pr-3">ID</th>
                   <th className="py-2 pr-3">User</th>
+                  <th className="py-2 pr-3">Phone</th>
                   <th className="py-2 pr-3">Manual Transcript Check</th>
                   <th className="py-2 pr-3">Category</th>
                   <th className="py-2 pr-3">Issue</th>
@@ -379,6 +455,7 @@ export default function TicketAdminPanel() {
                   <tr key={t.id} className="border-b last:border-b-0">
                     <td className="py-2 pr-3 font-mono text-xs">{t.id.slice(0,8)}…</td>
                     <td className="py-2 pr-3 text-xs">{t.reporter_name ? t.reporter_name : (t.reporter_email ? t.reporter_email : (t.userId ? t.userId.slice(0,8)+'…' : <span className="opacity-50">—</span>))}</td>
+                    <td className="py-2 pr-3 text-xs">{t.reporter_phone || '—'}</td>
                     <td className="py-2 pr-3">
                       <input
                         type="checkbox"
@@ -390,21 +467,42 @@ export default function TicketAdminPanel() {
                     <td className="py-2 pr-3">{t.category || <span className="opacity-50">—</span>}</td>
                     <td className="py-2 pr-3">{t.issue || <span className="opacity-50">—</span>}</td>
                     <td className="py-2">
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-2">
                         {String(t.status || '').toLowerCase().startsWith('approval_pending') ? (
-                          <span className="text-xs text-yellow-300 px-2 py-1 rounded border border-yellow-500/50">Pending approval…</span>
+                          <>
+                            {adminRole === 'super_admin' ? (
+                              <span className="text-xs">Request for { t.requested_pass_name || t.requested_pass_id || 'a pass' }</span>
+                            ) : (
+                              <span className="text-xs text-yellow-300 px-2 py-1 rounded border border-yellow-500/50">Pending approval…</span>
+                            )}
+                          </>
                         ) : (
-                          <Button size="sm" onClick={async () => {
-                            setRequestingId(t.id);
-                            try {
-                              const res = await requestTicketApproval(t.id);
-                              if (!res.ok) toast.error(res.error || 'Failed to request');
-                              else {
-                                toast.success('Approval requested');
-                                await loadTickets();
-                              }
-                            } finally { setRequestingId(null); }
-                          }} disabled={requestingId === t.id}>{requestingId === t.id ? 'Requesting…' : 'Request Approval'}</Button>
+                          <>
+                            {adminRole === 'ticket_admin' && (
+                              <select
+                                className="h-8 w-40 rounded-md border bg-background"
+                                value={ticketPass[t.id] || ''}
+                                onChange={e => setTicketPass(prev => ({ ...prev, [t.id]: e.target.value }))}
+                              >
+                                <option value="">Select pass</option>
+                                {passes.filter(p => Boolean(p.enable ?? p.status)).map(p => (
+                                  <option key={p.id} value={p.id}>{p.pass_name}</option>
+                                ))}
+                              </select>
+                            )}
+                            <Button size="sm" onClick={async () => {
+                              setRequestingId(t.id);
+                              try {
+                                const passId = ticketPass[t.id];
+                                const res = await requestTicketApproval(t.id, passId);
+                                if (!res.ok) toast.error(res.error || 'Failed to request');
+                                else {
+                                  toast.success('Approval requested');
+                                  await loadTickets();
+                                }
+                              } finally { setRequestingId(null); }
+                            }} disabled={requestingId === t.id}>{requestingId === t.id ? 'Requesting…' : 'Request Approval'}</Button>
+                          </>
                         )}
                         <Button
                           size="sm"
