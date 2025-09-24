@@ -29,6 +29,11 @@ const sponsors = [
     logo: "/sponsors/Lapcare.png",
     url: "https://lapcare.com/",
   },
+  {
+    name: "RealMe",
+    logo: "/sponsors/RealMe.png",
+    url: "https://realme.com/",
+  },
 ];
 
 const Sponsor: React.FC = () => {
