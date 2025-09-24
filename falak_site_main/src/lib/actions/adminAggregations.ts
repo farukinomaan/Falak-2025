@@ -4,7 +4,7 @@ import { getServiceClient } from "./supabaseClient";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { ingestAndListUserPasses } from "@/lib/actions/payments";
+//import { ingestAndListUserPasses } from "@/lib/actions/payments";
 import {
   EventCreateSchema,
   EventUpdateSchema,
