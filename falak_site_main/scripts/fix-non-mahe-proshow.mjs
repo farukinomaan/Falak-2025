@@ -33,12 +33,22 @@ async function main() {
   });
 
   // 1) Locate target Non-MAHE proshow pass
-  const passQ = await supabase
-    .from('Pass')
+  // Prefer lowercase 'passes' table; fallback to legacy 'Pass'
+  let passQ = await supabase
+    .from('passes')
     .select('id, pass_name, mahe, event_id')
     .ilike('pass_name', `${targetName}%`)
     .is('event_id', null)
     .eq('mahe', false);
+  if (passQ.error) {
+    // Retry legacy capitalization
+    passQ = await supabase
+      .from('Pass')
+      .select('id, pass_name, mahe, event_id')
+      .ilike('pass_name', `${targetName}%`)
+      .is('event_id', null)
+      .eq('mahe', false);
+  }
   if (passQ.error) throw passQ.error;
   const candidates = passQ.data || [];
   if (candidates.length === 0) {
@@ -53,19 +63,51 @@ async function main() {
   const targetPass = candidates[0];
   console.log(`Using target Non-MAHE pass: ${targetPass.pass_name} (${targetPass.id})`);
 
-  // 2) Fetch all user passes referencing any proshow pass (event_id null), where user is non-MAHE, and pass != target
-  const upQ = await supabase
-    .from('User_passes')
-    .select('id, userId, passId, passes:passId(id, pass_name, mahe, event_id), users:userId(id, mahe)')
-    .neq('passId', targetPass.id);
-  if (upQ.error) throw upQ.error;
-  const all = Array.isArray(upQ.data) ? upQ.data : [];
-  const candidatesToFix = all.filter(r => {
-    const pass = r.passes || {};
-    const user = r.users || {};
-    // proshow bundle => event_id null; user non-MAHE; not already target pass
-    return (pass.event_id == null) && (user.mahe === false);
-  });
+  // Helpers for detection via payment logs
+  const statuses = [
+    'Success','Paid','Completed','Successfull','Successfull payment','Successfull_payment',
+    'success','paid','completed','successfull','successfull payment','successfull_payment'
+  ];
+
+  // 2) Determine candidate users directly from payment_logs (mirrors the admin endpoint)
+  const onlyIdsEnv = (process.env.ONLY_USER_IDS || '').trim();
+  const onlyUserIds = onlyIdsEnv ? onlyIdsEnv.split(',').map(s => s.trim()).filter(Boolean) : [];
+  const orFilter = [
+    'raw->>user_type.eq.NONMAHE',
+    'raw->>userType.eq.NONMAHE',
+    'raw->>user_status.eq.NONMAHE',
+    'raw->>userStatus.eq.NONMAHE',
+  ].join(',');
+  let plq = supabase
+    .from('payment_logs')
+    .select('user_id')
+    .in('status', statuses)
+    .or(orFilter)
+    .not('user_id', 'is', null)
+    .limit(5000);
+  if (onlyUserIds.length > 0) {
+    plq = plq.in('user_id', onlyUserIds);
+  }
+  const candUsersRes = await plq;
+  if (candUsersRes.error) throw candUsersRes.error;
+  const nonMaheUsers = new Set((candUsersRes.data || []).map(r => r.user_id).filter(Boolean));
+  console.log(`Detected ${nonMaheUsers.size} NONMAHE user(s) from payment_logs.`);
+
+  // 3) For each candidate user, load their proshow ownerships (event_id null)
+  const userIds = Array.from(nonMaheUsers);
+  let proshowRows = [];
+  if (userIds.length > 0) {
+    const upQ = await supabase
+      .from('User_passes')
+      .select('id, userId, passId, passes:passId(id, pass_name, mahe, event_id)')
+      .in('userId', userIds);
+    if (upQ.error) throw upQ.error;
+    proshowRows = (upQ.data || []).filter(r => r?.passes?.event_id == null);
+  }
+  console.log(`Found ${proshowRows.length} proshow ownership row(s) for NONMAHE users.`);
+
+  // 4) Prepare rows to fix: any proshow pass not equal to target -> update; if both owned, delete MAHE
+  const candidatesToFix = proshowRows.filter(r => r.passId !== targetPass.id);
   console.log(`Found ${candidatesToFix.length} user pass(es) to consider for fix.`);
 
   if (dryRun) {
@@ -108,6 +150,21 @@ async function main() {
       continue;
     }
     updated++;
+
+    // After updating, ensure no stray MAHE proshow remains for this user (cleanup duplicates)
+    const stray = await supabase
+      .from('User_passes')
+      .select('id, passes:passId(mahe, event_id)')
+      .eq('userId', r.userId);
+    if (!stray.error && Array.isArray(stray.data)) {
+      for (const s of stray.data) {
+        const p = s?.passes;
+        if (s && s.id && p && p.event_id == null && p.mahe === true) {
+          const del = await supabase.from('User_passes').delete().eq('id', s.id);
+          if (!del.error) deleted++; else console.warn(`WARN: Failed cleanup delete ${s.id}: ${del.error.message}`);
+        }
+      }
+    }
   }
 
   console.log(`Done. Updated: ${updated}, Deleted dupes: ${deleted}`);
