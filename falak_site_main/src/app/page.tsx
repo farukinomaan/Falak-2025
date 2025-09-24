@@ -44,7 +44,7 @@ export default function Home() {
       {/* Page content */}
       <div className="relative z-10">
         <Suspense fallback={<SectionSkeleton title="Welcome" />}> <Hero /> </Suspense>
-        <Suspense fallback={<SectionSkeleton title="Welcome" />}> <Timer /> </Suspense>
+        {/* <Suspense fallback={<SectionSkeleton title="Welcome" />}> <Timer /> </Suspense> */}
         <Suspense fallback={<SectionSkeleton title="About" />}> <About /> </Suspense>
         <Suspense fallback={<SectionSkeleton title="Artist" />}> <Artist /> </Suspense>
         <Suspense fallback={<SectionSkeleton title="Timeline" />}> <Timeline /> </Suspense>

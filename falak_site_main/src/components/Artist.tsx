@@ -140,19 +140,26 @@ const Artist: React.FC = () => {
   {isMobile && (
     <div className="flex flex-col items-center justify-start w-full gap-6 mt-4">
       {/* TV */}
-      <div className="tv-wrapper w-full max-w-[80vw] aspect-[16/11] border-4 border-[#D7897D] rounded-2xl bg-[#32212C] shadow-lg flex items-center justify-center z-30">
-        <h3 className="vintage-font text-2xl sm:text-3xl font-bold text-[#DBAAA6] tracking-widest text-center px-2">
-          The Big Reveal Awaits
-        </h3>
-      </div>
+      <div className="tv-wrapper border-4 border-[#D7897D] rounded-2xl bg-[#32212C] shadow-lg z-30">
+  <img
+    src="/images/mohit.webp"
+    alt="Artist Mohit"
+    className="block max-w-full h-auto object-contain rounded-xl"
+  />
+</div>
+
+
 
       {/* Description */}
       <div className="artist-description z-40 bg-[#DBAAA6] border-2 border-[#32212C] rounded-xl flex flex-col justify-center items-center p-4 sm:p-6 text-center w-full max-w-[80vw] mt-6">
         <h3 className="vintage-font text-xl sm:text-2xl font-semibold text-[#32212C] mb-2 sm:mb-4">
-          About the Artist
+        MOHIT CHAUHAN
         </h3>
         <p className="abhaya-font text-sm sm:text-base leading-relaxed text-[#32212C]">
-          Stay tuned to find out
+        Prepare to be swept away by the timeless voice of <strong>Mohit Chauhan</strong>—where soulful melodies meet poetic lyricism, creating a sound that resonates deep within. 
+  Known for his iconic tracks like <strong>Masakali</strong> and <strong>Tum Se Hi</strong>, Mohit has captivated hearts across generations with his gentle yet powerful vocals. 
+  Whether it&rsquo;s his subtle ballads or his unforgettable anthems, Mohit&rsquo;s music transcends boundaries and connects with the very soul. 
+  Get ready for an evening of emotion, melody, and magic as he brings FALAK-25 alive with his signature style!
         </p>
       </div>
     </div>
@@ -181,22 +188,27 @@ const Artist: React.FC = () => {
   {!isMobile && (
     <div className="flex w-full max-w-[600px] mx-auto gap-6 flex-col items-center md:block mt-8">
       {/* TV */}
-      <div
-        className="tv-wrapper w-full max-w-[500px] aspect-[16/11] border-4 border-[#D7897D] rounded-2xl bg-[#32212C] shadow-lg flex items-center justify-center z-30 mx-auto md:relative md:left-0 mb-6 md:mb-0"
-      >
-        <h3 className="vintage-font text-2xl sm:text-3xl md:text-4xl font-bold text-[#DBAAA6] tracking-widest text-center px-2">
-          The Big Reveal Awaits
-        </h3>
-      </div>
+      <div className="tv-wrapper border-4 border-[#D7897D] rounded-2xl bg-[#32212C] shadow-lg z-30 mx-auto md:relative md:left-0 mb-6 md:mb-0 w-[470px] h-[450px]">
+  <img
+    src="/images/mohit.webp"
+    alt="Artist Mohit"
+    className="block w-full h-full object-cover rounded-xl"
+  />
+</div>
+
 
       {/* Description */}
-      <div className="artist-description z-40 bg-[#DBAAA6] border-2 border-[#32212C] rounded-xl flex flex-col justify-center items-center p-4 sm:p-6 text-center opacity-0 absolute md:top-1/2 md:right-[10%] md:-translate-y-1/2 w-[470px] h-[350px]">
+      <div className="artist-description z-40 bg-[#DBAAA6] border-2 border-[#32212C] rounded-xl flex flex-col justify-center items-center p-4 sm:p-6 text-center opacity-0 absolute md:top-1/2 md:right-[10%] md:-translate-y-1/2 w-[470px] h-[450px]">
         <h3 className="vintage-font text-xl sm:text-2xl md:text-3xl font-semibold text-[#32212C] mb-2 sm:mb-4">
-          About the Artist
+        MOHIT CHAUHAN
         </h3>
-        <p className="abhaya-font text-sm sm:text-base md:text-lg leading-relaxed text-[#32212C]">
-          Stay tuned to find out
-        </p>
+        <p className="abhaya-font text-sm sm:text-base md:text-lg leading-relaxed text-[#32212C]"> 
+  Prepare to be swept away by the timeless voice of <strong>Mohit Chauhan</strong>—where soulful melodies meet poetic lyricism, creating a sound that resonates deep within. 
+  Known for his iconic tracks like <strong>Masakali</strong> and <strong>Tum Se Hi</strong>, Mohit has captivated hearts across generations with his gentle yet powerful vocals. 
+  Whether it’s his subtle ballads or his unforgettable anthems, Mohit’s music transcends boundaries and connects with the very soul. 
+  Get ready for an evening of emotion, melody, and magic as he brings Solstice alive with his signature style!
+</p>
+
       </div>
     </div>
   )}

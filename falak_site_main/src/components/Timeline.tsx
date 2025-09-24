@@ -128,12 +128,13 @@ const Timeline: React.FC = () => {
             {currentDate < new Date(`${events[0].date}T${events[0].time}`) ? (
               <>
                 {/* Before fest starts */}
+                <p className="font-mono text-base sm:text-lg border-2 border-dashed border-[#DBAAA6] rounded p-1 sm:p-2 bg-[#1f1a2e]/80">
+                  Previous: Countdown to the Artist Reveal
+                </p>
                 <p className="text-[#32212C] font-mono text-lg sm:text-xl border-2 border-[#2e1a47] rounded p-2 sm:p-3 bg-[#DBAAA6] font-bold">
                   ► Current: Waiting for FALAK&#39;25...
                 </p>
-                <p className="font-mono text-base sm:text-lg border-2 border-dashed border-[#DBAAA6] rounded p-1 sm:p-2 bg-[#1f1a2e]/80">
-                  Upcoming: Countdown to the Artist Reveal...
-                </p>
+                
               </>
             ) : currentDate > endDate ? (
               <>
