@@ -32,6 +32,7 @@ async function main() {
     global: { headers: { 'X-Maintenance-Script': 'fix-non-mahe-proshow' } },
   });
 
+  
   // 1) Locate target Non-MAHE proshow pass
   // Prefer lowercase 'passes' table; fallback to legacy 'Pass'
   let passQ = await supabase
