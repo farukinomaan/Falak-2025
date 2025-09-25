@@ -34,6 +34,11 @@ const sponsors = [
     logo: "/sponsors/RealMe.png",
     url: "https://realme.com/",
   },
+  {
+    name: "Ink",
+    logo: "/sponsors/ink.png",
+    url: "https://ink-insights-thoughts.in",
+  },
 ];
 
 const Sponsor: React.FC = () => {
@@ -71,12 +76,14 @@ const Sponsor: React.FC = () => {
                 className="flex items-center justify-center w-[150px] sm:w-[200px] md:w-[250px] mx-4 sm:mx-6 md:mx-8 hover:scale-105 transition duration-300"
               >
                 <Image
-                  src={sponsor.logo}
-                  alt={sponsor.name}
-                  width={200}
-                  height={100}
-                  className="object-contain max-h-12 sm:max-h-16 md:max-h-20"
-                />
+  src={sponsor.logo}
+  alt={sponsor.name}
+  width={200}
+  height={100}
+  className={`object-contain max-h-12 sm:max-h-16 md:max-h-20 
+    ${sponsor.name === "Ink" ? "max-h-16 sm:max-h-30 md:max-h-28" : ""}`}
+ />
+
               </a>
             ))}
         </div>
