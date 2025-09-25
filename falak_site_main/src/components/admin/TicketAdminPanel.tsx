@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, markTicketSolved, adminManualFetchPayments, requestTicketApproval, adminUpdateUserPhone, adminIngestPaymentsForUser, adminUpdateUserRegNo, adminUpdateUserMahe, getCurrentAdminRole } from "@/lib/actions/adminAggregations";
+
+import { getUserDetails, saListPasses, searchUsers, listPendingPaymentLogs, resolvePendingPaymentLog, type UserDetailsData, listUnresolvedTickets, markTicketSolved, adminManualFetchPayments, requestTicketApproval, adminUpdateUserPhone, adminIngestPaymentsForUser, adminUpdateUserRegNo, adminUpdateUserMahe, getCurrentAdminRole , listDuplicateProshowLogsForUser , adminAssignDuplicateLogToPhone } from "@/lib/actions/adminAggregations";
+
 import type { SearchUserRow } from "@/lib/actions/adminAggregations";
 
 // Define a Pass summary type for this component
@@ -32,6 +34,11 @@ export default function TicketAdminPanel() {
   const [savingPhone, setSavingPhone] = useState<boolean>(false);
   const [editingPhone, setEditingPhone] = useState<boolean>(false);
   const [syncing, setSyncing] = useState<boolean>(false);
+
+  const [dupes, setDupes] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [assignPhone, setAssignPhone] = useState<Record<string,string>>({});
+  const [assigningId, setAssigningId] = useState<string | null>(null);
+
   const [adminRole, setAdminRole] = useState<string | null>(null);
   // reg_no + mahe editing
   const [editingRegNo, setEditingRegNo] = useState<boolean>(false);
@@ -41,6 +48,7 @@ export default function TicketAdminPanel() {
   const [savingMahe, setSavingMahe] = useState<boolean>(false);
   // Ticket pass selection (ticket_admin only)
   const [ticketPass, setTicketPass] = useState<Record<string,string>>({});
+
 
   const loadPending = useCallback(async () => {
     setLoadingPending(true);
@@ -87,13 +95,18 @@ export default function TicketAdminPanel() {
       setDetails(res.data);
       setEditPhone(res.data?.user?.phone || "");
       setEditingPhone(false);
-  setEditRegNo((res.data?.user as UserDetailsData['user']).reg_no || "");
+      // Load duplicate proshow logs for this user
+      const d = await listDuplicateProshowLogsForUser(id);
+      if (!d.ok) toast.error(d.error || 'Failed to load duplicates');
+      else setDupes(d.data as any[]); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      setEditRegNo((res.data?.user as UserDetailsData['user']).reg_no || "");
       setEditingRegNo(false);
-  setEditMahe(!!(res.data?.user as UserDetailsData['user']).mahe);
+      setEditMahe(!!(res.data?.user as UserDetailsData['user']).mahe);
     }
   }
 
-  async function syncPayments() {
+ async function syncPayments() {
     if (!selected) { toast.error('Select a user first'); return; }
     setSyncing(true);
     try {
@@ -109,6 +122,20 @@ export default function TicketAdminPanel() {
     }
   }
 
+
+  async function assignDuplicate(paymentLogId: string) {
+    const phone = (assignPhone[paymentLogId] || '').trim();
+    if (!phone) { toast.error('Enter target phone'); return; }
+    setAssigningId(paymentLogId);
+    try {
+      const res = await adminAssignDuplicateLogToPhone(paymentLogId, phone);
+      if (!res.ok) toast.error(res.error || 'Failed to assign');
+      else {
+        toast.success('Assigned to user');
+        setDupes(prev => prev.filter(r => r.payment_log_id !== paymentLogId));
+      }
+    } finally { setAssigningId(null); }
+  }
   async function saveRegNo() {
     if (!selected) return;
     setSavingRegNo(true);
@@ -132,6 +159,7 @@ export default function TicketAdminPanel() {
       const updated = res.data as { mahe?: boolean | null };
       setDetails((prev) => (prev ? { ...prev, user: { ...prev.user, mahe: !!updated.mahe } } : prev));
     } finally { setSavingMahe(false); }
+
   }
 
   async function savePhone() {
@@ -293,11 +321,64 @@ export default function TicketAdminPanel() {
 
               <div>
                 <div className="font-medium">Passes</div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Button size="sm" variant="outline" onClick={()=> void syncPayments()} disabled={!selected || syncing}>
+                    {syncing ? 'Syncing…' : 'Sync payments'}
+                  </Button>
+                </div>
                 <ul className="list-disc pl-6 text-sm">
                   {(details.passes || []).map((p) => (
                     <li key={p.id}>{p.pass_name}</li>
                   ))}
                 </ul>
+              </div>
+
+              {/* Duplicate proshow purchases on same phone */}
+              <div className="mt-4">
+                <div className="font-medium">Duplicate Proshow Purchases (same phone)</div>
+                {dupes.length === 0 ? (
+                  <div className="text-xs text-muted-foreground mt-1">None</div>
+                ) : (
+                  <div className="overflow-x-auto mt-2">
+                    <table className="w-full text-xs border-collapse">
+                      <thead>
+                        <tr className="text-left border-b">
+                          <th className="py-2 pr-3">Tracking</th>
+                          <th className="py-2 pr-3">Membership</th>
+                          <th className="py-2 pr-3">Event</th>
+                          <th className="py-2 pr-3">Created</th>
+                          <th className="py-2 pr-3">Assign to Phone</th>
+                          <th className="py-2">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dupes.map((r) => (
+                          <tr key={r.payment_log_id} className="border-b last:border-b-0">
+                            <td className="py-2 pr-3 font-mono text-[11px]">{r.tracking_id || '—'}</td>
+                            <td className="py-2 pr-3">{r.membership_type || '—'}</td>
+                            <td className="py-2 pr-3">{r.event_name || '—'}</td>
+                            <td className="py-2 pr-3">{r.created_at || '—'}</td>
+                            <td className="py-2 pr-3">
+                              <Input
+                                placeholder="Enter full phone"
+                                value={assignPhone[r.payment_log_id]||''}
+                                onChange={(e)=> setAssignPhone(prev => ({ ...prev, [r.payment_log_id]: e.target.value }))}
+                                onKeyDown={(e)=> { if (e.key==='Enter') void assignDuplicate(r.payment_log_id); }}
+                                className="h-8 w-44"
+                              />
+                            </td>
+                            <td className="py-2">
+                              <Button size="sm" onClick={()=> void assignDuplicate(r.payment_log_id)} disabled={assigningId === r.payment_log_id}>
+                                {assigningId === r.payment_log_id ? 'Assigning…' : 'Assign'}
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <p className="text-[11px] text-muted-foreground mt-1">We auto-assign only one proshow pass per phone. Extra purchases appear here for manual allocation.</p>
               </div>
 
               <div>
