@@ -159,7 +159,7 @@ const Artist: React.FC = () => {
         Prepare to be swept away by the timeless voice of <strong>Mohit Chauhan</strong>—where soulful melodies meet poetic lyricism, creating a sound that resonates deep within. 
   Known for his iconic tracks like <strong>Masakali</strong> and <strong>Tum Se Hi</strong>, Mohit has captivated hearts across generations with his gentle yet powerful vocals. 
   Whether it&rsquo;s his subtle ballads or his unforgettable anthems, Mohit&rsquo;s music transcends boundaries and connects with the very soul. 
-  Get ready for an evening of emotion, melody, and magic as he brings FALAK-25 alive with his signature style!
+  Get ready for an evening of emotion, melody, and magic as he brings FALAK'25  alive with his signature style!
         </p>
       </div>
     </div>
@@ -206,7 +206,7 @@ const Artist: React.FC = () => {
   Prepare to be swept away by the timeless voice of <strong>Mohit Chauhan</strong>—where soulful melodies meet poetic lyricism, creating a sound that resonates deep within. 
   Known for his iconic tracks like <strong>Masakali</strong> and <strong>Tum Se Hi</strong>, Mohit has captivated hearts across generations with his gentle yet powerful vocals. 
   Whether it’s his subtle ballads or his unforgettable anthems, Mohit’s music transcends boundaries and connects with the very soul. 
-  Get ready for an evening of emotion, melody, and magic as he brings Solstice alive with his signature style!
+  Get ready for an evening of emotion, melody, and magic as he brings FALAK'25 alive with his signature style!
 </p>
 
       </div>
