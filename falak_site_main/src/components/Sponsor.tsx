@@ -39,6 +39,11 @@ const sponsors = [
     logo: "/sponsors/ink.png",
     url: "https://ink-insights-thoughts.in",
   },
+  {
+    name: "Bisleri",
+    logo: "/sponsors/bisleri.png",
+    url: "https://bisleri.com",
+  },
 ];
 
 const Sponsor: React.FC = () => {
