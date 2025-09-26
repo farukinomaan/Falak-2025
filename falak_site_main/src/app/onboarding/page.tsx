@@ -63,6 +63,11 @@ export default function OnboardingPage() {
         return;
       }
     }
+    if (!mahe && !institute.trim()) {
+      toast.warning("Please enter your college name. If you are not a college student,you are not eligible to participate in fest.");
+      setSubmitting(false);
+      return;
+    }
     try {
       const payload = {
         name,
