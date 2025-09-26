@@ -51,7 +51,7 @@ export default function OnboardingPage() {
       return;
     }
     if (mahe && !regNo.trim()) {
-      toast.warning("Registration number is required for MAHE");
+      toast.warning("Registration number is required for MAHE BLR");
       setSubmitting(false);
       return;
     }
@@ -163,7 +163,7 @@ export default function OnboardingPage() {
             placeholder="98XXXXXX01"
             required
           />
-          <p className="text-[10px] sm:text-xs leading-snug text-neutral-400 max-w-xs">
+          <p className="text-[10px] sm:text-xs leading-snug text-red-500 max-w-xs">
             <span className="font-semibold text-[#DBAAA6]">Note:</span> Enter the number you will use on the payment portal. Discrepancies may cause issues.
           </p>
         </div>

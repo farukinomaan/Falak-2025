@@ -294,6 +294,7 @@ export async function listPendingPaymentLogs(limit = 200) {
     .from('payment_logs')
     .select('id, user_id, tracking_id, membership_type, event_name, event_type, external_created_at')
     .in('status', SUCCESS_STATUSES)
+    .order('external_created_at', { ascending: false, nullsFirst: false })
     .limit(limit * 3);
   if (pl.error) return { ok:false as const, error: pl.error.message };
   // Preload user phones for associated user_ids
@@ -317,12 +318,24 @@ export async function listPendingPaymentLogs(limit = 200) {
   }
   const pending: PendingPaymentRow[] = [];
   for (const row of (pl.data||[]) as Array<{ id: string; user_id: string | null; tracking_id: string | null; membership_type: string | null; event_name: string | null; event_type: string | null; external_created_at: string | null }>) {
-    const legacy_key = `${(row.membership_type||'').trim().toLowerCase()}|${(row.event_name||'').trim().toLowerCase()}`;
-    const v2_key = `${(row.event_type||'').trim().toLowerCase()}|${(row.event_name||'').trim().toLowerCase()}`;
-    const resolved = (v2_key && Object.prototype.hasOwnProperty.call(mapping, v2_key) ? mapping[v2_key] : undefined)
-                  ?? (legacy_key && Object.prototype.hasOwnProperty.call(mapping, legacy_key) ? mapping[legacy_key] : undefined);
-    // Include in pending when no mapping exists OR mapping exists but pass_id is null
-    if (resolved == null) {
+    const mt = (row.membership_type||'').trim().toLowerCase();
+    const en = (row.event_name||'').trim().toLowerCase();
+    const et = (row.event_type||'').trim().toLowerCase();
+    const legacy_key = `${mt}|${en}`;
+    const v2_key = `${et}|${en}`;
+
+    const v2KeyPresent = et.length > 0;
+    const v2MappedVal = v2_key && Object.prototype.hasOwnProperty.call(mapping, v2_key) ? mapping[v2_key] : undefined;
+    const legacyMappedVal = legacy_key && Object.prototype.hasOwnProperty.call(mapping, legacy_key) ? mapping[legacy_key] : undefined;
+
+    // New rule:
+    // - If a v2 key is present: include when v2 is missing in mapping OR mapped to null (even if legacy is mapped)
+    // - If no v2 key present: fall back to legacy; include when legacy is missing OR mapped to null
+    const includePending = v2KeyPresent
+      ? (v2MappedVal == null)
+      : (legacyMappedVal == null);
+
+    if (includePending) {
       pending.push({
         payment_log_id: row.id,
         user_id: row.user_id,
@@ -376,19 +389,57 @@ export async function resolvePendingPaymentLog(paymentLogId: string, passId: str
   const legacy_key = `${mt}|${en}`;
   const v2_key = `${et}|${en}`;
   const preferV2 = et.length > 0; // only if event_type present
-  // Compose payload (attempt to store both if we have both membership_type & event_type)
-  let payload: Record<string, unknown> = { pass_id: passId, active: true };
-  if (mt) payload.external_key = legacy_key;
-  if (et) payload.external_key_v2 = v2_key;
-  // Attempt upsert including both columns
-  let upsert = await supabase.from('external_pass_map').upsert(payload, { onConflict: mt ? 'external_key' : (et ? 'external_key_v2' : 'external_key') }).select('id').maybeSingle();
-  if (upsert.error && /external_key_v2/i.test(upsert.error.message) && preferV2) {
-    // Retry without v2 column if schema missing
-    payload = { pass_id: passId, active: true };
-    if (mt) payload.external_key = legacy_key;
-    upsert = await supabase.from('external_pass_map').upsert(payload, { onConflict: 'external_key' }).select('id').maybeSingle();
+  // Strategy to avoid overwriting when multiple v2 keys share the same legacy key:
+  // - If v2 key present: create or update a row keyed by external_key_v2 ONLY (do not set external_key to avoid unique conflict)
+  // - Optionally backfill a legacy row ONLY if it doesn't exist yet
+  // - If no v2 key: use legacy as before
+
+  if (preferV2) {
+    // 1) Upsert v2-only row
+    const v2Payload: Record<string, unknown> = { pass_id: passId, active: true, external_key_v2: v2_key };
+    const up1 = await supabase
+      .from('external_pass_map')
+      .upsert(v2Payload, { onConflict: 'external_key_v2' })
+      .select('id')
+      .maybeSingle();
+    if (up1.error) {
+      // Provide a clearer hint when the DB lacks the required unique constraint for ON CONFLICT
+      const msg = up1.error.message || '';
+      if (/no unique or exclusion constraint matching the on conflict specification/i.test(msg)) {
+        return { ok: false as const, error: 'missing_unique_index_external_key_v2' };
+      }
+      return { ok:false as const, error: up1.error.message };
+    }
+
+    // 2) Ensure a single legacy row exists at most once; only create if missing
+    if (mt) {
+      const legacyExists = await supabase
+        .from('external_pass_map')
+        .select('id')
+        .eq('external_key', legacy_key)
+        .limit(1)
+        .maybeSingle();
+      if (!legacyExists.error && !legacyExists.data) {
+        const legacyPayload: Record<string, unknown> = { pass_id: passId, active: true, external_key: legacy_key };
+        const up2 = await supabase
+          .from('external_pass_map')
+          .upsert(legacyPayload, { onConflict: 'external_key' })
+          .select('id')
+          .maybeSingle();
+        if (up2.error) return { ok:false as const, error: up2.error.message };
+      }
+    }
+  } else {
+    // No v2 key; legacy-only behavior
+    const legacyPayload: Record<string, unknown> = { pass_id: passId, active: true };
+    if (mt) legacyPayload.external_key = legacy_key;
+    const up = await supabase
+      .from('external_pass_map')
+      .upsert(legacyPayload, { onConflict: 'external_key' })
+      .select('id')
+      .maybeSingle();
+    if (up.error) return { ok:false as const, error: up.error.message };
   }
-  if (upsert.error) return { ok:false as const, error: upsert.error.message };
   // Grant pass ownership if not already
   const already = await supabase.from('User_passes').select('id').eq('userId', row.user_id).eq('passId', passId).maybeSingle();
   if (already.error) return { ok:false as const, error: already.error.message };

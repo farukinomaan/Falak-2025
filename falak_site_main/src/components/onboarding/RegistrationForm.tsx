@@ -34,7 +34,7 @@ export function RegistrationForm({ name, setName, regNo, setRegNo, mahe, setMahe
             onChange={() => setMahe(true)}
             className="accent-[#de8c89]"
           />
-          <span>MAHE</span>
+          <span>MAHE BLR</span>
         </label>
         <label className="inline-flex items-center gap-2 cursor-pointer">
           <input
