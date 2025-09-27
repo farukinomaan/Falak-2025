@@ -1,6 +1,7 @@
 // Shared server-side helpers for Sports & Cultural event pages to avoid duplication.
 // Each function returns the JSX formerly duplicated in individual route files.
 
+import React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
@@ -37,6 +38,7 @@ type EvtBase = {
   cluster_name?: string | null;
   date?: string | Date | null;
   price?: number | string | null;
+  prize?: string | number | null; // Added: prize / prize pool information
   min_team_size?: number | null;
   max_team_size?: number | null;
   enable?: boolean | null;
@@ -421,26 +423,45 @@ export async function ClusterEvent({
               <p className="text-gray-300 whitespace-pre-line text-lg">{event.description}</p>
             )}
             {(() => {
-              const raw = (event.rules || '').trim();
-              if (!raw) return null;
-              // Allow admin to paste either plain URL or text containing URL; extract first http(s):// link
-              const match = raw.match(/https?:\/\/[^\s]+/i);
-              const url = match ? match[0] : (raw.startsWith('http://') || raw.startsWith('https://') ? raw : null);
-              if (!url) return null;
-              return (
-                <div className="mt-2">
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm text-amber-300 hover:text-white underline decoration-dotted underline-offset-4"
-                  >
-                    View Event Rules / Guidelines
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                      <path d="M13 3a1 1 0 0 0 0 2h4.586l-9.293 9.293a1 1 0 1 0 1.414 1.414L19 6.414V11a1 1 0 1 0 2 0V4a1 1 0 0 0-1-1h-7Z" />
-                      <path d="M5 5a2 2 0 0 0-2 2v12c0 1.103.897 2 2 2h12a2 2 0 0 0 2-2v-5a1 1 0 1 0-2 0v5H5V7h5a1 1 0 1 0 0-2H5Z" />
+              // Build rules link (existing logic) AND prize badge aligned horizontally
+              const rawRules = (event.rules || '').trim();
+              const match = rawRules.match(/https?:\/\/[^\s]+/i);
+              const url = match ? match[0] : (rawRules.startsWith('http://') || rawRules.startsWith('https://') ? rawRules : null);
+              const rawPrize = (event as { prize?: string | number | null }).prize;
+              const hasPrize = !(rawPrize === undefined || rawPrize === null || String(rawPrize).trim() === '');
+              if (!url && !hasPrize) return null;
+              let prizeFragment: React.ReactNode = null;
+              if (hasPrize) {
+                const prizeStrRaw = String(rawPrize).trim();
+                const isNumeric = /^\d+(?:[.,]\d+)?$/.test(prizeStrRaw.replace(/,/g, ''));
+                const prizeStr = isNumeric ? `₹${prizeStrRaw.replace(/\.0+$/, '')}` : prizeStrRaw;
+                prizeFragment = (
+                  <div className="prize-badge inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 text-black font-semibold shadow-lg ring-2 ring-amber-300/60 ring-offset-2 ring-offset-black self-start ml-auto">
+                    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor' className='w-5 h-5'>
+                      <path d='M7 2a1 1 0 0 0-1 1v3a6 6 0 0 0 4 5.659V17H7a1 1 0 1 0 0 2h4v2.382a1 1 0 0 0 1.553.833L15 20.764 17.447 22.215A1 1 0 0 0 19 21.382V19h4a1 1 0 1 0 0-2h-3V11.659A6 6 0 0 0 23 6V3a1 1 0 0 0-1-1H7Zm1 2h14v2a4 4 0 1 1-8 0 1 1 0 1 0-2 0 4 4 0 1 1-4-4v2Z'/>
                     </svg>
-                  </a>
+                    <span className="uppercase tracking-wide text-xs md:text-sm font-bold text-black/70">Prize</span>
+                    <span className="text-xl md:text-2xl font-bold">{prizeStr}</span>
+                  </div>
+                );
+              }
+              return (
+                <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between mt-2">
+                  {url && (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm text-amber-300 hover:text-white underline decoration-dotted underline-offset-4"
+                    >
+                      View Event Rules / Guidelines
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                        <path d="M13 3a1 1 0 0 0 0 2h4.586l-9.293 9.293a1 1 0 1 0 1.414 1.414L19 6.414V11a1 1 0 1 0 2 0V4a1 1 0 0 0-1-1h-7Z" />
+                        <path d="M5 5a2 2 0 0 0-2 2v12c0 1.103.897 2 2 2h12a2 2 0 0 0 2-2v-5a1 1 0 1 0-2 0v5H5V7h5a1 1 0 1 0 0-2H5Z" />
+                      </svg>
+                    </a>
+                  )}
+                  {prizeFragment}
                 </div>
               );
             })()}
