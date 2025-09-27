@@ -695,8 +695,8 @@ export async function saCreateTeamWithMemberEmails(input: { eventId: string; cap
   const unique = Array.from(new Set(emails));
   // Disallow captain email among members (retrieve captain email)
   const supabase = getServiceClient();
-  // Fetch event constraints
-  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, min_team_size, max_team_size").eq("id", input.eventId).maybeSingle();
+  // Fetch event constraints (also sub_cluster for esports exclusion)
+  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, sub_cluster, min_team_size, max_team_size").eq("id", input.eventId).maybeSingle();
   if (evtErr) return { ok: false as const, error: evtErr.message };
   if (!evtRow) return { ok: false as const, error: "Event not found" };
   const minTeamSize: number | null = (evtRow as { id: string; min_team_size?: number | null }).min_team_size ?? null;
@@ -707,7 +707,7 @@ export async function saCreateTeamWithMemberEmails(input: { eventId: string; cap
   if (unique.length === 0 && minAdditional > 0) {
     return { ok: false as const, error: `At least ${minAdditional} additional member email(s) required` };
   }
-  const { data: captainUser, error: capErr } = await supabase.from("Users").select("id, email").eq("id", input.captainId).maybeSingle();
+  const { data: captainUser, error: capErr } = await supabase.from("Users").select("id, email, mahe").eq("id", input.captainId).maybeSingle();
   if (capErr) return { ok: false as const, error: capErr.message };
   const captainEmail = (captainUser as { email?: string } | null)?.email?.toLowerCase();
   const filtered = captainEmail ? unique.filter(e => e !== captainEmail) : unique;
@@ -741,6 +741,45 @@ export async function saCreateTeamWithMemberEmails(input: { eventId: string; cap
       .in("memberId", foundIds);
     if (cmErr) return { ok: false as const, error: cmErr.message };
     if (conflictMembers && conflictMembers.length) return { ok: false as const, error: "One or more users already in another team for this event" };
+  }
+
+  // Additional validation: For non-esports events, if captain is a MAHE user, ensure every member owns the "MAHE BLR" pass
+  try {
+    const isEsports = ((evtRow as { sub_cluster?: string | null })?.sub_cluster || '').toLowerCase() === 'esports';
+    const captainIsMahe = Boolean((captainUser as { mahe?: boolean | null } | null)?.mahe);
+    if (!isEsports && captainIsMahe && foundIds.length) {
+      // Resolve pass ids that match MAHE BLR naming (allow prefixes like "MAHE BLR" or exact match)
+      const { data: mahePassRows, error: mahePassErr } = await supabase
+        .from('Pass')
+        .select('id, pass_name')
+        .ilike('pass_name', 'MAHE BLR%');
+      if (mahePassErr) return { ok: false as const, error: mahePassErr.message };
+      const mahePassIds = (mahePassRows || []).map(r => (r as { id: string }).id);
+      if (mahePassIds.length === 0) {
+        return { ok: false as const, error: 'MAHE BLR pass not configured' };
+      }
+      // Fetch user_passes for these users and passes
+      const { data: upRows, error: upErr } = await supabase
+        .from('User_passes')
+        .select('userId, passId')
+        .in('userId', foundIds)
+        .in('passId', mahePassIds);
+      if (upErr) return { ok: false as const, error: upErr.message };
+      const ownedSet = new Set<string>((upRows || []).map(r => (r as { userId: string }).userId));
+      const idToEmail = new Map<string, string>();
+      for (const u of (userRows as Array<{ id: string; email: string }>) || []) {
+        idToEmail.set(u.id, u.email.toLowerCase());
+      }
+      const missingIds = foundIds.filter(id => !ownedSet.has(id));
+      if (missingIds.length) {
+        const missingEmails = missingIds.map(id => idToEmail.get(id) || id).join(', ');
+        return { ok: false as const, error: `Members missing MAHE BLR pass: ${missingEmails}` };
+      }
+    }
+  } catch (e) {
+    // Non-fatal; surface as error to client for clarity
+    const msg = e instanceof Error ? e.message : 'validation_failed';
+    return { ok: false as const, error: `Pass validation error: ${msg}` };
   }
   // Perform creation manually to emulate transaction semantics
   // 1. Re-check existing team for captain
