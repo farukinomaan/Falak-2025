@@ -462,6 +462,222 @@ export async function getRoleForEmail(email: string) {
   return { ok: true as const, data: (data?.role as string | undefined) };
 }
 
+// OPS ADMIN: list all events (id, name) for dropdown
+export async function opsListEvents() {
+  const supabase = getServiceClient();
+  const { data, error } = await supabase.from('Events').select('id, name').order('name');
+  if (error) return { ok: false as const, error: error.message };
+  return { ok: true as const, data: (data || []) as Array<{ id: string; name: string | null }> };
+}
+
+// OPS ADMIN: fetch participant roster + stats for an event
+export async function opsEventRoster(eventId: string) {
+  const idOk = uuid.safeParse(eventId);
+  if (!idOk.success) return { ok: false as const, error: 'Invalid eventId' };
+  const supabase = getServiceClient();
+  // Load event basic info (date/time/venue & enable). Provided schema (2025-09) has: date, time, venue, enable, min_team_size, max_team_size.
+  // Older drafts might have start_time/end_time or enabled. We select only existing guaranteed columns first to avoid fallback wiping fields.
+  const baseSelect = 'id, name, date, time, venue, enable, min_team_size, max_team_size';
+  const evtRes = await supabase
+    .from('Events')
+    .select(baseSelect)
+    .eq('id', eventId)
+    .maybeSingle();
+  if (evtRes.error) return { ok: false as const, error: evtRes.error.message };
+  if (!evtRes.data) return { ok: false as const, error: 'event_not_found' };
+  // Normalise to unified event object exposed to client (use 'enabled' property internally derived from enable/ enabled )
+  const rawEvt = evtRes.data as { id: string; name: string | null; date?: string | null; time?: string | null; venue?: string | null; enable?: boolean | null; enabled?: boolean | null; min_team_size?: number | null; max_team_size?: number | null };
+  const evt = {
+    id: rawEvt.id,
+    name: rawEvt.name,
+    // start_time / end_time intentionally omitted (schema uses date+time). Kept for forward compatibility as undefined.
+    start_time: undefined as string | null | undefined,
+    end_time: undefined as string | null | undefined,
+    date: rawEvt.date ?? null,
+    time: rawEvt.time ?? null,
+    venue: rawEvt.venue ?? null,
+    enabled: (rawEvt.enable ?? rawEvt.enabled) ?? null,
+    min_team_size: rawEvt.min_team_size ?? null,
+    max_team_size: rawEvt.max_team_size ?? null,
+  };
+
+  // Teams (with captain user info)
+  const { data: teamsRows, error: teamsErr } = await supabase
+    .from('Teams')
+    .select('id, name, captainId, Users:captainId(id, name, email, phone, mahe, reg_no, institute)')
+    .eq('eventId', eventId);
+  if (teamsErr) return { ok: false as const, error: teamsErr.message };
+  // Supabase nested select may return Users as array; normalize to single object
+  interface RawTeam { id: string; name: string | null; captainId: string; Users?: unknown }
+  interface RawUser { id: string; name?: string | null; email?: string | null; phone?: string | null; mahe?: boolean | null; reg_no?: string | null; institute?: string | null }
+  const teams = (teamsRows as unknown as RawTeam[] || []).map(tr => {
+    const uRaw = (tr as { Users?: any }).Users; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const u = Array.isArray(uRaw) ? uRaw[0] : uRaw;
+    return {
+      id: tr.id,
+      name: tr.name,
+      captainId: tr.captainId,
+      Users: u ? {
+        id: (u as RawUser).id,
+        name: (u as RawUser).name || null,
+        email: (u as RawUser).email || null,
+        phone: (u as RawUser).phone || null,
+        mahe: (u as RawUser).mahe ?? null,
+        reg_no: (u as RawUser).reg_no || null,
+        institute: (u as RawUser).institute || null,
+      } : null
+    };
+  }) as Array<{ id: string; name: string | null; captainId: string; Users: { id: string; name?: string | null; email?: string | null; phone?: string | null; mahe?: boolean | null; reg_no?: string | null; institute?: string | null } | null }>;
+
+  // Members
+  const { data: memberRows, error: memErr } = await supabase
+    .from('Team_members')
+    .select('id, teamId, memberId, Users:memberId(id, name, email, phone, mahe, reg_no, institute)')
+    .eq('eventId', eventId);
+  if (memErr) return { ok: false as const, error: memErr.message };
+  interface RawMember { id: string; teamId: string; memberId: string; Users?: unknown }
+  const members = (memberRows as unknown as RawMember[] || []).map(mr => {
+    const uRaw = (mr as { Users?: any }).Users; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const u = Array.isArray(uRaw) ? uRaw[0] : uRaw;
+    return {
+      id: mr.id,
+      teamId: mr.teamId,
+      memberId: mr.memberId,
+      Users: u ? {
+        id: (u as RawUser).id,
+        name: (u as RawUser).name || null,
+        email: (u as RawUser).email || null,
+        phone: (u as RawUser).phone || null,
+        mahe: (u as RawUser).mahe ?? null,
+        reg_no: (u as RawUser).reg_no || null,
+        institute: (u as RawUser).institute || null,
+      } : null
+    };
+  }) as Array<{ id: string; teamId: string; memberId: string; Users: { id: string; name?: string | null; email?: string | null; phone?: string | null; mahe?: boolean | null; reg_no?: string | null; institute?: string | null } | null }>;
+
+  // Build roster rows (captain first in each team)
+  interface RosterRow { userId: string; teamId: string; teamName: string | null; captain: boolean; name: string | null; email: string | null; phone: string | null; mahe: boolean; reg_no: string | null; college: string | null }
+  const roster: RosterRow[] = [];
+  for (const t of teams) {
+    const cap = t.Users;
+    roster.push({
+      userId: cap?.id || t.captainId,
+      teamId: t.id,
+      teamName: t.name || null,
+      captain: true,
+      name: cap?.name || null,
+      email: cap?.email || null,
+      phone: cap?.phone || null,
+      mahe: Boolean(cap?.mahe),
+      reg_no: cap?.reg_no || null,
+      college: cap?.mahe ? 'MAHE BLR' : (cap?.institute || null)
+    });
+    for (const m of members.filter(m => m.teamId === t.id)) {
+      const u = m.Users;
+      roster.push({
+        userId: u?.id || m.memberId,
+        teamId: t.id,
+        teamName: t.name || null,
+        captain: false,
+        name: u?.name || null,
+        email: u?.email || null,
+        phone: u?.phone || null,
+        mahe: Boolean(u?.mahe),
+        reg_no: u?.reg_no || null,
+        college: u?.mahe ? 'MAHE BLR' : (u?.institute || null)
+      });
+    }
+  }
+
+  // Stats
+  const teamCount = teams.length;
+  const participantCount = roster.length; // includes captains and members
+
+  // Pass ownership for the event (pass.event_id = eventId)
+  const { data: passes, error: pErr } = await supabase
+    .from('Pass')
+    .select('id')
+    .eq('event_id', eventId);
+  if (pErr) return { ok: false as const, error: pErr.message };
+  const passIds = (passes || []).map(r => (r as { id: string }).id);
+  let soldCount = 0;
+  if (passIds.length) {
+  const { data: up, error: upErr } = await supabase.from('User_passes').select('userId, passId').in('passId', passIds);
+    if (upErr) return { ok: false as const, error: upErr.message };
+  soldCount = (up || []).length; // raw ownership count (could be > unique users if multiple passes variants)
+  }
+
+  // Unique colleges from roster
+  const collegeSet = new Set<string>();
+  for (const r of roster) { if (r.college) collegeSet.add(r.college); }
+  const colleges = Array.from(collegeSet).sort();
+
+  return { ok: true as const, data: { event: evt, roster, stats: { teamCount, participantCount, soldCount, colleges } } };
+}
+
+// OPS ADMIN: list users who bought event pass but not on any team
+export async function opsPassHoldersWithoutTeam(eventId: string) {
+  const idOk = uuid.safeParse(eventId);
+  if (!idOk.success) return { ok: false as const, error: 'Invalid eventId' };
+  const supabase = getServiceClient();
+  const { data: passes, error: pErr } = await supabase.from('Pass').select('id').eq('event_id', eventId);
+  if (pErr) return { ok: false as const, error: pErr.message };
+  const passIds = (passes || []).map(r => (r as { id: string }).id);
+  if (!passIds.length) return { ok: true as const, data: { rows: [], total: 0 } };
+  const { data: owners, error: oErr } = await supabase.from('User_passes').select('userId').in('passId', passIds);
+  if (oErr) return { ok: false as const, error: oErr.message };
+  const userIds = Array.from(new Set((owners || []).map(r => (r as { userId: string }).userId)));
+  if (!userIds.length) return { ok: true as const, data: { rows: [], total: 0 } };
+  // Exclude any user who is captain or member in Teams/Team_members for this event
+  const [capRows, memRows] = await Promise.all([
+    supabase.from('Teams').select('captainId').eq('eventId', eventId),
+    supabase.from('Team_members').select('memberId').eq('eventId', eventId)
+  ]);
+  if (capRows.error) return { ok: false as const, error: capRows.error.message };
+  if (memRows.error) return { ok: false as const, error: memRows.error.message };
+  const excluded = new Set<string>();
+  for (const r of (capRows.data || []) as Array<{ captainId: string }>) excluded.add(r.captainId);
+  for (const r of (memRows.data || []) as Array<{ memberId: string }>) excluded.add(r.memberId);
+  const remaining = userIds.filter(id => !excluded.has(id));
+  if (!remaining.length) return { ok: true as const, data: { rows: [], total: 0 } };
+  const { data: userRows, error: uErr } = await supabase
+    .from('Users')
+    .select('id, name, email, phone, mahe, reg_no, institute')
+    .in('id', remaining);
+  if (uErr) return { ok: false as const, error: uErr.message };
+  interface BasicUser { id: string; name?: string | null; email?: string | null; phone?: string | null; mahe?: boolean | null; reg_no?: string | null; institute?: string | null }
+  const rows = (userRows || []).map(u => {
+    const bu = u as BasicUser;
+    return {
+      userId: bu.id,
+      name: bu.name || null,
+      email: bu.email || null,
+      phone: bu.phone || null,
+      mahe: Boolean(bu.mahe),
+      reg_no: bu.reg_no || null,
+      college: bu.mahe ? 'MAHE BLR' : (bu.institute || null)
+    };
+  });
+  return { ok: true as const, data: { rows, total: rows.length } };
+}
+
+// OPS ADMIN: deactivate (disable) event
+export async function opsDeactivateEvent(eventId: string) {
+  const idOk = uuid.safeParse(eventId);
+  if (!idOk.success) return { ok: false as const, error: 'Invalid eventId' };
+  const supabase = getServiceClient();
+  // Update correct column name 'enable'. Some legacy code referenced 'enabled'.
+  const { data, error } = await supabase
+    .from('Events')
+    .update({ enable: false })
+    .eq('id', eventId)
+    .select('id, enable')
+    .maybeSingle();
+  if (error) return { ok: false as const, error: error.message };
+  if (!data) return { ok: false as const, error: 'event_not_found' };
+  return { ok: true as const, data: { id: (data as { id: string }).id, enabled: (data as { enable?: boolean | null }).enable ?? false } };
+}
+
 // Admin: update a user's phone (ticket_admin or super_admin)
 export async function adminUpdateUserPhone(userId: string, phone: string) {
   // Validate input
@@ -549,6 +765,30 @@ export async function adminUpdateUserMahe(userId: string, mahe: boolean) {
     .update({ mahe })
     .eq('id', userId)
     .select('id, name, email, phone, reg_no, mahe')
+    .maybeSingle();
+  if (error) return { ok: false as const, error: error.message };
+  if (!data) return { ok: false as const, error: 'user_not_found' };
+  return { ok: true as const, data };
+}
+
+// OPS ADMIN: update only reg_no (restricted field set)
+export async function opsUpdateUserRegNo(userId: string, regNo: string) {
+  const uid = uuid.safeParse(userId);
+  if (!uid.success) return { ok: false as const, error: 'Invalid userId' };
+  const reg = (regNo || '').trim();
+  if (!reg) return { ok: false as const, error: 'reg_no required' };
+  const session = (await getServerSession(authOptions)) as { user?: { email?: string | null } } | null;
+  const email = session?.user?.email || null;
+  if (!email) return { ok: false as const, error: 'Not authenticated' };
+  const roleRes = await getRoleForEmail(email);
+  const role = roleRes.ok ? roleRes.data : undefined;
+  if (!(role === 'ops_admin' || role === 'super_admin')) return { ok: false as const, error: 'Forbidden' };
+  const supabase = getServiceClient();
+  const { data, error } = await supabase
+    .from('Users')
+    .update({ reg_no: reg })
+    .eq('id', userId)
+    .select('id, reg_no')
     .maybeSingle();
   if (error) return { ok: false as const, error: error.message };
   if (!data) return { ok: false as const, error: 'user_not_found' };

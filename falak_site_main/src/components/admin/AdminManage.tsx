@@ -3,6 +3,7 @@
 import EventAdminPanel from "./EventAdminPanel";
 import SuperAdminDashboard from "./SuperAdminDashboard";
 import TicketAdminPanel from "./TicketAdminPanel";
+import OpsAdminPanel from "./OpsAdminPanel";
 
 export default function AdminManage({ role }: { role: string }) {
   const active = role;
@@ -29,11 +30,12 @@ export default function AdminManage({ role }: { role: string }) {
       `}</style>
       <h1 className="text-2xl font-semibold">Admin</h1>
       <div className="admin-scope space-y-6">
-        {active === "event_admin" && <EventAdminPanel />}
-        {active === "super_admin" && <SuperAdminDashboard />}
-        {active === "ticket_admin" && <TicketAdminPanel />}
+  {active === "event_admin" && <EventAdminPanel />}
+  {active === "super_admin" && <SuperAdminDashboard />}
+  {active === "ticket_admin" && <TicketAdminPanel />}
+  {active === "ops_admin" && <OpsAdminPanel />}
       </div>
-      {!(active === "event_admin" || active === "super_admin" || active === "ticket_admin") && (
+      {!(active === "event_admin" || active === "super_admin" || active === "ticket_admin" || active === 'ops_admin') && (
         <p>Unknown role: {active}</p>
       )}
     </div>
