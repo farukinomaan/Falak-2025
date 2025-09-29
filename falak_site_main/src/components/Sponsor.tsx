@@ -20,6 +20,11 @@ const sponsors = [
     url: "https://interviewbuddy.com/",
   },
   {
+    name: "Spinner",
+    logo: "/sponsors/spinner.png",
+    url: "https://www.instagram.com/spinnersportsdrink/?hl=en",
+  },
+  {
     name: "Finlatics",
     logo: "/sponsors/finlatics.png",
     url: "https://finlatics.com/",
@@ -86,7 +91,7 @@ const Sponsor: React.FC = () => {
   width={200}
   height={100}
   className={`object-contain max-h-12 sm:max-h-16 md:max-h-20 
-    ${sponsor.name === "Ink" ? "max-h-16 sm:max-h-30 md:max-h-28" : ""}`}
+    ${sponsor.name === "Ink" || sponsor.name === "Spinner" ? "max-h-18 sm:max-h-32 md:max-h-30" : ""}`}
  />
 
               </a>
