@@ -243,29 +243,37 @@ function validateDoc(d: ExternalPaymentDoc): string | null {
 
 function digitsOnly(p: string) { return (p || '').replace(/[^0-9]/g, ''); }
 
-async function fetchRemoteLogsOnce(phone: string): Promise<ExternalPaymentDoc[]> {
+// Paginated fetch (page param) – accumulates all docs until hasNextPage false or safety cap
+async function fetchRemoteLogsPaginated(phone: string): Promise<ExternalPaymentDoc[]> {
   if (!ACCESS_KEY || !ACCESS_TOKEN) throw new Error("payment_keys_missing");
-  const controller = new AbortController();
-  const timeout = setTimeout(()=>controller.abort(), 10000); // 10s timeout
-  try {
-    const url = `${PAYMENT_ENDPOINT}?mobile=${encodeURIComponent(phone)}`;
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'accept': 'application/json',
-        'accesskey': ACCESS_KEY,
-        'accesstoken': ACCESS_TOKEN,
-      },
-      cache: 'no-store',
-      signal: controller.signal,
-    });
-    if (!res.ok) throw new Error(`remote_http_${res.status}`);
-    const json = await res.json();
-    const docs = Array.isArray(json?.data?.docs) ? json.data.docs : [];
-    return docs;
-  } finally {
-    clearTimeout(timeout);
+  const collected: ExternalPaymentDoc[] = [];
+  const MAX_PAGES = 20; // safety guard
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 10000);
+    try {
+      const url = `${PAYMENT_ENDPOINT}?mobile=${encodeURIComponent(phone)}&page=${page}`;
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'accept': 'application/json',
+          'accesskey': ACCESS_KEY,
+          'accesstoken': ACCESS_TOKEN,
+        },
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error(`remote_http_${res.status}`);
+      const json = await res.json();
+      const docs = Array.isArray(json?.data?.docs) ? json.data.docs : [];
+      if (docs.length) collected.push(...docs);
+      const hasNext = Boolean(json?.data?.hasNextPage);
+      if (!hasNext) break;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
+  return collected;
 }
 
 async function fetchRemoteLogs(phone: string): Promise<ExternalPaymentDoc[]> {
@@ -282,7 +290,7 @@ async function fetchRemoteLogs(phone: string): Promise<ExternalPaymentDoc[]> {
   for (const variant of variants) {
     for (let attempt = 0; attempt < RETRY_ATTEMPTS; attempt++) {
       try {
-        const docs = await fetchRemoteLogsOnce(variant);
+  const docs = await fetchRemoteLogsPaginated(variant);
         // If docs are empty and we have more variants, continue trying
         if (docs && docs.length > 0) return docs;
       } catch (e) {

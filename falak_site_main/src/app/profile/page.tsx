@@ -71,6 +71,10 @@ export default async function ProfilePage() {
             ) : (
               <p>{user.institute || "Non-MAHE"}</p>
             )}
+            <div>
+              <p>{user.phone}</p>
+              <div className="text-white font-light text-sm"><span className="font-bold text-red-500 text-lg">Note</span>: If you have not used this number while purchasing pass, your pass will not be generated, raise a ticket to get your number changed,else contact HR.</div>
+            </div>
           </div>
         </header>
 
