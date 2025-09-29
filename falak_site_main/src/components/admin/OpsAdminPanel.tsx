@@ -23,7 +23,7 @@ export default function OpsAdminPanel() {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<RosterRow | null>(null);
   const [editForm, setEditForm] = useState<{ reg_no: string }>({ reg_no: '' });
-  const [deleting, setDeleting] = useState<RosterRow | null>(null);
+  // Remove deletion capability per new requirement
 
   // Load events once
   useEffect(() => {
@@ -188,7 +188,17 @@ export default function OpsAdminPanel() {
         </div>
         <button onClick={downloadExcel} className="px-4 py-2 rounded bg-[#b46868] hover:bg-[#c98a8a] text-sm font-medium border border-[#d79f9f]">Download All Participants Excel</button>
         <button onClick={downloadTeamsOnly} className="px-4 py-2 rounded bg-[#b46868] hover:bg-[#c98a8a] text-sm font-medium border border-[#c98a8a]">Download Teams Only Excel</button>
-        <button onClick={deactivate} disabled={!roster || roster.event.enabled === false} className="px-4 py-2 rounded bg-red-600 disabled:opacity-40 text-sm font-medium">Deactivate Event</button>
+        {roster?.event.enabled ? (
+          <button onClick={deactivate} disabled={!roster} className="px-4 py-2 rounded bg-red-600 disabled:opacity-40 text-sm font-medium">Deactivate Event</button>
+        ) : (
+          <button onClick={async ()=>{
+            if (!eventId) return; if (!confirm('Activate this event?')) return;
+            try {
+              const j = await api<{ ok: boolean; data?: { id: string; enabled: boolean }; error?: string }>(`/api/ops/event/${eventId}/activate`, { method: 'POST' });
+              if (!j.ok) toast.error(j.error || 'Failed'); else { toast.success('Event activated'); setRoster(r => r ? { ...r, event: { ...r.event, enabled: true } } : r); }
+            } catch { toast.error('Failed to activate'); }
+          }} className="px-4 py-2 rounded bg-green-600 disabled:opacity-40 text-sm font-medium">Activate Event</button>
+        )}
       </div>
 
       {loading && <p>Loading...</p>}
@@ -252,7 +262,6 @@ export default function OpsAdminPanel() {
                     <td className="p-2">{r.college || '-'}</td>
                     <td className="p-2 space-x-2">
                       <button onClick={() => { setEditing(r); setEditForm({ reg_no: r.reg_no || '' }); }} className="px-2 py-1 rounded bg-[#8452b4]/80 hover:bg-[#9e6cd0] text-xs">Edit</button>
-                      <button onClick={() => setDeleting(r)} className="px-2 py-1 rounded bg-red-600/80 hover:bg-red-500 text-xs">Delete</button>
                     </td>
                   </tr>
                 ))}
@@ -328,24 +337,7 @@ export default function OpsAdminPanel() {
             </div>
           )}
 
-          {/* Delete Confirm */}
-          {deleting && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-              <div className="bg-zinc-900 border border-zinc-700 rounded p-6 w-full max-w-sm space-y-4">
-                <h4 className="text-lg font-semibold">Remove Participant</h4>
-                <p className="text-sm opacity-80">This will remove the user from this team (does not delete their account). Continue?</p>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button onClick={() => setDeleting(null)} className="px-3 py-2 text-xs rounded bg-zinc-700/60">Cancel</button>
-                  <button onClick={async () => {
-                    try {
-                      toast.success('Deleted (placeholder)');
-                      setDeleting(null);
-                    } catch { toast.error('Delete failed'); }
-                  }} className="px-3 py-2 text-xs rounded bg-red-600 hover:bg-red-500">Delete</button>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Deletion removed by policy */}
         </>
       )}
     </div>
