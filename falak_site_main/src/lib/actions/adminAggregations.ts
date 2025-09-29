@@ -106,77 +106,66 @@ export async function getTotals() {
 
 export async function getPassSalesByPass() {
   const supabase = getServiceClient();
-  const [passes, ups] = await Promise.all([
-    supabase.from("Pass").select("id, pass_name"),
-    supabase.from("User_passes").select("id, passId"),
-  ]);
-  if (passes.error) return { ok: false as const, error: passes.error.message };
-  if (ups.error) return { ok: false as const, error: ups.error.message };
-  const counts = new Map<string, number>();
-  for (const row of (ups.data as UserPassRow[])) {
-    counts.set(row.passId, (counts.get(row.passId) || 0) + 1);
+  const passesRes = await supabase.from('Pass').select('id, pass_name');
+  if (passesRes.error) return { ok:false as const, error: passesRes.error.message };
+  const passRows = (passesRes.data as PassNameRow[]) || [];
+  const data: Array<{ passId: string; pass_name: string; count: number }> = [];
+  for (const p of passRows) {
+    const c = await supabase
+      .from('User_passes')
+      .select('id', { count: 'exact', head: true })
+      .eq('passId', p.id);
+    if (c.error) return { ok:false as const, error: c.error.message };
+    data.push({ passId: p.id, pass_name: p.pass_name ?? 'Unnamed', count: c.count ?? 0 });
   }
-  const data = ((passes.data as PassNameRow[]) || []).map((p) => ({
-    passId: p.id,
-    pass_name: p.pass_name ?? "Unnamed",
-    count: counts.get(p.id) || 0,
-  }));
-  return { ok: true as const, data };
+  return { ok:true as const, data };
 }
 
 export async function getTeamsPerEvent() {
   const supabase = getServiceClient();
-  const [events, teams] = await Promise.all([
-    supabase.from("Events").select("id, name"),
-    supabase.from("Teams").select("id, eventId"),
-  ]);
-  if (events.error) return { ok: false as const, error: events.error.message };
-  if (teams.error) return { ok: false as const, error: teams.error.message };
-  const counts = new Map<string, number>();
-  for (const t of (teams.data as TeamRow[])) {
-    counts.set(t.eventId, (counts.get(t.eventId) || 0) + 1);
+  const eventsRes = await supabase.from('Events').select('id, name');
+  if (eventsRes.error) return { ok:false as const, error: eventsRes.error.message };
+  const data: Array<{ eventId: string; event_name: string; count: number }> = [];
+  for (const e of (eventsRes.data as EventNameRow[])) {
+    const c = await supabase
+      .from('Teams')
+      .select('id', { count: 'exact', head: true })
+      .eq('eventId', e.id);
+    if (c.error) return { ok:false as const, error: c.error.message };
+    data.push({ eventId: e.id, event_name: e.name, count: c.count ?? 0 });
   }
-  const data = ((events.data as EventNameRow[]) || []).map((e) => ({
-    eventId: e.id,
-    event_name: e.name,
-    count: counts.get(e.id) || 0,
-  }));
-  return { ok: true as const, data };
+  return { ok:true as const, data };
 }
 
 export async function listUsersWithPurchasedPasses() {
   const supabase = getServiceClient();
-  const [users, ups, passes] = await Promise.all([
-    supabase.from("Users").select("id, name, email, phone"),
-    supabase.from("User_passes").select("id, userId, passId"),
-    supabase.from("Pass").select("id, pass_name"),
+  const [usersRes, passesRes] = await Promise.all([
+    supabase.from('Users').select('id, name, email, phone'),
+    supabase.from('Pass').select('id, pass_name')
   ]);
-  if (users.error) return { ok: false as const, error: users.error.message };
-  if (ups.error) return { ok: false as const, error: ups.error.message };
-  if (passes.error) return { ok: false as const, error: passes.error.message };
-
+  if (usersRes.error) return { ok:false as const, error: usersRes.error.message };
+  if (passesRes.error) return { ok:false as const, error: passesRes.error.message };
   const passById = new Map<string, string>();
-  for (const p of (passes.data as PassNameRow[])) passById.set(p.id, p.pass_name ?? "Unnamed");
-
-  const passesByUser = new Map<string, string[]>();
-  for (const up of (ups.data as UserPassRow[])) {
-    const arr = passesByUser.get(up.userId) || [];
-    const name = passById.get(up.passId);
-    if (name) arr.push(name);
-    passesByUser.set(up.userId, arr);
+  for (const p of (passesRes.data as PassNameRow[])) passById.set(p.id, p.pass_name ?? 'Unnamed');
+  // Stream all user_passes via paged ranges to bypass 1000 soft cap
+  const batchSize = 1000; let from = 0; let to = batchSize - 1; let done = false;
+  const userPasses: UserPassRow[] = [];
+  while (!done) {
+    const page = await supabase.from('User_passes').select('id, userId, passId').range(from, to);
+    if (page.error) return { ok:false as const, error: page.error.message };
+    userPasses.push(...(page.data as UserPassRow[]));
+    if ((page.data || []).length < batchSize) done = true; else { from += batchSize; to += batchSize; if (from > 20000) done = true; }
   }
-
-  const data = (users.data as UserBasicRow[])
-    .filter((u) => (passesByUser.get(u.id) || []).length > 0)
-    .map((u) => ({
-      id: u.id,
-      name: u.name ?? "Unnamed",
-      email: u.email,
-      phone: u.phone,
-      passes: passesByUser.get(u.id) || [],
-    }));
-
-  return { ok: true as const, data };
+  const usersArr = (usersRes.data as UserBasicRow[]) || [];
+  const grouped: Record<string, { id: string; name: string; email: string; phone: string; passes: string[] }> = {};
+  for (const up of userPasses) {
+    const user = usersArr.find(u => u.id === up.userId);
+    if (!user) continue;
+    if (!grouped[user.id]) grouped[user.id] = { id: user.id, name: user.name || '', email: user.email, phone: user.phone, passes: [] };
+    grouped[user.id].passes.push(passById.get(up.passId) || up.passId);
+  }
+  const data = Object.values(grouped).sort((a, b) => a.name.localeCompare(b.name));
+  return { ok:true as const, data };
 }
 
 // Ticket Admin helpers
@@ -676,6 +665,22 @@ export async function opsDeactivateEvent(eventId: string) {
   if (error) return { ok: false as const, error: error.message };
   if (!data) return { ok: false as const, error: 'event_not_found' };
   return { ok: true as const, data: { id: (data as { id: string }).id, enabled: (data as { enable?: boolean | null }).enable ?? false } };
+}
+
+// OPS ADMIN: activate (enable) event
+export async function opsActivateEvent(eventId: string) {
+  const idOk = uuid.safeParse(eventId);
+  if (!idOk.success) return { ok: false as const, error: 'Invalid eventId' };
+  const supabase = getServiceClient();
+  const { data, error } = await supabase
+    .from('Events')
+    .update({ enable: true })
+    .eq('id', eventId)
+    .select('id, enable')
+    .maybeSingle();
+  if (error) return { ok: false as const, error: error.message };
+  if (!data) return { ok: false as const, error: 'event_not_found' };
+  return { ok: true as const, data: { id: (data as { id: string }).id, enabled: (data as { enable?: boolean | null }).enable ?? true } };
 }
 
 // Admin: update a user's phone (ticket_admin or super_admin)
@@ -1451,6 +1456,106 @@ export async function listDuplicateProshowLogsForUser(userId: string, limit = 20
     duplicates.push(...sorted.slice(1));
   }
   return { ok: true as const, data: duplicates };
+}
+
+// ---------------- Maintenance: Fix Non-MAHE Proshow Ownerships (script logic inlined) ----------------
+// This makes the one-off script repeatable via a server action / API route.
+// It is idempotent: running multiple times yields same final state.
+// Strategy: detect NONMAHE users from payment_logs raw.user_type/user_status variants, then
+// ensure they only own the Non-MAHE proshow pass (event_id NULL, mahe=false) instead of a MAHE proshow pass.
+// If both owned, delete MAHE variant; if only MAHE owned, swap to target.
+export async function maintenanceFixNonMaheProshow(limitUsers = 400, dryRun = false) {
+  const supabase = getServiceClient();
+  // 1) Resolve target Non-MAHE proshow pass (prefer 'passes' lowercase)
+  const targetName = 'Non-MAHE BLR';
+  let passQ = await supabase
+    .from('passes')
+    .select('id, pass_name, mahe, event_id')
+    .ilike('pass_name', `${targetName}%`)
+    .is('event_id', null)
+    .eq('mahe', false)
+    .limit(5);
+  if (passQ.error) {
+    passQ = await supabase
+      .from('Pass')
+      .select('id, pass_name, mahe, event_id')
+      .ilike('pass_name', `${targetName}%`)
+      .is('event_id', null)
+      .eq('mahe', false)
+      .limit(5);
+  }
+  if (passQ.error) return { ok:false as const, error: passQ.error.message };
+  const candidates = passQ.data || [];
+  if (!candidates.length) return { ok:false as const, error: 'target_non_mahe_pass_not_found' };
+  // If multiple we just take first deterministic; script version forced disambiguation. Here we proceed with first.
+  const targetPass = candidates[0] as { id: string; pass_name: string };
+
+  // 2) Collect NONMAHE user ids from payment_logs raw (limit for safety)
+  const statuses = [
+    'Success','Paid','Completed','Successfull','Successfull payment','Successfull_payment',
+    'success','paid','completed','successfull','successfull payment','successfull_payment'
+  ];
+  const orFilter = [
+    'raw->>user_type.eq.NONMAHE',
+    'raw->>userType.eq.NONMAHE',
+    'raw->>user_status.eq.NONMAHE',
+    'raw->>userStatus.eq.NONMAHE'
+  ].join(',');
+  const candUsersRes = await supabase
+    .from('payment_logs')
+    .select('user_id')
+    .in('status', statuses)
+    .or(orFilter)
+    .not('user_id', 'is', null)
+    .limit(limitUsers * 5); // over-fetch to allow filtering distinct then slicing
+  if (candUsersRes.error) return { ok:false as const, error: candUsersRes.error.message };
+  const userIds = Array.from(new Set((candUsersRes.data || []).map(r => (r as { user_id: string | null }).user_id).filter(Boolean))) as string[];
+  const limitedUserIds = userIds.slice(0, limitUsers);
+  if (!limitedUserIds.length) return { ok:true as const, data: { updated:0, deleted:0, scannedUsers:0, targetPass: targetPass.pass_name } };
+
+  // 3) Fetch their proshow-like ownership rows
+  const upRes = await supabase
+    .from('User_passes')
+    .select('id, userId, passId, passes:passId(id, pass_name, mahe, event_id)')
+    .in('userId', limitedUserIds);
+  if (upRes.error) return { ok:false as const, error: upRes.error.message };
+  // Filter to event_id null rows only
+  interface ProshowRow { id: string; userId: string; passId: string; passes?: { id?: string; pass_name?: string | null; mahe?: boolean | null; event_id?: string | null } }
+  const proshowRows = (upRes.data as ProshowRow[] || []).filter(r => r.passes?.event_id == null);
+
+  let updated = 0; let deleted = 0;
+  if (!dryRun) {
+    for (const r of proshowRows as Array<{ id: string; userId: string; passId: string; passes?: { mahe?: boolean | null; event_id?: string | null; pass_name?: string | null } }>) {
+      const p = r.passes;
+      if (!p) continue;
+      // If pass is MAHE proshow (mahe=true) then remediate
+      if (p.event_id == null && p.mahe === true) {
+        // Does user already have target pass?
+        const existing = await supabase
+          .from('User_passes')
+          .select('id')
+          .eq('userId', r.userId)
+          .eq('passId', targetPass.id)
+          .maybeSingle();
+        if (!existing.error && existing.data) {
+          // Delete this MAHE row
+          const del = await supabase.from('User_passes').delete().eq('id', r.id);
+          if (!del.error) { deleted++; }
+          continue;
+        }
+        // Update passId in place
+        const up = await supabase.from('User_passes').update({ passId: targetPass.id }).eq('id', r.id);
+        if (!up.error) { updated++; }
+      }
+    }
+  }
+
+  // Dry run summary (without modifications) still counts potential changes
+  if (dryRun) {
+  const potential = proshowRows.filter(r => r.passes?.event_id == null && r.passes?.mahe === true).length;
+    return { ok:true as const, data: { updated: potential, deleted: 0, scannedUsers: limitedUserIds.length, dryRun: true, targetPass: targetPass.pass_name } };
+  }
+  return { ok:true as const, data: { updated, deleted, scannedUsers: limitedUserIds.length, targetPass: targetPass.pass_name } };
 }
 
 // Assign a duplicate log (proshow-like) to another user by phone. Updates the log's user_id and grants pass to target.
