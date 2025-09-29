@@ -1279,14 +1279,26 @@ export async function adminManualFetchPayments(phone: string) {
   if (!p.startsWith("+91") && digits.length === 10) variants.push("+91" + digits);
   let docs: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
   let lastError: string | null = null;
+  // For each variant phone, attempt paginated retrieval. Stop at first variant that yields any docs.
   for (const v of variants) {
     try {
-      const url = `${PAYMENT_ENDPOINT}?mobile=${encodeURIComponent(v)}`;
-      const r = await fetch(url, { headers: { accept: 'application/json', accesskey: ACCESS_KEY, accesstoken: ACCESS_TOKEN }, cache: 'no-store' });
-      if (!r.ok) { lastError = `remote_status_${r.status}`; continue; }
-      const j = await r.json();
-      const arr = Array.isArray(j?.data?.docs) ? j.data.docs : [];
-      if (arr.length > 0) { docs = arr; break; }
+      let page = 1;
+      const collected: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
+      // Safety cap to avoid infinite loops if remote API misbehaves
+      const MAX_PAGES = 20;
+      for (;;) {
+        const url = `${PAYMENT_ENDPOINT}?mobile=${encodeURIComponent(v)}&page=${page}`;
+        const r = await fetch(url, { headers: { accept: 'application/json', accesskey: ACCESS_KEY, accesstoken: ACCESS_TOKEN }, cache: 'no-store' });
+        if (!r.ok) { lastError = `remote_status_${r.status}`; break; }
+        const j = await r.json();
+        const arr = Array.isArray(j?.data?.docs) ? j.data.docs : [];
+        if (arr.length) collected.push(...arr);
+        const hasNext = Boolean(j?.data?.hasNextPage);
+        if (!hasNext) break;
+        page += 1;
+        if (page > MAX_PAGES) { lastError = 'pagination_overflow'; break; }
+      }
+      if (collected.length > 0) { docs = collected; break; }
     } catch (e) {
       lastError = e instanceof Error ? e.message : 'fetch_failed';
     }
