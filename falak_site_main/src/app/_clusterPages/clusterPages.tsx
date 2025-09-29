@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import {
-  saListEvents,
+  saListAllEvents,
   saListUserPassIds,
   saListPasses,
   saListUserTeamEventIds,
@@ -81,12 +81,12 @@ export function PageBackground({ cluster }: { cluster: string }) {
 
 // Root: list sub-clusters for a cluster (sports / cultural)
 export async function ClusterRoot({ cluster }: { cluster: string }) {
-  const res = await saListEvents();
+  const res = await saListAllEvents();
   const events = res.ok ? (res.data as EvtBase[]) : [];
 
+  // Include disabled events so they still appear (will be marked Unavailable later)
   const filtered = events
-    .filter((e) => (e.cluster_name || "").toLowerCase() === cluster)
-    .filter((e) => (e.enable ?? true) as boolean);
+    .filter((e) => (e.cluster_name || "").toLowerCase() === cluster);
   const subMap = new Map<string, { count: number }>();
   for (const e of filtered) {
     const sub = e.sub_cluster;
@@ -160,7 +160,7 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
   const userId = (session as { user?: { id?: string } } | null)?.user?.id;
   const [ownedRes, eventsRes, passesRes, teamEvtRes, accessibleRes] = await Promise.all([
     userId ? saListUserPassIds(userId) : Promise.resolve({ ok: true as const, data: [] as string[] }),
-    saListEvents(),
+  saListAllEvents(),
     saListPasses(),
     userId ? saListUserTeamEventIds(userId) : Promise.resolve({ ok: true as const, data: [] as string[] }),
     userId ? computeUserAccessibleEventIds(userId) : Promise.resolve({ eventIds: [] }),
@@ -174,7 +174,8 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
   // Incorporate unified access layer (includes esports bundle / Falak25 esports full bundle / proshow unlocks)
   const accessibleIds = new Set<string>(accessibleRes.eventIds || []);
   const teamEventIds = new Set<string>(teamEvtRes.ok ? teamEvtRes.data : []);
-  const events = eventsRes.ok ? ((eventsRes.data as EvtBase[]) || []).filter((e) => (e.enable ?? true) as boolean) : [];
+  // Include disabled events; gating handled in UI (Unavailable state)
+  const events = eventsRes.ok ? ((eventsRes.data as EvtBase[]) || []) : [];
 
   // Determine if user has a MAHE proshow pass (no event_id) to unlock access (except esports)
   interface SessWithMahe { user?: { mahe?: boolean | null } }
@@ -217,6 +218,7 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
         >
           <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-8">
             {list.map((e) => {
+              const disabled = !(e.enable ?? true);
               // Ownership / access now centralized
               const eligibleUniversal = hasMaheProshow && (e.sub_cluster || '').toLowerCase() !== 'esports'; // legacy (still valid for display)
               const owned = accessibleIds.has(e.id) || ownedEventIds.has(e.id) || eligibleUniversal;
@@ -232,8 +234,8 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
                   }
                   back={
                     <>
-                      <div className={`status-tag ${inTeam ? 'in-team' : owned ? 'owned' : 'available'}`}>
-                        {inTeam ? "In Team" : owned ? "Owned" : userIsMahe ? "MAHE" : "Available"}
+                      <div className={`status-tag ${disabled ? 'unavailable' : inTeam ? 'in-team' : owned ? 'owned' : 'available'}`}>
+                        {disabled ? 'Unavailable' : inTeam ? "In Team" : owned ? "Owned" : userIsMahe ? "MAHE" : "Available"}
                       </div>
                       <div className="mt-4 flex flex-col gap-2">
                         <Link
@@ -242,7 +244,7 @@ export async function ClusterCategory({ cluster, category }: { cluster: string; 
                         >
                           Go to Event Page
                         </Link>
-                        {!owned && userIsMahe && (
+                        {!disabled && !owned && userIsMahe && (
                           <Link href="/passes" className="clusterButton alt">
                             Get Access
                           </Link>
@@ -277,7 +279,7 @@ export async function ClusterEvent({
   // Keeping these fetches for when events go live
   const [ownedRes, eventsRes, passesRes, teamRes, accessibleRes] = await Promise.all([
     userId ? saListUserPassIds(userId) : Promise.resolve({ ok: true as const, data: [] as string[] }),
-    saListEvents(),
+  saListAllEvents(),
     saListPasses(),
     userId ? saGetUserTeamForEvent(userId, slug) : Promise.resolve({ ok: true as const, data: null }),
     userId ? computeUserAccessibleEventIds(userId) : Promise.resolve({ eventIds: [] }),
@@ -296,6 +298,7 @@ export async function ClusterEvent({
     (e) => e.id === slug && ((e.sub_cluster || '').toLowerCase() === decodeURIComponent(category).toLowerCase()) && (e.cluster_name || "").toLowerCase() === cluster
   );
   if (!event) return notFound();
+  const disabled = !(event.enable ?? true);
   const nice = clusterLabel(cluster);
   // Determine if user has a MAHE proshow pass (no event_id) to unlock access (except esports)
   interface SessWithMahe2 { user?: { mahe?: boolean | null } }
@@ -419,6 +422,11 @@ export async function ClusterEvent({
               {event.name}
               <span className="text-sm uppercase tracking-wide px-3 py-1 rounded-full bg-black text-white">{nice}</span>
             </h1>
+            {disabled && (
+              <div className="rounded-lg border border-red-500/40 bg-red-900/30 text-red-200 px-4 py-3 text-sm leading-relaxed">
+                This event is currently <strong>unavailable</strong>. Registration and new purchases are disabled while it is deactivated.
+              </div>
+            )}
             {event.description && (
               <p className="text-gray-300 whitespace-pre-line text-lg">{event.description}</p>
             )}
@@ -507,7 +515,7 @@ export async function ClusterEvent({
                   </div>
                 );
               }
-              if (!owned) {
+              if (!owned && !disabled) {
                 // Non-MAHE: always show Add to Cart for the specific event
                 if (!userIsMahe) {
                   return (
@@ -529,13 +537,20 @@ export async function ClusterEvent({
                   </Link>
                 );
               }
+              if (!owned && disabled) {
+                return (
+                  <div className="flex items-center justify-end gap-4">
+                    <div className="text-lg font-medium text-red-300">Unavailable</div>
+                  </div>
+                );
+              }
               return null;
             })()}
           </div>
         </div>
 
         
-    {owned && !existingTeam && (
+    {owned && !existingTeam && !disabled && (
           <div className="mt-8" style={{ position: 'relative', zIndex: 5 }}>
             {blockedEsportsRegistration ? (
               <div className="clusterCard border rounded-lg p-6 text-center bg-black/30">
@@ -594,7 +609,7 @@ export async function ClusterEvent({
 // Static params helpers
 export async function getClusterCategoryParams(cluster: string) {
   // Backend logic re-enabled
-  const res = await saListEvents();
+  const res = await saListAllEvents();
   const events = res.ok ? (res.data as EvtBase[]) : [];
 
   const filtered = events.filter((e) => (e.cluster_name || "").toLowerCase() === cluster);
@@ -604,7 +619,7 @@ export async function getClusterCategoryParams(cluster: string) {
 
 export async function getClusterEventParams(cluster: string) {
   // Backend logic re-enabled
-  const res = await saListEvents();
+  const res = await saListAllEvents();
   const events = res.ok ? (res.data as EvtBase[]) : [];
   
   const filtered = events.filter((e) => (e.cluster_name || "").toLowerCase() === cluster);
