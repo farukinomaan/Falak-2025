@@ -1347,7 +1347,7 @@ export async function adminManualFetchPayments(phone: string) {
 }
 
 
-// ---------------- Duplicate Proshow Purchases (same phone) ----------------
+// ---------------- Duplicate Pass Purchases (same phone) ----------------
 
 type DuplicateLogRow = {
   payment_log_id: string;
@@ -1365,10 +1365,9 @@ function normalizeKeyParts(s?: string | null) {
   return (s || "").trim().toLowerCase();
 }
 
-// List logs for a given user that resolve to a pass already owned by that user (i.e., duplicates).
-// Filtered to "proshow-like" passes (passes.event_id is null). We keep the original log untouched and
-// surface these extras for manual assignment to another user via phone.
-export async function listDuplicateProshowLogsForUser(userId: string, limit = 200) {
+// List logs for a given user that resolve to a pass already owned by that user (i.e., duplicates) across ALL passes.
+// Previous implementation restricted to proshow-like (event_id null) passes; now generalized per request.
+export async function listDuplicateProshowLogsForUser(userId: string, limit = 200) { // name kept for backward compatibility
   const uid = uuid.safeParse(userId);
   if (!uid.success) return { ok: false as const, error: "Invalid userId" };
   const supabase = getServiceClient();
@@ -1398,17 +1397,8 @@ export async function listDuplicateProshowLogsForUser(userId: string, limit = 20
   const ownedSet = new Set<string>((owned || []).map((r: any) => r.passId as string)); // eslint-disable-line @typescript-eslint/no-explicit-any
   if (!logs || logs.length === 0 || ownedSet.size === 0) return { ok: true as const, data: [] as DuplicateLogRow[] };
 
-  // Resolve passId per log and filter to proshow-like passes (event_id is null)
+  // Resolve passId per log and collect duplicates for ANY pass
   const rows: Array<DuplicateLogRow & { _mt: string; _en: string; _et: string }> = [];
-  // Cache for pass meta to avoid repetitive fetches
-  const passMetaCache = new Map<string, { event_id: string | null } | null>();
-  async function getPassEventNull(pid: string): Promise<boolean> {
-    if (passMetaCache.has(pid)) return passMetaCache.get(pid)?.event_id == null || false;
-    const { data, error } = await supabase.from('Pass').select('id, event_id').eq('id', pid).maybeSingle();
-    if (error || !data) { passMetaCache.set(pid, null); return false; }
-    passMetaCache.set(pid, { event_id: (data as any).event_id ?? null }); // eslint-disable-line @typescript-eslint/no-explicit-any
-    return ((data as any).event_id ?? null) == null; // eslint-disable-line @typescript-eslint/no-explicit-any
-  }
 
   for (const pl of (logs as PLRow[])) {
     const mt = normalizeKeyParts(pl.membership_type);
@@ -1419,9 +1409,6 @@ export async function listDuplicateProshowLogsForUser(userId: string, limit = 20
     const passId = (mapping[v2Key] ?? mapping[legacyKey]) || null;
     if (!passId) continue; // unmapped
     if (!ownedSet.has(passId)) continue; // not a duplicate if user doesn't own this pass
-    // Filter to proshow-like: passes where event_id is null
-    const isProshowLike = await getPassEventNull(passId);
-    if (!isProshowLike) continue;
     rows.push({
       payment_log_id: pl.id,
       user_id: pl.user_id,

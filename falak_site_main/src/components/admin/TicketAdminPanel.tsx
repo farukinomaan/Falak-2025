@@ -333,9 +333,9 @@ export default function TicketAdminPanel() {
                 </ul>
               </div>
 
-              {/* Duplicate proshow purchases on same phone */}
+              {/* Duplicate pass purchases on same phone */}
               <div className="mt-4">
-                <div className="font-medium">Duplicate Proshow Purchases (same phone)</div>
+                <div className="font-medium">Duplicate Pass Purchases (same phone)</div>
                 {dupes.length === 0 ? (
                   <div className="text-xs text-muted-foreground mt-1">None</div>
                 ) : (
@@ -378,7 +378,7 @@ export default function TicketAdminPanel() {
                     </table>
                   </div>
                 )}
-                <p className="text-[11px] text-muted-foreground mt-1">We auto-assign only one proshow pass per phone. Extra purchases appear here for manual allocation.</p>
+                <p className="text-[11px] text-muted-foreground mt-1">We auto-assign only one pass per phone when ambiguity exists. Additional purchases appear here for manual allocation to another user (by phone).</p>
               </div>
 
               <div>
