@@ -1545,7 +1545,7 @@ export async function maintenanceFixNonMaheProshow(limitUsers = 400, dryRun = fa
   return { ok:true as const, data: { updated, deleted, scannedUsers: limitedUserIds.length, targetPass: targetPass.pass_name } };
 }
 
-// Assign a duplicate log (proshow-like) to another user by phone. Updates the log's user_id and grants pass to target.
+// Assign a duplicate log (any pass) to another user by phone. Updates the log's user_id and grants pass to target.
 export async function adminAssignDuplicateLogToPhone(paymentLogId: string, targetPhone: string) {
   const pid = uuid.safeParse(paymentLogId);
   if (!pid.success) return { ok: false as const, error: 'Invalid paymentLogId' };
@@ -1587,10 +1587,10 @@ export async function adminAssignDuplicateLogToPhone(paymentLogId: string, targe
   }
   const passId = (mapping[v2Key] ?? mapping[legacyKey]) || null;
   if (!passId) return { ok: false as const, error: 'mapping_not_found' };
-  // Ensure pass is proshow-like (event_id null)
-  const { data: passRow, error: passErr } = await supabase.from('Pass').select('id, event_id').eq('id', passId).maybeSingle();
+  // Load pass meta (no longer restricted to proshow-like)
+  const { data: passRow, error: passErr } = await supabase.from('Pass').select('id').eq('id', passId).maybeSingle();
   if (passErr) return { ok: false as const, error: passErr.message };
-  if (!passRow || (passRow as any).event_id !== null) return { ok: false as const, error: 'not_proshow_like' }; // eslint-disable-line @typescript-eslint/no-explicit-any
+  if (!passRow) return { ok: false as const, error: 'pass_not_found' };
 
   // Normalize phone and find target user
   const normalized = phoneRaw.startsWith('+') ? phoneRaw.replace(/[^0-9+]/g, '') : phoneRaw.replace(/[^0-9]/g, '');
