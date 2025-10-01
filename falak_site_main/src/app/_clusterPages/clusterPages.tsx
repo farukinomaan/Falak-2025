@@ -593,6 +593,7 @@ export async function ClusterEvent({
                   minSize={adjustedMin}
                   maxSize={adjustedMax}
                   leaderHint={eligibleUniversal && !ownedEventIds.has(event.id)}
+                  clusterName={cluster}
                 />
                   );
                 })()

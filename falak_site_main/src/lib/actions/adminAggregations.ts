@@ -941,7 +941,7 @@ export async function saCreateTeamWithMemberEmails(input: { eventId: string; cap
   // Disallow captain email among members (retrieve captain email)
   const supabase = getServiceClient();
   // Fetch event constraints (also sub_cluster for esports exclusion)
-  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, sub_cluster, min_team_size, max_team_size").eq("id", input.eventId).maybeSingle();
+  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, sub_cluster, cluster_name, min_team_size, max_team_size").eq("id", input.eventId).maybeSingle();
   if (evtErr) return { ok: false as const, error: evtErr.message };
   if (!evtRow) return { ok: false as const, error: "Event not found" };
   const minTeamSize: number | null = (evtRow as { id: string; min_team_size?: number | null }).min_team_size ?? null;
@@ -990,9 +990,11 @@ export async function saCreateTeamWithMemberEmails(input: { eventId: string; cap
 
   // Additional validation: For non-esports events, if captain is a MAHE user, ensure every member owns the "MAHE BLR" pass
   try {
-    const isEsports = ((evtRow as { sub_cluster?: string | null })?.sub_cluster || '').toLowerCase() === 'esports';
+  const isEsports = ((evtRow as { sub_cluster?: string | null })?.sub_cluster || '').toLowerCase() === 'esports';
+  const isCultural = ((evtRow as { cluster_name?: string | null })?.cluster_name || '').toLowerCase() === 'cultural';
     const captainIsMahe = Boolean((captainUser as { mahe?: boolean | null } | null)?.mahe);
-    if (!isEsports && captainIsMahe && foundIds.length) {
+  // Pass requirement applies only to non-esports, non-cultural clusters for MAHE captain
+  if (!isEsports && !isCultural && captainIsMahe && foundIds.length) {
       // Resolve pass ids that match MAHE BLR naming (allow prefixes like "MAHE BLR" or exact match)
       const { data: mahePassRows, error: mahePassErr } = await supabase
         .from('Pass')
