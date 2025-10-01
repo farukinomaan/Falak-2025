@@ -4,59 +4,26 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 
 const sponsors = [
-  {
-    name: "Unstop",
-    logo: "/sponsors/unstop.png",
-    url: "https://unstop.com/",
-  },
-  {
-    name: "Findoc",
-    logo: "/sponsors/findoc.png",
-    url: "https://findoc.com/",
-  },
-  {
-    name: "InterviewBuddy",
-    logo: "/sponsors/inbuddy.png",
-    url: "https://interviewbuddy.com/",
-  },
-  {
-    name: "Spinner",
-    logo: "/sponsors/spinner.png",
-    url: "https://www.instagram.com/spinnersportsdrink/?hl=en",
-  },
-  {
-    name: "Finlatics",
-    logo: "/sponsors/finlatics.png",
-    url: "https://finlatics.com/",
-  },
-  {
-    name: "Lapcare",
-    logo: "/sponsors/Lapcare.png",
-    url: "https://lapcare.com/",
-  },
-  {
-    name: "RealMe",
-    logo: "/sponsors/RealMe.png",
-    url: "https://realme.com/",
-  },
-  {
-    name: "Ink",
-    logo: "/sponsors/ink.png",
-    url: "https://ink-insights-thoughts.in",
-  },
-  {
-    name: "Bisleri",
-    logo: "/sponsors/bisleri.png",
-    url: "https://bisleri.com",
-  },
+  { name: "RealMe", partnership: "Pronite Sponsor", logo: "/sponsors/RealMe.png", url: "https://realme.com/" },
+  { name: "LapCare", partnership: "Event Partner", logo: "/sponsors/Lapcare.png", url: "https://lapcare.com/" },
+  { name: "Findoc", partnership: "Trading Partner", logo: "/sponsors/findoc.png", url: "https://findoc.com/" },
+  { name: "Spinner", partnership: "Beverage Partner", logo: "/sponsors/spinner.png", url: "https://www.instagram.com/spinnersportsdrink/?hl=en" },
+  { name: "Finlatics", partnership: "Learning Partner", logo: "/sponsors/finlatics.png", url: "https://finlatics.com/" },
+  { name: "Tradejini", partnership: "Investment Partner", logo: "/sponsors/tradejini.png", url: "https://www.tradejini.com" },
+  { name: "Plum Body Lovin'", partnership: "Bath & Body Partner", logo: "/sponsors/plum.png", url: "https://plumgoodness.com" },
+  { name: "Ink Insights Thoughts", partnership: "Creative Gifting Partner", logo: "/sponsors/ink.png", url: "https://ink-insights-thoughts.in" },
+  { name: "Interview Buddy", partnership: "Official Mock Interview Partner", logo: "/sponsors/inbuddy.png", url: "https://interviewbuddy.com/" },
+  { name: "Unstop", partnership: "Opportunity Partner", logo: "/sponsors/unstop.png", url: "https://unstop.com/" },
+  { name: "DS Group", partnership: "Taste Partner", logo: "/sponsors/ds.png", url: "https://www.dsgroup.com" },
+  { name: "Bisleri", partnership: "Beverage Partner", logo: "/sponsors/bisleri.png", url: "https://bisleri.com" },
 ];
 
 const Sponsor: React.FC = () => {
-  const [repeatCount, setRepeatCount] = useState(2); // at least 2 for seamless loop
+  const [repeatCount, setRepeatCount] = useState(2); // for seamless loop
 
   useEffect(() => {
     const handleResize = () => {
-      setRepeatCount(window.innerWidth < 768 ? 2 : 4); 
+      setRepeatCount(window.innerWidth < 768 ? 2 : 4);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -83,17 +50,20 @@ const Sponsor: React.FC = () => {
                 href={sponsor.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center w-[150px] sm:w-[200px] md:w-[250px] mx-4 sm:mx-6 md:mx-8 hover:scale-105 transition duration-300"
+                className="flex flex-col items-center justify-center w-[150px] sm:w-[200px] md:w-[250px] mx-4 sm:mx-6 md:mx-8 hover:scale-105 transition duration-300"
               >
-                <Image
-  src={sponsor.logo}
-  alt={sponsor.name}
-  width={200}
-  height={100}
-  className={`object-contain max-h-12 sm:max-h-16 md:max-h-20 
-    ${sponsor.name === "Ink" || sponsor.name === "Spinner" ? "max-h-18 sm:max-h-32 md:max-h-30" : ""}`}
- />
-
+                <div className="w-full h-24 flex items-center justify-center mb-2">
+                  <Image
+                    src={sponsor.logo}
+                    alt={sponsor.name}
+                    width={200}
+                    height={100}
+                    className="object-contain max-h-16 sm:max-h-20 md:max-h-24"
+                  />
+                </div>
+                <p className="text-base sm:text-lg md:text-lg text-[#32212C] font-[abhaya-font] text-center">
+                  {sponsor.partnership}
+                </p>
               </a>
             ))}
         </div>

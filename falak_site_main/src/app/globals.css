@@ -221,8 +221,13 @@ main {
 
 .animate-marquee {
   display: flex;
-  animation: marquee 15s linear infinite;
+  animation: marquee 20s linear infinite;
   width: max-content;
+}
+@media (max-width: 768px) {
+  .animate-marquee {
+    animation: marquee 15s linear infinite;
+  }
 }
 
 .button-shadow-border {
