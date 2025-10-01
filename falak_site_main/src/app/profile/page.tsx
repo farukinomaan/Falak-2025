@@ -113,7 +113,6 @@ export default async function ProfilePage() {
                       <li key={up.id ?? `${up.userId}-${up.passId}`} className={styles.passItem}>
                         <div className={styles.passDetails}>
                           <h3>{pass?.pass_name ?? "Pass"}</h3>
-                          <p className={styles.passDescription}>{pass?.description || ""}</p>
                         </div>
                         {qrPayloadUrl && (
                           <div className={styles.qrContainer}>

@@ -10,6 +10,7 @@ interface Props {
 	minSize?: number;
 	maxSize?: number;
 	leaderHint?: boolean; // show leader-only purchase hint when eligibility comes from proshow pass
+	clusterName?: string; // to adjust messaging (cultural vs others)
 }
 
 export default function TeamRegistrationClient(props: Props) {
@@ -55,7 +56,9 @@ export default function TeamRegistrationClient(props: Props) {
 			{/* Body (scrollable) */}
 			<div className="flex-grow overflow-y-auto py-4">
 				<div className="text-base mb-4">
-					Note: Make sure your team members have registered on the site and have purchased passes for this event.
+					{props.clusterName && props.clusterName.toLowerCase() === 'cultural'
+						? 'Note: Ensure your team members have registered an account on the site.'
+						: 'Note: Make sure your team members have registered and (where required) purchased access to this event.'}
 				</div>
 				<TeamRegistrationForm
 					eventId={props.eventId}

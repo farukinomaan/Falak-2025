@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getTotals, getPassSalesByPass, getTeamsPerEvent, listUsersWithPurchasedPasses, listApprovalPendingTickets, saListPasses, approveTicketAndAssign } from "@/lib/actions/adminAggregations";
+import { getTotals, getPassSalesByPass, getTeamsPerEvent, listUsersWithPurchasedPasses, listApprovalPendingTickets, saListPasses, approveTicketAndAssign, maintenanceFixNonMaheProshow } from "@/lib/actions/adminAggregations";
 
 export default function SuperAdminDashboard() {
   const [totals, setTotals] = useState<{ users: number; teams: number; passesSold: number } | null>(null);
@@ -14,6 +14,8 @@ export default function SuperAdminDashboard() {
   const [passes, setPasses] = useState<Array<{ id: string; pass_name: string; enable?: boolean | null; status?: boolean | null }>>([]);
   const [assignSel, setAssignSel] = useState<Record<string,string>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  const [maintBusy, setMaintBusy] = useState<boolean>(false);
+  const [maintSummary, setMaintSummary] = useState<null | { updated: number; deleted: number; scannedUsers: number; targetPass: string; dryRun?: boolean }>(null);
 
   useEffect(() => {
     (async () => {
@@ -42,6 +44,8 @@ export default function SuperAdminDashboard() {
         <CardStat title="Teams" value={totals?.teams ?? 0} />
         <CardStat title="Passes Sold" value={totals?.passesSold ?? 0} />
       </div>
+
+      
 
       
 
@@ -111,40 +115,40 @@ export default function SuperAdminDashboard() {
       </div>
 
 
-      <div className="space-y-3">
-        <h3 className="font-medium">Users who bought passes</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left border-b">
-                <th className="p-2">Name</th>
-                <th className="p-2">Email</th>
-                <th className="p-2">Phone</th>
-                <th className="p-2">Passes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {buyers.slice(0, buyersShown).map((u) => (
-                <tr key={u.id} className="border-b">
-                  <td className="p-2">{u.name}</td>
-                  <td className="p-2">{u.email}</td>
-                  <td className="p-2">{u.phone}</td>
-                  <td className="p-2 flex flex-wrap gap-2">{u.passes.map((p) => (<span key={p} className="px-2 py-0.5 rounded bg-primary/10 text-primary text-xs">{p}</span>))}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      
+
+      <div className="border rounded-lg p-4 space-y-3">
+        <h3 className="font-medium">Maintenance</h3>
+        <p className="text-sm text-muted-foreground max-w-prose">Normalize Non-MAHE proshow ownerships (idempotent). This wraps the previous manual script. Safe to run multiple times. Processes a bounded set of users per invocation.</p>
+        <div className="flex flex-wrap gap-3 items-center">
+          <button
+            disabled={maintBusy}
+            onClick={async ()=>{
+              setMaintBusy(true); setMaintSummary(null);
+              try {
+                const res = await maintenanceFixNonMaheProshow(400, false);
+                if (res.ok) setMaintSummary(res.data as { updated: number; deleted: number; scannedUsers: number; targetPass: string; dryRun?: boolean }); else alert(res.error || 'Failed');
+              } finally { setMaintBusy(false); }
+            }}
+            className="px-3 py-1.5 rounded bg-primary text-black disabled:opacity-50 text-sm"
+          >{maintBusy ? 'Running…' : 'Run Non-MAHE Proshow Fix'}</button>
+          <button
+            disabled={maintBusy}
+            onClick={async ()=>{
+              setMaintBusy(true); setMaintSummary(null);
+              try {
+                const res = await maintenanceFixNonMaheProshow(400, true);
+                if (res.ok) setMaintSummary(res.data as { updated: number; deleted: number; scannedUsers: number; targetPass: string; dryRun?: boolean }); else alert(res.error || 'Failed');
+              } finally { setMaintBusy(false); }
+            }}
+            className="px-3 py-1.5 rounded border border-primary text-primary hover:bg-primary/10 disabled:opacity-50 text-sm"
+          >Dry Run</button>
+          {maintSummary && (
+            <div className="text-xs bg-muted/30 px-3 py-2 rounded border">
+              <div><strong>{maintSummary.dryRun ? 'Dry Run' : 'Result'}:</strong> updated {maintSummary.updated}, deleted {maintSummary.deleted}, scanned {maintSummary.scannedUsers} users → target {maintSummary.targetPass}</div>
+            </div>
+          )}
         </div>
-        {buyersShown < buyers.length && (
-          <div className="pt-2">
-            <button
-              className="px-3 py-1 rounded border bg-background hover:bg-muted text-sm"
-              onClick={() => setBuyersShown((n) => Math.min(n + 10, buyers.length))}
-            >
-              Load more
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

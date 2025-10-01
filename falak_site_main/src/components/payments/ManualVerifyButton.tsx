@@ -88,7 +88,7 @@ export default function ManualVerifyButton({ label = "Verify Purchases", classNa
         }
       }
 
-      toast.info("No passes found. If you already paid, please contact HR. You can tap Verify again.");
+      toast.info("No passes found. Maybe you already have it, check QR on profile, else drop a message to HR.");
   } catch {
       toast.error("Verification failed. Please try again or contact HR.");
     } finally {
