@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { getServiceClient } from "@/lib/actions/supabaseClient";
 
-// Env var: ADMIN_QR_JWT_SECRET (can reuse OTP_JWT_SECRET if you prefer; using dedicated for separation)
-function getSecret() {
-  const secret = process.env.ADMIN_QR_JWT_SECRET || process.env.OTP_JWT_SECRET; // fallback
+// Secrets:
+// 1. ADMIN_QR_JWT_SECRET (or OTP_JWT_SECRET fallback) validates the original upstream JWT passed from the external scanner auth source.
+// 2. ADMIN_QR_SESSION_SECRET signs/validates short-lived session tokens we issue at /verify_admin.
+function getOrigSecret() {
+  const secret = process.env.ADMIN_QR_JWT_SECRET || process.env.OTP_JWT_SECRET;
   if (!secret) throw new Error("ADMIN_QR_JWT_SECRET (or OTP_JWT_SECRET) missing");
+  return new TextEncoder().encode(secret);
+}
+function getSessionSecret() {
+  const secret = process.env.ADMIN_QR_SESSION_SECRET || process.env.ADMIN_QR_JWT_SECRET || process.env.OTP_JWT_SECRET;
+  if (!secret) throw new Error("ADMIN_QR_SESSION_SECRET (or fallback) missing");
   return new TextEncoder().encode(secret);
 }
 
@@ -16,8 +23,25 @@ async function authenticate(req: NextRequest) {
   const token = parts.length === 2 ? parts[1] : parts[0];
   if (!token) return { ok: false as const, status: 401, error: "Missing token" };
   try {
-    const { payload } = await jwtVerify(token, getSecret());
-    const email = typeof payload.email === 'string' ? payload.email : (typeof payload.sub === 'string' ? payload.sub : undefined);
+    // First attempt: treat as issued session token
+    let payload: Record<string, unknown> | undefined;
+    try {
+      const res = await jwtVerify(token, getSessionSecret());
+      payload = res.payload as Record<string, unknown>;
+      if (payload && payload['t'] === 'qr_session') {
+        // Accept directly
+      } else {
+        payload = undefined; // force fallback to original token verification
+      }
+    } catch {
+      // fall through to original token verification
+    }
+    if (!payload) {
+      // Try original upstream token
+      const res2 = await jwtVerify(token, getOrigSecret());
+      payload = res2.payload as Record<string, unknown>;
+    }
+    const email = typeof payload?.email === 'string' ? String(payload.email) : (typeof payload?.sub === 'string' ? String(payload.sub) : undefined);
     if (!email) return { ok: false as const, status: 401, error: "Token missing email" };
     const supabase = getServiceClient();
     const { data: roleRows, error: roleErr } = await supabase
