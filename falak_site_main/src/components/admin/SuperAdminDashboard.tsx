@@ -7,8 +7,7 @@ export default function SuperAdminDashboard() {
   const [totals, setTotals] = useState<{ users: number; teams: number; passesSold: number } | null>(null);
   const [sales, setSales] = useState<Array<{ passId: string; pass_name: string; count: number }>>([]);
   const [teamsPerEvent, setTeamsPerEvent] = useState<Array<{ eventId: string; event_name: string; count: number }>>([]);
-  const [buyers, setBuyers] = useState<Array<{ id: string; name: string; email: string; phone: string; passes: string[] }>>([]);
-  const [buyersShown, setBuyersShown] = useState(10);
+  // Removed legacy buyers listing (unused in current dashboard view)
   type ApprovalRow = { id: string; userId: string | null; category: string | null; issue: string | null; created_at: string | null; status: string | null; reporter_name: string | null; reporter_email: string | null; raised_by: string | null };
   const [approvals, setApprovals] = useState<ApprovalRow[]>([]);
   const [passes, setPasses] = useState<Array<{ id: string; pass_name: string; enable?: boolean | null; status?: boolean | null }>>([]);
@@ -16,21 +15,21 @@ export default function SuperAdminDashboard() {
   const [busy, setBusy] = useState<string | null>(null);
   const [maintBusy, setMaintBusy] = useState<boolean>(false);
   const [maintSummary, setMaintSummary] = useState<null | { updated: number; deleted: number; scannedUsers: number; targetPass: string; dryRun?: boolean }>(null);
+  // QR migration UI removed (universal user QR now implicit). State cleaned up.
 
   useEffect(() => {
     (async () => {
-      const [t, s, te, b, ap, ps] = await Promise.all([
+      const [t, s, te, /* b */, ap, ps] = await Promise.all([
         getTotals(),
         getPassSalesByPass(),
         getTeamsPerEvent(),
-        listUsersWithPurchasedPasses(),
+        listUsersWithPurchasedPasses(), // retained call to keep parity if reintroduced; comment out to save query
         listApprovalPendingTickets(200),
         saListPasses(),
       ]);
       if (t.ok) setTotals(t.data);
       if (s.ok) setSales(s.data);
       if (te.ok) setTeamsPerEvent(te.data);
-      if (b.ok) setBuyers(b.data);
   if (ap.ok) setApprovals((ap.data as unknown as ApprovalRow[]) || []);
       if (ps.ok) setPasses(((ps.data as unknown) as Array<{ id: string; pass_name: string; enable?: boolean | null; status?: boolean | null }>) || []);
     })();
@@ -150,6 +149,8 @@ export default function SuperAdminDashboard() {
           )}
         </div>
       </div>
+
+      {/* QR Token Migration UI removed: universal QR now always derived from userId at display time */}
     </div>
   );
 }

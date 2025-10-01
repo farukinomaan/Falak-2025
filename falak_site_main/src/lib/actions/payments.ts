@@ -36,7 +36,7 @@ import { createServiceClient, createClient } from "@/lib/supabase/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getUserByEmail } from "@/lib/actions/tables/users";
-import crypto from "crypto";
+import { computeDeterministicUserQrToken } from "@/lib/security";
 
 // Endpoint & env keys
 const PAYMENT_ENDPOINT = process.env.VERIFICATION_URL || "https://api.manipal.edu/api/v1/falak-single-payment-log";
@@ -104,9 +104,8 @@ async function loadMapping(service: ReturnType<typeof createServiceClient>): Pro
 }
 export function __clearMappingCache() { MAPPING_CACHE = null; }
 
-function generateQrToken() {
-  try { return crypto.randomUUID(); } catch { return crypto.randomBytes(16).toString('hex'); }
-}
+// Legacy random token (kept for reference); new scheme uses computeDeterministicUserQrToken(userId)
+// legacyGenerateQrToken removed (no longer used)
 
 interface ExternalPaymentDoc {
   _id?: string;
@@ -517,7 +516,7 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
           baseRow.source_order_id = d.orderid;
           baseRow.source_payment_log_id = insertedLogId;
         }
-        if (REQUIRE_QR_TOKEN) baseRow.qr_token = generateQrToken();
+  if (REQUIRE_QR_TOKEN) baseRow.qr_token = computeDeterministicUserQrToken(userId);
         let ins = await service.from('User_passes').insert(baseRow).select('passId').maybeSingle();
         if (ins.error && /qr_token/i.test(ins.error.message)) {
           // Column maybe absent (unlikely) -> stop requiring it
@@ -539,7 +538,7 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
               source_order_id: d.orderid,
               source_payment_log_id: insertedLogId,
             };
-            if (REQUIRE_QR_TOKEN) row.qr_token = generateQrToken();
+            if (REQUIRE_QR_TOKEN) row.qr_token = computeDeterministicUserQrToken(userId);
             upsert = await service.from('User_passes').upsert(row, { onConflict: 'userId,passId', ignoreDuplicates: true }).select('passId').maybeSingle();
             if (upsert.error && /qr_token/i.test(upsert.error.message)) {
               REQUIRE_QR_TOKEN = false; // retry without qr_token
@@ -552,7 +551,7 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
           }
           if (!SUPPORTS_SOURCE_COLUMNS) {
             const row: Record<string, unknown> = { userId, passId };
-            if (REQUIRE_QR_TOKEN) row.qr_token = generateQrToken();
+            if (REQUIRE_QR_TOKEN) row.qr_token = computeDeterministicUserQrToken(userId);
             upsert = await service.from('User_passes').upsert(row, { onConflict: 'userId,passId', ignoreDuplicates: true }).select('passId').maybeSingle();
             if (upsert.error && /qr_token/i.test(upsert.error.message)) {
               REQUIRE_QR_TOKEN = false;
@@ -653,7 +652,7 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
           baseRow.source_order_id = pl.order_id;
           baseRow.source_payment_log_id = pl.id;
         }
-        if (REQUIRE_QR_TOKEN) baseRow.qr_token = generateQrToken();
+  if (REQUIRE_QR_TOKEN) baseRow.qr_token = computeDeterministicUserQrToken(userId);
         let ins = await service.from('User_passes').insert(baseRow).select('passId').maybeSingle();
         if (ins.error && /qr_token/i.test(ins.error.message)) {
           REQUIRE_QR_TOKEN = false;
@@ -673,7 +672,7 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
               source_order_id: pl.order_id,
               source_payment_log_id: pl.id,
             };
-            if (REQUIRE_QR_TOKEN) row.qr_token = generateQrToken();
+            if (REQUIRE_QR_TOKEN) row.qr_token = computeDeterministicUserQrToken(userId);
             up2 = await service.from('User_passes').upsert(row, { onConflict: 'userId,passId', ignoreDuplicates: true }).select('passId').maybeSingle();
             if (up2.error && /qr_token/i.test(up2.error.message)) {
               REQUIRE_QR_TOKEN = false;
@@ -686,7 +685,7 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
           }
           if (!SUPPORTS_SOURCE_COLUMNS) {
             const row: Record<string, unknown> = { userId, passId };
-            if (REQUIRE_QR_TOKEN) row.qr_token = generateQrToken();
+            if (REQUIRE_QR_TOKEN) row.qr_token = computeDeterministicUserQrToken(userId);
             up2 = await service.from('User_passes').upsert(row, { onConflict: 'userId,passId', ignoreDuplicates: true }).select('passId').maybeSingle();
             if (up2.error && /qr_token/i.test(up2.error.message)) {
               REQUIRE_QR_TOKEN = false;
@@ -762,7 +761,7 @@ export async function ingestAndListUserPasses(opts?: { devUserId?: string; debug
               if (SUPPORTS_SOURCE_COLUMNS) {
                 // We don't have a distinct payment log for this synthetic grant; leave provenance empty or clone one of last logs if desired.
               }
-              if (REQUIRE_QR_TOKEN) baseRow.qr_token = generateQrToken();
+              if (REQUIRE_QR_TOKEN) baseRow.qr_token = computeDeterministicUserQrToken(userId);
               let grant = await service.from('User_passes').insert(baseRow).select('passId').maybeSingle();
               if (grant.error && /qr_token/i.test(grant.error.message)) {
                 REQUIRE_QR_TOKEN = false;

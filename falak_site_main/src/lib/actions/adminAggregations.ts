@@ -29,6 +29,7 @@ import {
 } from "./tables/pass";
 import { createUserPass as _createUserPass } from "./tables/userPasses";
 import { ingestAndListUserPasses } from "@/lib/actions/payments";
+import { computeDeterministicUserQrToken } from "@/lib/security";
 // (Team create/list functions imported on demand elsewhere if needed)
 
 // Wrapper Server Actions for Events
@@ -1225,6 +1226,56 @@ export async function approveTicketAndAssign(ticketId: string, passId: string) {
   const { data, error } = await supabase.from("Tickets").update({ solved: true, status: composite }).eq("id", ticketId).select("*").maybeSingle();
   if (error) return { ok: false as const, error: error.message };
   return { ok: true as const, data };
+}
+
+// ---------------- Maintenance: Rewrite all QR tokens to userId-based format ----------------
+// Rationale: External scanner now uses userId encoded in QR to fetch passes via /api/qr/ticket.
+// Strategy: For every row in User_passes, set qr_token = `UID:${userId}` or a signed variant if QR_SIGNING_SECRET is present.
+// Idempotent: Running multiple times leaves same result.
+export async function maintenanceRewriteQrTokens({ dryRun = false, batchSize = 1000 }: { dryRun?: boolean; batchSize?: number } = {}) {
+  const supabase = getServiceClient();
+  // Fetch total count
+  const { count: totalCount, error: countErr } = await supabase.from('User_passes').select('id', { count: 'exact', head: true });
+  if (countErr) return { ok: false as const, error: countErr.message };
+  let offset = 0; let processed = 0; const toUpdate: Array<{ id: string; userId: string; newToken: string }> = [];
+  while (true) {
+  const { data, error } = await supabase.from('User_passes').select('id, userId, passId, qr_token').range(offset, offset + batchSize - 1);
+    if (error) return { ok: false as const, error: error.message };
+  const rows = (data as Array<{ id: string; userId: string; passId?: string | null; qr_token?: string | null }> ) || [];
+    if (!rows.length) break;
+    for (const r of rows) {
+      if (!r.userId) continue; // skip corrupt row
+      const finalToken = computeDeterministicUserQrToken(r.userId);
+      if (r.qr_token === finalToken) continue; // unchanged
+      toUpdate.push({ id: r.id, userId: r.userId, newToken: finalToken });
+    }
+    processed += rows.length;
+    offset += batchSize;
+    if (rows.length < batchSize) break;
+    if (offset > 50000) break; // safety cap
+  }
+  if (dryRun) {
+    return { ok: true as const, data: { dryRun: true, total: totalCount ?? processed, wouldChange: toUpdate.length } };
+  }
+  // Perform updates in chunks to avoid large single payload
+  const chunkSize = 500;
+  let applied = 0; const failures: Array<{ id: string; error: string }> = [];
+  for (let i=0;i<toUpdate.length;i+=chunkSize) {
+    const slice = toUpdate.slice(i, i+chunkSize);
+    const payload = slice.map(r => ({ id: r.id, qr_token: r.newToken }));
+    const { error } = await supabase.from('User_passes').upsert(payload, { onConflict: 'id' });
+    if (error) {
+      // Fallback: try row-by-row to gather granular errors
+      for (const r of slice) {
+        const single = [{ id: r.id, qr_token: r.newToken }];
+        const { error: rowErr } = await supabase.from('User_passes').upsert(single, { onConflict: 'id' });
+        if (rowErr) failures.push({ id: r.id, error: rowErr.message }); else applied += 1;
+      }
+    } else {
+      applied += slice.length;
+    }
+  }
+  return { ok: true as const, data: { dryRun: false, total: totalCount ?? processed, changed: applied, failed: failures } };
 }
 
 // Assign a pass to the ticket's user (grants pass to user). Does not mark the ticket solved.

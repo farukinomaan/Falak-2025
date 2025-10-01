@@ -9,6 +9,7 @@ import { listTeams } from "@/lib/actions/tables/teams";
 import { listEventsByIds } from "@/lib/actions/tables/events";
 import Link from "next/link";
 import QrCode from "@/components/QrCode";
+import { computeDeterministicUserQrToken } from "@/lib/security";
 import Image from "next/image";
 import RetroAnimations from "../../components/profile/RetroAnimations";
 import ManualVerifyButton from "@/components/payments/ManualVerifyButton";
@@ -80,9 +81,11 @@ export default async function ProfilePage() {
 
         <div className={styles.mainContent}>
           <div className={styles.detailsColumn}>
+            {/* Removed dedicated Universal QR section; now each pass shows the (same) user-level QR so only purchasers see it. */}
+
             <section className={styles.section}>
               <h2>Your Passes</h2>
-              <h3>Please note: The QR generated is your pass. Show it on the day of event to get entry.</h3>
+              <h3>Your QR is shown under every pass below (it is the SAME for all your passes).</h3>
               <div className={styles.infoCard} style={{
                 background:'rgba(0,0,0,0.35)',
                 border:'1px solid rgba(255,255,255,0.15)',
@@ -107,18 +110,15 @@ export default async function ProfilePage() {
                 <ul className={styles.passList}>
                   {userPasses.map((up) => {
                     const pass = passes.find((p) => p.id === up.passId);
-                    const qr = up.qr_token as string | null | undefined;
-                    const qrPayloadUrl = qr ? `${process.env.NEXT_PUBLIC_QR_BASE_URL ?? "https://falak.mitblr.org"}/api/qr/verify?token=${encodeURIComponent(qr)}` : null;
                     return (
                       <li key={up.id ?? `${up.userId}-${up.passId}`} className={styles.passItem}>
                         <div className={styles.passDetails}>
                           <h3>{pass?.pass_name ?? "Pass"}</h3>
-                        </div>
-                        {qrPayloadUrl && (
+                          <p className="text-xs opacity-70 mb-2">Owned • QR</p>
                           <div className={styles.qrContainer}>
-                            <QrCode value={qrPayloadUrl} size={192} />
+                            <QrCode size={192} value={computeDeterministicUserQrToken(user.id!)}  className="" />
                           </div>
-                        )}
+                        </div>
                       </li>
                     );
                   })}

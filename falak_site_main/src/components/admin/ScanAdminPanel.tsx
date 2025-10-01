@@ -57,57 +57,6 @@ export default function ScanAdminPanel() {
       } else {
         setResult(j.data as ScanResultData);
         setOpen(true);
-        toast.success('Pass verified');
-      }
-    } catch (e) {
+        // Deprecated: ScanAdminPanel removed in favor of external ticket cutting app.
+        export default function ScanAdminPanel() { return null; }
       setError((e as Error).message);
-      toast.error((e as Error).message);
-    } finally { setLoading(false); }
-  }
-
-  const handleManualSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    lookupToken(manualToken.trim());
-  };
-
-  return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Scan / Verify Pass</h2>
-      <p className="text-sm text-neutral-400">Scan a QR from a user&apos;s pass to view ownership details. Only visible to scan-enabled admin roles.</p>
-      <form onSubmit={handleManualSubmit} className="flex flex-col sm:flex-row gap-2 max-w-xl">
-        <Input placeholder="Paste or type QR token" value={manualToken} onChange={e=>setManualToken(e.target.value)} className="flex-1" />
-        <Button type="submit" disabled={loading || !manualToken.trim()}>{loading ? 'Verifying...' : 'Verify'}</Button>
-      </form>
-      {!supported && (
-        <p className="text-xs text-yellow-400">Camera API not supported in this browser; use manual token entry.</p>
-      )}
-      {/* Placeholder for future live camera scanner (can integrate html5-qrcode or @zxing/browser) */}
-      <div className="border border-neutral-700 rounded p-4 text-neutral-400 text-sm bg-neutral-900/40">
-        Live camera scanning not yet integrated. Paste the token shown under the QR code. (We can add camera support later.)
-      </div>
-
-      <Modal open={open} onClose={()=>setOpen(false)}>
-        {result ? (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Pass Holder</h3>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              <div className="text-neutral-400">User ID</div><div className="font-mono break-all">{result.userId}</div>
-              <div className="text-neutral-400">Name</div><div>{result.userName || '—'}</div>
-              <div className="text-neutral-400">Phone</div><div>{result.userPhone || '—'}</div>
-              <div className="text-neutral-400">Reg No</div><div>{result.userRegNo || '—'}</div>
-              <div className="text-neutral-400">MAHE</div><div>{result.userMahe ? 'Yes' : 'No'}</div>
-              <div className="text-neutral-400">College</div><div>{result.userCollege || '—'}</div>
-              <div className="text-neutral-400">Pass</div><div>{result.pass_name || result.passId}</div>
-              <div className="text-neutral-400">Event ID</div><div>{result.event_id || '—'}</div>
-              <div className="text-neutral-400">Issued At</div><div>{new Date(result.issued_at).toLocaleString()}</div>
-              <div className="text-neutral-400">Token</div><div className="font-mono text-xs break-all">{result.qr_token}</div>
-            </div>
-            <div className="pt-2 flex justify-end">
-              <Button variant="secondary" type="button" onClick={()=>setOpen(false)}>Close</Button>
-            </div>
-          </div>
-        ) : error ? <p className="text-red-400 text-sm">{error}</p> : <p className="text-sm text-neutral-400">No result</p>}
-      </Modal>
-    </div>
-  );
-}
