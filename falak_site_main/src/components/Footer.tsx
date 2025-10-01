@@ -1,10 +1,36 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { Mail, Phone } from "lucide-react";
+import { Mail, MessageSquareText } from "lucide-react";
+
+interface SessionShape { user?: { mahe?: boolean | null } }
+
+async function fetchSessionMahe(): Promise<boolean | null> {
+  try {
+    // NextAuth exposes the session at this endpoint client-side
+    const res = await fetch('/api/auth/session', { cache: 'no-store' });
+    if (!res.ok) return null;
+    const json: SessionShape = await res.json();
+    return json?.user?.mahe ?? null;
+  } catch {/* ignore */}
+  return null;
+}
 
 const Footer: React.FC = () => {
+  const [isMahe, setIsMahe] = useState<boolean | null>(null);
+  useEffect(() => { fetchSessionMahe().then(setIsMahe); }, []);
+
+  const maheContacts = [
+    { name: 'Adrita Mitra, HR Team', phone: '+91 76058 92406' },
+    { name: 'Aditya Akkannavar, HR Team', phone: '+91 93183 02452' },
+  ];
+  const defaultContacts = [
+    { name: 'Aishani Sharma, HR Head', phone: '+91 95353 90081' },
+    { name: 'Swaraj Shewale, HR Head', phone: '+91 90281 86267' },
+  ];
+  const contacts = isMahe ? maheContacts : defaultContacts;
+
   return (
     <footer className="bg-[#32212C] text-[#DBAAA6] border-t-4 border-[#D7897D] relative overflow-hidden">
       {/* Retro radial background */}
@@ -43,32 +69,21 @@ const Footer: React.FC = () => {
             <li className="flex items-center justify-end gap-2">
               <Mail size={18} aria-hidden="true" />
               <a
-                href="mailto:fest@falak2025.com"
+                href="mailto:fest.mitblr@manipal.edu"
                 className="hover:underline text-xs sm:text-base"
               >
                 fest.mitblr@manipal.edu
               </a>
             </li>
-
-            <li className="flex flex-col items-end">
-              <div className="flex items-center gap-2">
-                <Phone size={18} aria-hidden="true" />
-                <span className="text-sm">+91 95353 90081</span>
-              </div>
-              <span className="text-xs font-semibold text-[#DBAAA6]">
-                Aishani Sharma, HR Head
-              </span>
-            </li>
-
-            <li className="flex flex-col items-end">
-              <div className="flex items-center gap-2">
-                <Phone size={18} aria-hidden="true" />
-                <span className="text-sm">+91 90281 86267</span>
-              </div>
-              <span className="text-xs font-semibold text-[#DBAAA6]">
-                Swaraj Shewale, HR Head
-              </span>
-            </li>
+            {contacts.map(c => (
+              <li key={c.phone} className="flex flex-col items-end">
+                <div className="flex items-center gap-2">
+                  <MessageSquareText size={18} aria-hidden="true" />
+                  <span className="text-sm">{c.phone}</span>
+                </div>
+                <span className="text-xs font-semibold text-[#DBAAA6]">{c.name}</span>
+              </li>
+            ))}
           </ul>
         </div>
       </div>
