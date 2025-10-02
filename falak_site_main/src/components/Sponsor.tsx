@@ -9,13 +9,13 @@ const sponsors = [
   { name: "Findoc", partnership: "Trading Partner", logo: "/sponsors/findoc.png", url: "https://findoc.com/" },
   { name: "Spinner", partnership: "Beverage Partner", logo: "/sponsors/spinner.png", url: "https://www.instagram.com/spinnersportsdrink/?hl=en" },
   { name: "Finlatics", partnership: "Learning Partner", logo: "/sponsors/finlatics.png", url: "https://finlatics.com/" },
-  { name: "Tradejini", partnership: "Investment Partner", logo: "/sponsors/tradejini.png", url: "https://www.tradejini.com" },
+  { name: "Tradejini", partnership: "Investment Partner", logo: "/sponsors/Tradejini.png", url: "https://www.tradejini.com" },
   { name: "Plum Body Lovin'", partnership: "Bath & Body Partner", logo: "/sponsors/plum.png", url: "https://plumgoodness.com" },
   { name: "Ink Insights Thoughts", partnership: "Creative Gifting Partner", logo: "/sponsors/ink.png", url: "https://ink-insights-thoughts.in" },
   { name: "Interview Buddy", partnership: "Official Mock Interview Partner", logo: "/sponsors/inbuddy.png", url: "https://interviewbuddy.com/" },
   { name: "Unstop", partnership: "Opportunity Partner", logo: "/sponsors/unstop.png", url: "https://unstop.com/" },
   { name: "DS Group", partnership: "Taste Partner", logo: "/sponsors/ds.png", url: "https://www.dsgroup.com" },
-  { name: "Bisleri", partnership: "Beverage Partner", logo: "/sponsors/bisleri.png", url: "https://bisleri.com" },
+  { name: "Bisleri", partnership: "Hydrating Partner", logo: "/sponsors/bisleri.png", url: "https://bisleri.com" },
 ];
 
 const Sponsor: React.FC = () => {
