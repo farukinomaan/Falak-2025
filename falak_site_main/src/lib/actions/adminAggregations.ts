@@ -1059,6 +1059,79 @@ export async function saCreateTeamWithMemberEmails(input: { eventId: string; cap
   return { ok: true as const, data: { teamId } };
 }
 
+// Update existing team (captain only) with new name & member emails (excluding captain)
+export async function saUpdateTeamWithMemberEmails(input: { teamId: string; eventId: string; captainId: string; name: string; memberEmails: string[] }) {
+  const { teamId, eventId, captainId } = input;
+  if (!teamId || !eventId || !captainId || !input.name) return { ok: false as const, error: "Missing fields" };
+  const supabase = getServiceClient();
+  // Fetch team & verify captain
+  const { data: teamRow, error: tErr } = await supabase.from('Teams').select('id, name, captainId, eventId').eq('id', teamId).maybeSingle();
+  if (tErr) return { ok: false as const, error: tErr.message };
+  if (!teamRow) return { ok: false as const, error: 'team_not_found' };
+  if ((teamRow as { captainId?: string }).captainId !== captainId) return { ok: false as const, error: 'forbidden_not_captain' };
+  if ((teamRow as { eventId: string }).eventId !== eventId) return { ok: false as const, error: 'event_mismatch' };
+  // Fetch event constraints
+  const { data: evtRow, error: evtErr } = await supabase.from('Events').select('id, min_team_size, max_team_size').eq('id', eventId).maybeSingle();
+  if (evtErr) return { ok: false as const, error: evtErr.message };
+  if (!evtRow) return { ok: false as const, error: 'event_not_found' };
+  const minTeamSize: number | null = (evtRow as { min_team_size?: number | null }).min_team_size ?? null;
+  const maxTeamSize: number | null = (evtRow as { max_team_size?: number | null }).max_team_size ?? null;
+  const rawEmails = (input.memberEmails || []).map(e => (e||'').trim().toLowerCase()).filter(Boolean);
+  const uniqueEmails = Array.from(new Set(rawEmails));
+  // Get captain email (exclude if present)
+  const { data: captainUser, error: capErr } = await supabase.from('Users').select('id, email').eq('id', captainId).maybeSingle();
+  if (capErr) return { ok: false as const, error: capErr.message };
+  const captainEmail = (captainUser as { email?: string | null } | null)?.email?.toLowerCase();
+  const filteredEmails = captainEmail ? uniqueEmails.filter(e => e !== captainEmail) : uniqueEmails;
+  // Size constraints apply to total team size including captain => additional members = size -1
+  const minAdditional = minTeamSize != null ? Math.max(minTeamSize - 1, 0) : 0;
+  const maxAdditional = maxTeamSize != null ? Math.max(maxTeamSize - 1, 0) : null;
+  if (filteredEmails.length < minAdditional) return { ok: false as const, error: `Team needs at least ${minTeamSize ?? (minAdditional + 1)} member(s) including captain` };
+  if (maxAdditional != null && filteredEmails.length > maxAdditional) return { ok: false as const, error: `Team exceeds max size ${maxTeamSize}` };
+  // Resolve users by email
+  const { data: userRows, error: uErr } = await supabase.from('Users').select('id, email').in('email', filteredEmails);
+  if (uErr) return { ok: false as const, error: uErr.message };
+  const idByEmail = new Map<string, string>();
+  for (const u of (userRows as Array<{ id: string; email: string }> || [])) idByEmail.set(u.email.toLowerCase(), u.id);
+  const missing = filteredEmails.filter(e => !idByEmail.has(e));
+  if (missing.length) return { ok: false as const, error: `Unregistered emails: ${missing.join(', ')}` };
+  const newMemberIds = filteredEmails.map(e => idByEmail.get(e)!).filter(Boolean);
+  // Fetch existing members
+  const { data: existingMembersRows, error: emErr } = await supabase.from('Team_members').select('memberId').eq('teamId', teamId);
+  if (emErr) return { ok: false as const, error: emErr.message };
+  const existingMemberIds = new Set(((existingMembersRows as Array<{ memberId: string }> )|| []).map(r => r.memberId));
+  // Determine adds/removals
+  const toAdd = newMemberIds.filter(id => !existingMemberIds.has(id));
+  const newMemberSet = new Set(newMemberIds);
+  const toRemove = Array.from(existingMemberIds).filter(id => !newMemberSet.has(id));
+  // Validate no conflicts for additions (members already captain or member in SAME event on ANOTHER team)
+  if (toAdd.length) {
+    const { data: conflictCaptains, error: ccErr } = await supabase.from('Teams').select('id, captainId').eq('eventId', eventId).in('captainId', toAdd);
+    if (ccErr) return { ok: false as const, error: ccErr.message };
+    if (conflictCaptains && conflictCaptains.length) return { ok: false as const, error: 'One or more users already captain another team for this event' };
+    const { data: conflictMembers, error: cmErr } = await supabase.from('Team_members').select('id, memberId, teamId').eq('eventId', eventId).in('memberId', toAdd);
+    if (cmErr) return { ok: false as const, error: cmErr.message };
+    if (conflictMembers && conflictMembers.length) return { ok: false as const, error: 'One or more users already in another team for this event' };
+  }
+  // Apply updates (best-effort sequential). We allow partial failure rollbacks minimal.
+  if (toRemove.length) {
+    const { error: delErr } = await supabase.from('Team_members').delete().eq('teamId', teamId).in('memberId', toRemove);
+    if (delErr) return { ok: false as const, error: delErr.message };
+  }
+  if (toAdd.length) {
+    const rows = toAdd.map(memberId => ({ teamId, memberId, eventId }));
+    const { error: addErr } = await supabase.from('Team_members').insert(rows);
+    if (addErr) return { ok: false as const, error: addErr.message };
+  }
+  // Update name if changed
+  const newName = input.name.trim();
+  if (newName && newName !== (teamRow as { name?: string | null }).name) {
+    const { error: nameErr } = await supabase.from('Teams').update({ name: newName }).eq('id', teamId);
+    if (nameErr) return { ok: false as const, error: nameErr.message };
+  }
+  return { ok: true as const, data: { updated: true, added: toAdd.length, removed: toRemove.length } };
+}
+
 // List event IDs where user participates (captain or member)
 export async function saListUserTeamEventIds(userId: string) {
   const supabase = getServiceClient();

@@ -18,6 +18,7 @@ import AddToCartButton from "@/components/cart/AddToCartButton";
 import TeamRegistrationClient from "./team-registration-client";
 import CopySmall from "@/components/CopySmall";
 import EsportsTeamRegistration from "@/components/teams/EsportsTeamRegistration";
+import TeamEditModal from "@/components/teams/TeamEditModal";
 import { getServiceClient } from "@/lib/actions/supabaseClient";
 import "./cluster.css";
 import FlipCard from "./FlipCard";
@@ -506,12 +507,31 @@ export async function ClusterEvent({
                         return <li key={m.id}>{info?.name || info?.email || m.memberId}</li>;
                       })}
                     </ul>
-                    <Link
-                      href="/profile"
-                      className="clusterButton"
-                    >
-                      My Passes
-                    </Link>
+                    <div className="flex flex-col md:flex-row gap-3 pt-2">
+                      <Link
+                        href="/profile"
+                        className="clusterButton w-full md:w-auto"
+                      >
+                        My Passes
+                      </Link>
+                      {/* Show edit only to captain */}
+                      {userId && capId === userId && (
+                        <TeamEditModal
+                          teamId={existingTeam.team.id}
+                          eventId={event.id}
+                          initialName={existingTeam.team.name}
+                          captainId={userId}
+                          captainName={capInfo?.name || capInfo?.email || null}
+                          memberEmails={existingTeam.members.map(m => {
+                            const info = memberUsersById?.get(m.memberId);
+                            return (info?.email || '').toLowerCase();
+                          }).filter(e => !!e)}
+                          // Adjusted sizes exclude captain (same logic used in registration below)
+                          minSize={minTeamSize ? Math.max(minTeamSize - 1, 0) : 0}
+                          maxSize={maxTeamSize ? Math.max(maxTeamSize - 1, 0) : undefined}
+                        />
+                      )}
+                    </div>
                   </div>
                 );
               }
