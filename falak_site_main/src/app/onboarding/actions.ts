@@ -70,35 +70,41 @@ export async function completeOnboarding(input: OnboardInput) {
       active: true,
     };
 
-    // If user with this email already exists, return ok
+    // If user with this email already exists, short‑circuit success (they are already onboarded)
     if (existing.data) {
       return { ok: true } as const;
     }
 
-    // Check if a user already exists with this phone; if so, update that record to have this email if missing
-    let byPhone = await getUserByPhone(phone);
-    if (!byPhone.ok) {
-      return { ok: false, message: byPhone.error || "Lookup error" } as const;
+    // Enforce phone uniqueness: if phone already belongs to a different user (with ANY email), block onboarding.
+    // Only allow linking if existing phone row has NO email (legacy / partial record).
+    let phoneLookup = await getUserByPhone(phone);
+    if (!phoneLookup.ok) {
+      return { ok: false, message: phoneLookup.error || "Lookup error" } as const;
     }
-    // Fallback: try matching '+91' prefixed phone to migrate older rows
-    if (!byPhone.data) {
-      const byPhoneLegacy = await getUserByPhone("+91" + phone);
-      if (!byPhoneLegacy.ok) {
-        return { ok: false, message: byPhoneLegacy.error || "Lookup error" } as const;
+    if (!phoneLookup.data) {
+      // Try +91 legacy format
+      const legacy = await getUserByPhone("+91" + phone);
+      if (!legacy.ok) {
+        return { ok: false, message: legacy.error || "Lookup error" } as const;
       }
-      if (byPhoneLegacy.data) byPhone = byPhoneLegacy;
+      if (legacy.data) phoneLookup = legacy;
     }
 
-    if (byPhone.data) {
-      // If this phone is already tied to a user, and that user has no email or different email, try to attach email
-      const u = byPhone.data as { id: string; email?: string | null };
-      if (!u.email || u.email !== email) {
-        const updated = await updateUser({ id: u.id, email, phone });
-        if (!updated.ok) {
-          // Fallback: return ok to avoid blocking flow if phone is already used
-          return { ok: true } as const;
-        }
+    if (phoneLookup.data) {
+      const existingPhoneUser = phoneLookup.data as { id: string; email?: string | null };
+      // If that record already has an email different from this session's email, treat as conflict
+      if (existingPhoneUser.email && existingPhoneUser.email !== email) {
+        return { ok: false, message: "Phone number already registered with another account" } as const;
       }
+      // If no email on the record (legacy stub), attach this email & proceed
+      if (!existingPhoneUser.email) {
+        const updated = await updateUser({ id: existingPhoneUser.id, email, phone });
+        if (!updated.ok) {
+          return { ok: false, message: updated.error || "Could not claim existing phone record" } as const;
+        }
+        return { ok: true } as const;
+      }
+      // If same email (unlikely since existing.data was null), just allow
       return { ok: true } as const;
     }
 

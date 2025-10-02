@@ -1,6 +1,7 @@
 import { withAuth } from "next-auth/middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { getUserByEmail } from "@/lib/actions";
 import type { JWT } from "next-auth/jwt";
 
 type AugToken = JWT & { needsOnboarding?: boolean };
@@ -21,8 +22,27 @@ export async function middleware(req: NextRequest) {
 
   // Force karta hai user to onboarding only if bkl is logged in & not registered
   if (token && needs && !isOnboarding) {
-    const url = new URL("/onboarding", req.url);
-    return NextResponse.redirect(url);
+    let shouldRedirect = true;
+    try {
+      // Re-check in DB to see if onboarding just completed this request cycle
+      const email = token.email as string | undefined;
+      if (email) {
+        const exists = await getUserByEmail(email);
+        if (exists.ok && exists.data) {
+          shouldRedirect = false; // user now exists; allow navigation
+        }
+      }
+    } catch {
+      // On error keep default behavior (redirect)
+    }
+    if (shouldRedirect) {
+      const url = new URL("/onboarding", req.url);
+      const originalPath = req.nextUrl.pathname + (req.nextUrl.search || "");
+      if (originalPath && originalPath !== "/" && !url.searchParams.has("return")) {
+        if (originalPath.startsWith("/")) url.searchParams.set("return", originalPath);
+      }
+      return NextResponse.redirect(url);
+    }
   }
   // Force karta hai user to home if bkl is logged in & still onboarding khol lia hai 
   if (token && !needs && isOnboarding) {
