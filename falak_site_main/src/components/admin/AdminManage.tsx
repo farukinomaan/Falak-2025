@@ -4,7 +4,7 @@ import EventAdminPanel from "./EventAdminPanel";
 import SuperAdminDashboard from "./SuperAdminDashboard";
 import TicketAdminPanel from "./TicketAdminPanel";
 import OpsAdminPanel from "./OpsAdminPanel";
-import ScanAdminPanel from "./ScanAdminPanel";
+// Removed ScanAdminPanel (external app now handles ticket cutting)
 
 export default function AdminManage({ role }: { role: string }) {
   const active = role;
@@ -35,9 +35,7 @@ export default function AdminManage({ role }: { role: string }) {
   {active === "super_admin" && <SuperAdminDashboard />}
   {active === "ticket_admin" && <TicketAdminPanel />}
   {active === "ops_admin" && <OpsAdminPanel />}
-  {(active === 'ticket_admin' || active === 'super_admin' || active === 'ops_admin') && (
-    <ScanAdminPanel />
-  )}
+  {/* Scan/Verify panel removed: QR verification handled by external app */}
       </div>
       {!(active === "event_admin" || active === "super_admin" || active === "ticket_admin" || active === 'ops_admin') && (
         <p>Unknown role: {active}</p>

@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { getServiceClient } from "../supabaseClient";
 import { UserPassCreateSchema, UserPassUpdateSchema, uuid } from "../schemas";
-import { generateQrToken, signQrToken } from "@/lib/security";
+import { computeDeterministicUserQrToken } from "@/lib/security";
 
 const table = "User_passes" as const
 
@@ -13,11 +13,9 @@ export async function createUserPass(input: z.infer<typeof UserPassCreateSchema>
   const parsed = UserPassCreateSchema.safeParse(input)
   if (!parsed.success) return { ok: false as const, error: "Invalid input" }
   const supabase = getServiceClient()
-  // Generate and sign a QR token per purchase
-  const base = generateQrToken()
-  const secret = process.env.QR_SIGNING_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "fallback-secret";
-  const signed = signQrToken(base, String(secret))
-  const payload = { ...parsed.data, qr_token: signed }
+  // Single user-level QR token (shared across passes)
+  const token = computeDeterministicUserQrToken(parsed.data.userId)
+  const payload = { ...parsed.data, qr_token: token }
   const { data, error } = await supabase.from(table).insert(payload).select("*").single()
   if (error) return { ok: false as const, error: error.message }
   return { ok: true as const, data }
