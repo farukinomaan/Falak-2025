@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify, SignJWT } from 'jose';
+import { jwtVerify, SignJWT, createRemoteJWKSet } from 'jose';
 import { getServiceClient } from '@/lib/actions/supabaseClient';
 
-function getOrigSecret() {
-  const secret = process.env.ADMIN_QR_JWT_SECRET || process.env.OTP_JWT_SECRET;
-  if (!secret) throw new Error('ADMIN_QR_JWT_SECRET (or OTP_JWT_SECRET) missing');
-  return new TextEncoder().encode(secret);
-}
 function getSessionSecret() {
   const secret = process.env.ADMIN_QR_SESSION_SECRET || process.env.ADMIN_QR_JWT_SECRET || process.env.OTP_JWT_SECRET;
   if (!secret) throw new Error('ADMIN_QR_SESSION_SECRET (or fallback) missing');
+  // session token uses HS256 in this route, so Uint8Array is fine
   return new TextEncoder().encode(secret);
 }
 
 async function verifyUpstreamToken(raw: string) {
-  const { payload } = await jwtVerify(raw, getOrigSecret());
+  // Verify as a Google ID token using Google's JWKS
+  const googleClientId = process.env.ADMIN_QR_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+  if (!googleClientId) throw new Error('ADMIN_QR_GOOGLE_CLIENT_ID (or GOOGLE_CLIENT_ID) must be set');
+  const jwks = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
+  const { payload } = await jwtVerify(raw, jwks, { audience: googleClientId });
   const email = typeof payload.email === 'string' ? payload.email : (typeof payload.sub === 'string' ? payload.sub : undefined);
   if (!email) throw new Error('Token missing email');
   return email;
