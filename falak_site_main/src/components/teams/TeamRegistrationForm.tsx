@@ -16,9 +16,35 @@ interface Props {
 
 export function TeamRegistrationForm({ eventId, minSize = 1, captainId, captainName, onSuccess, actionPath, useEmails = true, maxSize }: Props) {
   const endpoint = actionPath || (useEmails ? "/api/teams/createWithEmails" : "/api/teams/create");
+  const createAsCaptainEndpoint = "/api/teams/createWithEmailsAsCaptain";
   const [teamName, setTeamName] = useState("");
   const [members, setMembers] = useState<string[]>(Array.from({ length: minSize }, () => ""));
+  const [leaderEmail, setLeaderEmail] = useState<string>(captainName || '');
+  const [leaderValidation, setLeaderValidation] = useState<{ ok: boolean; message?: string } | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  // On mount, try to fetch captain's email by captainId if a name was provided instead
+  React.useEffect(() => {
+    let mounted = true;
+    async function fetchEmail() {
+      try {
+        if (!captainId) return;
+        const res = await fetch(`/api/users/byId?userId=${encodeURIComponent(captainId)}`);
+        const json = await res.json();
+        if (!mounted) return;
+        if (res.ok && json.ok && json.data?.email) {
+          setLeaderEmail(json.data.email);
+        } else if (captainName) {
+          // fallback to showing captainName if email not found
+          setLeaderEmail(captainName);
+        }
+      } catch {
+        // ignore network errors
+      }
+    }
+    fetchEmail();
+    return () => { mounted = false; };
+  }, [captainId, captainName]);
 
   function updateMember(i: number, val: string) {
     setMembers((prev) => prev.map((m, idx) => (idx === i ? val : m)));
@@ -51,28 +77,50 @@ export function TeamRegistrationForm({ eventId, minSize = 1, captainId, captainN
       toast.error(`Cannot exceed ${maxSize} members`);
       return;
     }
-    const payload = useEmails
-      ? { eventId, name: teamName.trim(), memberEmails: filtered }
-      : { eventId, captainId, name: teamName.trim(), memberIds: filtered };
-    startTransition(async () => {
-      try {
-  const res = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        const json = await res.json();
-        if (!res.ok || !json.ok) {
-          toast.error(json.error || "Failed to create team");
-        } else {
-          toast.success("Team registered");
-          onSuccess?.(json.data.teamId);
+    if (useEmails) {
+      const payload: Record<string, unknown> = { eventId, name: teamName.trim(), memberEmails: filtered };
+  if (leaderEmail && leaderEmail.trim()) (payload as Record<string, unknown>)['captainEmail'] = leaderEmail.trim().toLowerCase();
+      startTransition(async () => {
+        try {
+          const res = await fetch(createAsCaptainEndpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const json = await res.json();
+          if (!res.ok || !json.ok) {
+            toast.error(json.error || "Failed to create team");
+          } else {
+            toast.success("Team registered");
+            onSuccess?.(json.data.teamId);
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Network error";
+          toast.error(msg);
         }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Network error";
-        toast.error(msg);
-      }
-    });
+      });
+    } else {
+      const payload = { eventId, captainId, name: teamName.trim(), memberIds: filtered };
+      startTransition(async () => {
+        try {
+          const res = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const json = await res.json();
+          if (!res.ok || !json.ok) {
+            toast.error(json.error || "Failed to create team");
+          } else {
+            toast.success("Team registered");
+            onSuccess?.(json.data.teamId);
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Network error";
+          toast.error(msg);
+        }
+      });
+    }
   }
 
   return (
@@ -88,12 +136,32 @@ export function TeamRegistrationForm({ eventId, minSize = 1, captainId, captainN
         />
       </div>
       <div className="space-y-1 text-left">
-        <label className="text-base font-medium">Team Leader</label>
+        <label className="text-base font-medium">Team Leader (email)</label>
         <input
           className="w-full border rounded px-3 py-2 text-base"
-          value={captainName || captainId}
-          disabled
+          value={leaderEmail}
+          onChange={(e) => { setLeaderEmail(e.target.value); setLeaderValidation(null); }}
+          onBlur={async () => {
+            const v = (leaderEmail || '').trim().toLowerCase();
+            if (!v) { setLeaderValidation({ ok: false, message: 'Leader email required' }); return; }
+            // Simple email format check
+            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { setLeaderValidation({ ok: false, message: 'Invalid email format' }); return; }
+            try {
+              const res = await fetch(`/api/users/byEmail?email=${encodeURIComponent(v)}`);
+              const json = await res.json();
+              if (!res.ok || !json.ok) {
+                setLeaderValidation({ ok: false, message: 'User not found' });
+              } else {
+                setLeaderValidation({ ok: true });
+              }
+            } catch {
+              setLeaderValidation({ ok: false, message: 'Lookup failed' });
+            }
+          }}
         />
+        {leaderValidation && !leaderValidation.ok && (
+          <div className="text-xs text-red-400">{leaderValidation.message}</div>
+        )}
       </div>
       {(maxSize === 0 && minSize === 0) ? (
         <div className="text-sm text-gray-600">Solo event – no additional members required.</div>
