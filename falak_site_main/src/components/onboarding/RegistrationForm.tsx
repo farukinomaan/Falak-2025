@@ -25,27 +25,24 @@ export function RegistrationForm({ name, setName, regNo, setRegNo, mahe, setMahe
         />
       </div>
 
-      <div className="flex gap-4 items-center text-sm">
-        <label className="inline-flex items-center gap-2 cursor-pointer">
-          <input
-            type="radio"
-            name="maheToggle"
-            checked={mahe}
-            onChange={() => setMahe(true)}
-            className="accent-[#de8c89]"
-          />
-          <span>MAHE BLR</span>
-        </label>
-        <label className="inline-flex items-center gap-2 cursor-pointer">
-          <input
-            type="radio"
-            name="maheToggle"
-            checked={!mahe}
-            onChange={() => setMahe(false)}
-            className="accent-[#de8c89]"
-          />
-          <span>Non‑MAHE BLR</span>
-        </label>
+      {/* Tab-like toggle */}
+      <div className="relative">
+        <div className="flex rounded-lg overflow-hidden border border-white/15 bg-black/20 backdrop-blur supports-[backdrop-filter]:bg-black/30">
+          <button
+            type="button"
+            onClick={() => setMahe(true)}
+            className={`flex-1 px-4 py-2 text-sm font-medium transition-all duration-200 relative group ${mahe ? 'bg-[#de8c89] text-[#32212C]' : 'text-neutral-300 hover:text-white'}`}
+          >
+            <span className="relative z-10">MAHE BLR</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMahe(false)}
+            className={`flex-1 px-4 py-2 text-sm font-medium transition-all duration-200 relative group ${!mahe ? 'bg-[#de8c89] text-[#32212C]' : 'text-neutral-300 hover:text-white'}`}
+          >
+            <span className="relative z-10">Non‑MAHE BLR</span>
+          </button>
+        </div>
       </div>
 
       {mahe ? (

@@ -24,11 +24,21 @@ export default function OnboardingPage() {
   // Mount guard to avoid SSR/CSR mismatch (session/state driven conditional UI)
   const [mounted, setMounted] = useState(false);
 
+  // Determine intended return path from query (?return=/some/path)
+  const [returnPath, setReturnPath] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      const ret = url.searchParams.get('return');
+      if (ret && ret.startsWith('/')) setReturnPath(ret);
+    }
+  }, []);
+
   useEffect(() => {
     if (status === "authenticated" && !(session as { needsOnboarding?: boolean }).needsOnboarding) {
-      router.replace("/");
+      router.replace(returnPath || "/");
     }
-  }, [status, session, router]);
+  }, [status, session, router, returnPath]);
 
   // useRecaptcha(); // <— re-enable when restoring OTP
   useEffect(() => {
@@ -80,13 +90,11 @@ export default function OnboardingPage() {
       const res = await completeOnboarding(payload);
       if (res.ok) {
         toast.success("Onboarding complete");
-        // Let the toast show briefly, then refresh.
-        // The auth effect will redirect to home after refresh if onboarding is done.
+        // Force refresh session so needsOnboarding flips before navigation
+        try { await fetch('/api/auth/session?update=' + Date.now(), { cache: 'no-store' }); } catch {}
         setTimeout(() => {
-          if (typeof window !== 'undefined') {
-            window.location.reload();
-          }
-        }, 1200);
+          router.replace(returnPath || "/");
+        }, 400);
       } else {
         toast.error(res.message || "Failed to save");
       }

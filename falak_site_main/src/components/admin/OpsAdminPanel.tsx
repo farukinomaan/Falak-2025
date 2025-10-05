@@ -212,6 +212,7 @@ export default function OpsAdminPanel() {
                   <div><span className="opacity-60">Teams</span><div className="font-medium text-base md:text-lg">{roster.stats.teamCount}</div></div>
                   <div><span className="opacity-60">Participants</span><div className="font-medium text-base md:text-lg">{roster.stats.participantCount}</div></div>
                   <div><span className="opacity-60">Passes Sold</span><div className="font-medium text-base md:text-lg">{roster.stats.soldCount}</div></div>
+                  <div><span className="opacity-60">Teams+PassesWithoutTeams</span><div className="font-medium text-base md:text-lg">{roster.stats.teamCount + (holders?.total || 0)}</div></div>
                   <div><span className="opacity-60">Enabled</span><div className="font-medium text-base md:text-lg">{roster.event.enabled ? 'Yes' : 'No'}</div></div>
                   <div><span className="opacity-60">Start</span><div>{formatEventDate()}</div></div>
                   <div><span className="opacity-60">End</span><div>{formatEventEnd()}</div></div>
