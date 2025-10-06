@@ -1,6 +1,6 @@
 "use client";
 
-import CassettePass from "@/components/CassettePass";
+import CassettePass, { CassettePass2 } from "@/components/CassettePass";
 import { useMemo } from "react";
 import { useSession } from "next-auth/react";
 
@@ -37,6 +37,13 @@ const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false }) => {
     return base;
   }, [passes, sessionIsMahe]);
 
+  const tempPass ={
+    id: 'standup-pass',
+    pass_name: 'Standup Show Pass',
+    description: 'Access to standup comedy event by THE PRANAV SHARMA.',
+    cost: 1,
+  }
+
   return (
     <section className="bg-transparent pb-10 relative z-10">
       <div className="container mx-auto px-3 md:px-0">
@@ -55,7 +62,11 @@ const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false }) => {
             <CassettePass pass={pass} isMahe={sessionIsMahe} />
           </div>
         ))}
-
+        <div className="flex justify-center items-center min-h-[40vh] lg:min-h-[90vh] -mt-10 sm:-mt-20 lg:-mt-40 tablet:min-h-[80vh] relative">
+          {sessionIsMahe && 
+            <CassettePass2 pass={tempPass} isMahe={sessionIsMahe} />
+          }
+        </div>
         </div>
       </div>
     </section>
