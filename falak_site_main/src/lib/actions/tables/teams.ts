@@ -33,6 +33,17 @@ export async function listTeams() {
   return { ok: true as const, data }
 }
 
+export async function listTeamsByIds(ids: string[]) {
+  if (!Array.isArray(ids) || ids.length === 0) return { ok: true as const, data: [] as Team[] }
+  const supabase = getServiceClient()
+  const { data, error } = await supabase
+    .from(table)
+    .select("*")
+    .in("id", ids)
+  if (error) return { ok: false as const, error: error.message }
+  return { ok: true as const, data }
+}
+
 export async function updateTeam(input: z.infer<typeof TeamUpdateSchema>) {
   const parsed = TeamUpdateSchema.safeParse(input)
   if (!parsed.success) return { ok: false as const, error: "Invalid input" }
