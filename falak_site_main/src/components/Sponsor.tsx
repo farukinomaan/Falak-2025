@@ -15,6 +15,7 @@ const sponsors = [
   { name: "Plum Body Lovin'", partnership: "Bath & Body Partner", logo: "/sponsors/plum.png", url: "https://plumgoodness.com" },
   { name: "Ink Insights Thoughts", partnership: "Creative Gifting Partner", logo: "/sponsors/ink.png", url: "https://ink-insights-thoughts.in" },
   { name: "Interview Buddy", partnership: "Mock Interview Partner", logo: "/sponsors/inbuddy.png", url: "https://interviewbuddy.com/" },
+  { name: "Manipal", partnership: "Health Partner", logo: "/sponsors/manipal.png", url: "https://www.manipalhospitals.com/bangalore/" },
   { name: "Unstop", partnership: "Opportunity Partner", logo: "/sponsors/unstop.png", url: "https://unstop.com/" },
   { name: "DS Group", partnership: "Taste Partner", logo: "/sponsors/ds.png", url: "https://www.dsgroup.com" },
   { name: "Bisleri", partnership: "Hydrating Partner", logo: "/sponsors/bisleri.png", url: "https://bisleri.com" },
@@ -61,7 +62,7 @@ const Sponsor: React.FC = () => {
           width={200}
           height={100}
           className={`object-contain max-h-16 sm:max-h-20 md:max-h-24 ${
-            sponsor.name === "JioSaavn" ? "scale-150" : ""
+            sponsor.name === "JioSaavn" || sponsor.name === "Manipal"? "scale-150" : ""
           }`}
         />
       </div>
