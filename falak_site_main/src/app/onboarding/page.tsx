@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { completeOnboarding } from "./actions";
+import { completeOnboarding, completeFacultyOnboarding } from "./actions";
 import { RegistrationForm } from "@/components/onboarding/RegistrationForm";
 // To re-enable OTP in the future, uncomment these imports and the blocks below:
 // import { PhoneVerification } from "@/components/onboarding/PhoneVerification";
@@ -21,6 +21,8 @@ export default function OnboardingPage() {
   const [institute, setInstitute] = useState("");
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [mode, setMode] = useState<'mahe' | 'non-mahe' | 'faculty'>("mahe");
+  const [facultyEmpId, setFacultyEmpId] = useState("");
   // Mount guard to avoid SSR/CSR mismatch (session/state driven conditional UI)
   const [mounted, setMounted] = useState(false);
 
@@ -54,7 +56,55 @@ export default function OnboardingPage() {
     e.preventDefault();
     if (submitting) return;
     setSubmitting(true);
-    // OTP disabled: allow direct registration with provided number
+    // Faculty flow: gated by double-confirm toasts
+    if (mode === 'faculty') {
+      setSubmitting(false);
+      let proceed1 = false;
+      await new Promise<void>((resolve) => {
+        toast.warning(
+          "Are you a MAHE BLR faculty with a valid Employee ID?",
+          {
+            action: {
+              label: "Proceed",
+              onClick: () => { proceed1 = true; resolve(); },
+            },
+            cancel: { label: "Cancel", onClick: () => resolve() },
+            duration: 8000,
+          }
+        );
+      });
+      if (!proceed1) return;
+      if (!name.trim()) { toast.warning('Please enter your name'); return; }
+      if (!phone.replace(/[^0-9]/g, '').trim()) { toast.warning('Please enter your phone'); return; }
+      if (!facultyEmpId.trim()) { toast.warning('Please enter your Employee ID'); return; }
+      let proceed2 = false;
+      await new Promise<void>((resolve) => {
+        toast.info(
+          "You need to show Employee ID during physical verification; otherwise your pass may be rejected.",
+          {
+            action: {
+              label: "Proceed",
+              onClick: () => { proceed2 = true; resolve(); },
+            },
+            cancel: { label: "Cancel", onClick: () => resolve() },
+            duration: 10000,
+          }
+        );
+      });
+      if (!proceed2) return;
+      try {
+        const res = await completeFacultyOnboarding({ username: name.trim(), phone: phone.replace(/[^0-9]/g, ''), empId: facultyEmpId.trim() });
+        if (res.ok) {
+          toast.success('Faculty onboarding complete');
+          try { await fetch('/api/auth/session?update=' + Date.now(), { cache: 'no-store' }); } catch {}
+          setTimeout(() => { router.replace(returnPath || "/"); }, 400);
+        } else {
+          toast.error(res.message || 'Failed to save');
+        }
+      } catch { toast.error('Unexpected error'); }
+      return;
+    }
+    // OTP disabled: allow direct registration with provided number (student/guest)
     if (!mahe && !institute.trim()) {
       toast.warning("Please enter your college name");
       setSubmitting(false);
@@ -153,11 +203,47 @@ export default function OnboardingPage() {
           regNo={regNo}
           // Allow arbitrary length; enforce minimum length (>=9) in submit handler
           setRegNo={(v: string) => setRegNo(v.replace(/[^0-9]/g, ""))}
-          mahe={mahe}
           setMahe={setMahe}
           institute={institute}
           setInstitute={setInstitute}
+          mode={mode}
+          setMode={(m) => { setMode(m); if (m === 'mahe') setMahe(true); if (m === 'non-mahe') setMahe(false); if (m === 'faculty') setMahe(true); }}
         />
+        {mode === 'faculty' && (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium">Username</label>
+              <input
+                className="w-full border rounded px-3 py-2 bg-black/20 border-white/20 text-white placeholder:text-neutral-400"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="Your name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">Phone</label>
+              <input
+                className="w-full border rounded px-3 py-2 bg-black/20 border-white/20 text-white placeholder:text-neutral-400"
+                type="tel"
+                value={phone}
+                onChange={(e)=> setPhone(e.target.value.replace(/[^0-9]/g, '').slice(0,10))}
+                placeholder="98XXXXXX01"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">Employee ID</label>
+              <input
+                className="w-full border rounded px-3 py-2 bg-black/20 border-white/20 text-white placeholder:text-neutral-400"
+                value={facultyEmpId}
+                onChange={(e) => setFacultyEmpId(e.target.value)}
+                required
+                placeholder="EMPxxxxx"
+              />
+            </div>
+          </div>
+        )}
         <div>
               {/* OTP flow (disabled). To restore, replace the block below with PhoneVerification
               <PhoneVerification
