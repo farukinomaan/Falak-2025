@@ -73,7 +73,7 @@ export default async function PassesPage() {
     description: 'Exclusive entertainment access for MAHE BLR faculty.',
     price: 429,
     perks: [],
-    redirect: 'https://payment.manipal.edu/falak-faculty-Login'
+    redirect: 'https://conference.manipal.edu/registration/Registration?workshop=2Xn4Ba1tEIpTuszRWw9xhOH5O4iac%2fRUD%2frMMFwFcHA%3d'
   }] : [];
 
   return (
@@ -91,7 +91,7 @@ export default async function PassesPage() {
       <div className="relative z-20">
         {isFaculty ? (
           <Features
-            passes={facultyMock.map(m => ({ id: m.id, title: m.title, description: m.description, price: m.price }))}
+            passes={facultyMock.map(m => ({ id: m.id, title: m.title, description: m.description, price: m.price, redirect: m.redirect }))}
             isMahe={true}
             disableEsports
           />
