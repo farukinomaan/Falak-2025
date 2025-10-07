@@ -514,8 +514,8 @@ export async function ClusterEvent({
                       >
                         My Passes
                       </Link>
-                      {/* Show edit only to captain */}
-                      {userId && capId === userId && (
+                      {/* Show edit only to captain, and not for Esports events */}
+                      {userId && capId === userId && !isEsports && (
                         <TeamEditModal
                           teamId={existingTeam.team.id}
                           eventId={event.id}

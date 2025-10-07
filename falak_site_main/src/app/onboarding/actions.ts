@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { createUser, getUserByEmail } from "@/lib/actions";
 import { getUserByPhone, updateUser } from "@/lib/actions";
 import { UserCreateSchema } from "@/lib/actions/schemas";
+import { getServiceClient } from "@/lib/actions/supabaseClient";
 
 // OTP verification disabled: accept phone as provided (basic length check only)
 const OnboardSchema = z
@@ -117,5 +118,62 @@ export async function completeOnboarding(input: OnboardInput) {
   } catch (e) {
     console.error(e);
     return { ok: false, message: "Unexpected error" } as const;
+  }
+}
+
+// Faculty onboarding: writes to faculty_user (name, phone, emp_id, email) and ensures Users row with mahe=true
+export async function completeFacultyOnboarding(input: { username: string; phone: string; empId: string }) {
+  try {
+    const session = await getServerSession(authOptions);
+    const email = session?.user?.email;
+    if (!email) return { ok: false as const, message: 'Not authenticated' };
+
+    const username = (input.username || '').trim();
+    let phone = (input.phone || '').replace(/[^0-9]/g, '');
+    const empId = (input.empId || '').trim();
+    if (username.length < 2) return { ok: false as const, message: 'Invalid name' };
+    if (phone.length < 7) return { ok: false as const, message: 'Invalid phone' };
+    if (!empId) return { ok: false as const, message: 'Employee ID required' };
+
+    // Normalize phone to 10-digit national
+    if (phone.startsWith('91') && phone.length === 12) phone = phone.slice(2);
+    if (phone.length > 10) phone = phone.slice(-10);
+    if (phone.length === 11 && phone.startsWith('0')) phone = phone.slice(1);
+
+    const supabase = getServiceClient();
+
+    // Upsert into faculty_user
+    const { error: fErr } = await supabase
+      .from('faculty_user')
+      .upsert({ name: username, phone, emp_id: empId, email }, { onConflict: 'email' });
+    if (fErr) return { ok: false as const, message: fErr.message };
+
+    // Ensure Users row with mahe=true
+    // Try to find existing user by email
+    const existing = await getUserByEmail(email);
+    if (!existing.ok) return { ok: false as const, message: existing.error || 'Lookup error' };
+    if (existing.data) {
+      // Update to ensure mahe=true and set phone if empty
+      const existingUser = existing.data as { id: string };
+      const updated = await updateUser({ id: existingUser.id, mahe: true, phone });
+      if (!updated.ok) return { ok: false as const, message: updated.error || 'Update failed' };
+      return { ok: true as const };
+    }
+    // No existing -> create
+    const toCreate: z.infer<typeof UserCreateSchema> = {
+      name: username,
+      phone,
+      email,
+      mahe: true,
+      reg_no: null,
+      institute: null,
+      active: true,
+    };
+    const created = await createUser(toCreate);
+    if (!created.ok) return { ok: false as const, message: created.error || 'DB error' };
+    return { ok: true as const };
+  } catch (e) {
+    console.error(e);
+    return { ok: false as const, message: 'Unexpected error' };
   }
 }

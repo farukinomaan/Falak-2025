@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import Footer from "@/components/Footer";
 import ManualVerifyButton from "@/components/payments/ManualVerifyButton";
 import styles from "../profile/page.module.css";
+import { getServiceClient } from "@/lib/actions/supabaseClient";
 
 export const revalidate = 60;
 
@@ -25,9 +26,21 @@ export default async function PassesPage() {
   const session = await getServerSession(authOptions);
   interface SessWithMahe { user?: { mahe?: boolean | null } }
   const isMahe = Boolean((session as SessWithMahe | null)?.user?.mahe);
+  const email = session?.user?.email || null;
+
+  // Faculty detection
+  let isFaculty = false;
+  if (email) {
+    try {
+      const supabase = getServiceClient();
+      const { data } = await supabase.from('faculty_user').select('email').eq('email', email).limit(1);
+      isFaculty = Array.isArray(data) && data.length > 0;
+    } catch { /* ignore */ }
+  }
 
   const filteredPasses: PassCard[] = (() => {
     if (!session?.user?.email) return []; // guest sees none of the real passes
+    if (isFaculty) return [];
     if (isMahe) return passes.filter(p => p.mahe !== false);
     return passes.filter(p => p.event_id == null && p.mahe === false);
   })();
@@ -53,6 +66,16 @@ export default async function PassesPage() {
     perks: [],
   }));
 
+  // Faculty specific mock pass replacing normal passes
+  const facultyMock = isFaculty && email ? [{
+    id: 'faculty-entertainment',
+    title: 'Entertainment Pass',
+    description: 'Exclusive entertainment access for MAHE BLR faculty.',
+    price: 429,
+    perks: [],
+    redirect: 'https://payment.manipal.edu/falak-faculty-Login'
+  }] : [];
+
   return (
     <div
       className="min-h-screen relative overflow-hidden"
@@ -66,7 +89,13 @@ export default async function PassesPage() {
       }}
     >
       <div className="relative z-20">
-        {featurePasses.length > 0 ? (
+        {isFaculty ? (
+          <Features
+            passes={facultyMock.map(m => ({ id: m.id, title: m.title, description: m.description, price: m.price }))}
+            isMahe={true}
+            disableEsports
+          />
+        ) : featurePasses.length > 0 ? (
           <Features passes={featurePasses} isMahe={isMahe} />
         ) : (
           <div className="pt-40 pb-20 text-center text-white relative z-20">
@@ -109,33 +138,45 @@ export default async function PassesPage() {
         </div>
       </div>
 
-      <div
-        className={styles.infoCard}
-        style={{
-          background: "rgba(0,0,0,0.35)",
-          border: "1px solid rgba(255,255,255,0.15)",
-          borderRadius: 12,
-          padding: "12px 16px",
-          marginBottom: 16,
-          backdropFilter: "blur(6px)",
-        }}
-      >
-        <p style={{ fontSize: 14, lineHeight: 1.4, color: "#e2e8f0" }}>
-          <strong style={{ color: "#fff" }}>Note:</strong> If you do not see a pass
-          immediately after purchase, do not panic. Please scroll down to footer and
-          contact HR, show them your receipt. Devs also have mid-sems—thanks for
-          understanding.
-        </p>
-        <div className="mt-3 mb-1">
-          <ManualVerifyButton label="Verify Purchases" />
-        </div>
-        <span
-          className="pl-3"
-          style={{ fontSize: 12, lineHeight: 1.8, color: "#e2e8f0" }}
+      {isFaculty ? (
+        <div
+          className={styles.infoCard}
+          style={{
+            background: "rgba(0,0,0,0.35)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            borderRadius: 12,
+            padding: "12px 16px",
+            marginBottom: 16,
+            backdropFilter: "blur(6px)",
+          }}
         >
-          <p style={{ color: "#fff" }}>Wait a little after clicking</p>
-        </span>
-      </div>
+          <p style={{ fontSize: 14, lineHeight: 1.4, color: "#e2e8f0" }}>
+            Bring your payment transcript and Employee ID to the Proshow Registration desk. Contact HR (see footer) for any queries.
+          </p>
+        </div>
+      ) : (
+        <div
+          className={styles.infoCard}
+          style={{
+            background: "rgba(0,0,0,0.35)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            borderRadius: 12,
+            padding: "12px 16px",
+            marginBottom: 16,
+            backdropFilter: "blur(6px)",
+          }}
+        >
+          <p style={{ fontSize: 14, lineHeight: 1.4, color: "#e2e8f0" }}>
+            <strong style={{ color: "#fff" }}>Note:</strong> If you do not see a pass immediately after purchase, do not panic. Please scroll down to footer and contact HR, show them your receipt. Devs also have mid-sems—thanks for understanding.
+          </p>
+          <div className="mt-3 mb-1">
+            <ManualVerifyButton label="Verify Purchases" />
+          </div>
+          <span className="pl-3" style={{ fontSize: 12, lineHeight: 1.8, color: "#e2e8f0" }}>
+            <p style={{ color: "#fff" }}>Wait a little after clicking</p>
+          </span>
+        </div>
+      )}
 
       <div className="relative z-20">
         <Footer />

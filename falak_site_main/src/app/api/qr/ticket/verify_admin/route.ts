@@ -1,69 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify, SignJWT, createRemoteJWKSet } from 'jose';
+import { SignJWT } from 'jose';
 import { getServiceClient } from '@/lib/actions/supabaseClient';
 
-function getSessionSecret() {
-  const secret = process.env.ADMIN_QR_SESSION_SECRET || process.env.ADMIN_QR_JWT_SECRET || process.env.OTP_JWT_SECRET;
-  if (!secret) throw new Error('ADMIN_QR_SESSION_SECRET (or fallback) missing');
-  // session token uses HS256 in this route, so Uint8Array is fine
+function getGoogleClientSecret() {
+  const secret = process.env.GOOGLE_CLIENT_SECRET;
+  if (!secret) throw new Error('GOOGLE_CLIENT_SECRET missing');
   return new TextEncoder().encode(secret);
 }
-
-async function verifyUpstreamToken(raw: string) {
-  // Verify as a Google ID token using Google's JWKS
-  const googleClientId = process.env.ADMIN_QR_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
-  if (!googleClientId) throw new Error('ADMIN_QR_GOOGLE_CLIENT_ID (or GOOGLE_CLIENT_ID) must be set');
-  const jwks = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
-  const { payload } = await jwtVerify(raw, jwks, { audience: googleClientId });
-  const email = typeof payload.email === 'string' ? payload.email : (typeof payload.sub === 'string' ? payload.sub : undefined);
-  if (!email) throw new Error('Token missing email');
-  return email;
+function getGoogleClientId() {
+  const id = process.env.GOOGLE_CLIENT_ID || process.env.ADMIN_QR_GOOGLE_CLIENT_ID;
+  if (!id) throw new Error('GOOGLE_CLIENT_ID (or ADMIN_QR_GOOGLE_CLIENT_ID) missing');
+  return id;
 }
-
-async function lookupAdmin(email: string) {
-  const supabase = getServiceClient();
-  const { data, error } = await supabase
-    .from('Admin_roles')
-    .select('email, role')
-    .eq('email', email)
-    .limit(1);
-  if (error) throw new Error(error.message);
-  if (!Array.isArray(data) || !data.length) throw new Error('Unauthenticated');
-  return data[0].role as string | null;
-}
-
-async function issueSession(email: string, role: string | null) {
-  // Short-lived (e.g., 30 minutes) session token
-  return await new SignJWT({ t: 'qr_session', email, role })
+async function issueSession(payload: { phone?: string | null; username?: string | null; name?: string | null; role?: string | null }) {
+  // Short-lived (e.g., 30 minutes) session token, signed with Google client secret and audience set to our Google client id
+  return await new SignJWT({ t: 'qr_session', ...payload })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
+    .setAudience(getGoogleClientId())
+    .setIssuer('falak-qr')
     .setExpirationTime('30m')
-    .sign(getSessionSecret());
+    .sign(getGoogleClientSecret());
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = req.headers.get('authorization') || req.headers.get('Authorization');
-    if (!auth) return NextResponse.json({ ok: false, error: 'Missing Authorization header' }, { status: 401 });
-    const parts = auth.split(/\s+/);
-    const upstreamToken = parts.length === 2 ? parts[1] : parts[0];
-    if (!upstreamToken) return NextResponse.json({ ok: false, error: 'Missing token' }, { status: 401 });
-    let email: string;
-    try {
-      email = await verifyUpstreamToken(upstreamToken);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'invalid_token';
-      return NextResponse.json({ ok: false, error: msg }, { status: 401 });
-    }
-    let role: string | null;
-    try {
-      role = await lookupAdmin(email);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'unauthenticated';
-      return NextResponse.json({ ok: false, error: msg }, { status: msg === 'Unauthenticated' ? 401 : 500 });
-    }
-    const sessionToken = await issueSession(email, role);
-    return NextResponse.json({ ok: true, email, role, sessionToken, expiresIn: 1800 });
+    // Expect JSON body with credentials, e.g., { username, password, phone, name }
+    const body = await req.json().catch(() => ({}));
+    const username = typeof body?.username === 'string' ? body.username.trim() : '';
+    const password = typeof body?.password === 'string' ? body.password.trim() : '';
+    const phone = typeof body?.phone === 'string' ? body.phone.trim() : '';
+    if (!username && !phone) return NextResponse.json({ ok: false, error: 'username_or_phone_required' }, { status: 400 });
+    if (!password) return NextResponse.json({ ok: false, error: 'password_required' }, { status: 400 });
+
+    const supabase = getServiceClient();
+    // Lookup in ticket_admin_list by username OR phone
+    let q = supabase.from('ticket_admin_list').select('id, username, phone, name, password').limit(1);
+    if (username) q = q.eq('username', username);
+    else if (phone) q = q.eq('phone', phone);
+    const { data, error } = await q.maybeSingle();
+    if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    if (!data) return NextResponse.json({ ok: false, error: 'invalid_credentials' }, { status: 401 });
+    const row = data as { id: string; username?: string | null; phone?: string | null; name?: string | null; password?: string | null; role?: string | null };
+    // NOTE: Plain-text compare. Replace with hashing if passwords are hashed.
+    if ((row.password || '') !== password) return NextResponse.json({ ok: false, error: 'invalid_credentials' }, { status: 401 });
+
+  const payload = { username: row.username || null, phone: row.phone || null, name: row.name || null };
+    const sessionToken = await issueSession(payload);
+    return NextResponse.json({ ok: true, ...payload, sessionToken, expiresIn: 1800 });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Server error';
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });

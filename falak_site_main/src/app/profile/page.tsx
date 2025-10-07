@@ -17,6 +17,7 @@ import { PageBackground } from "../_clusterPages/clusterPages";
 import styles from "./page.module.css";
 import LogoutButton from "@/components/auth/LogoutButton";
 import Footer from "@/components/Footer";
+import { getServiceClient } from "@/lib/actions/supabaseClient";
 
 
 export default async function ProfilePage() {
@@ -27,6 +28,14 @@ export default async function ProfilePage() {
    const userRes = await getUserByEmail(email);
    if (!userRes.ok || !userRes.data) redirect("/onboarding");
   const user = userRes.data;
+
+  // Faculty detection via faculty_user table
+  let isFaculty = false;
+  try {
+    const supabase = getServiceClient();
+    const { data } = await supabase.from('faculty_user').select('email').eq('email', email).limit(1);
+    isFaculty = Array.isArray(data) && data.length > 0;
+  } catch {}
 
   // Fetch passes owned by user
   const upRes = await listUserPassesByUserId(user.id!);
@@ -68,9 +77,13 @@ export default async function ProfilePage() {
           <div>
             <p>{user.email}</p>
             {user.mahe ? (
-              <p>MAHE {user.reg_no ? `• ${user.reg_no}` : ""}</p>
+              isFaculty?(
+                <p>MAHE BLR Faculty {user.reg_no ? `• ${user.reg_no}` : ""}</p>
+              ):(
+                <p>MAHE BLR {user.reg_no ? `• ${user.reg_no}` : ""}</p>
+              )
             ) : (
-              <p>{user.institute || "Non-MAHE"}</p>
+              <p>{user.institute || "Non-MAHE BLR"}</p>
             )}
             <div>
               <p>{user.phone}</p>
@@ -86,24 +99,39 @@ export default async function ProfilePage() {
             <section className={styles.section}>
               <h2>Your Passes</h2>
               <h3>Your QR is shown under every pass below (it is the SAME for all your passes).</h3>
-              <div className={styles.infoCard} style={{
-                background:'rgba(0,0,0,0.35)',
-                border:'1px solid rgba(255,255,255,0.15)',
-                borderRadius:12,
-                padding:'12px 16px',
-                marginBottom:16,
-                backdropFilter:'blur(6px)'
-              }}>
-                <p style={{fontSize:14,lineHeight:1.4,color:'#e2e8f0'}}>
-                  <strong style={{color:'#fff'}}>Note:</strong> If you do not see a pass immediately after purchase, do not panic. Please scroll down to footer and contact HR, show them your reciept. Devs also have mid-sems—thanks for understanding.
-                </p>
-                <div className="mt-3 mb-1">
-                  <ManualVerifyButton label="Verify Purchases" />
+              {isFaculty ? (
+                <div className={styles.infoCard} style={{
+                  background:'rgba(0,0,0,0.35)',
+                  border:'1px solid rgba(255,255,255,0.15)',
+                  borderRadius:12,
+                  padding:'12px 16px',
+                  marginBottom:16,
+                  backdropFilter:'blur(6px)'
+                }}>
+                  <p style={{fontSize:14,lineHeight:1.4,color:'#e2e8f0'}}>
+                    Bring your payment transcript and Employee ID to the Proshow Registration desk. Contact HR (see footer) for any queries.
+                  </p>
                 </div>
-                <span className="pl-3" style={{fontSize:12,lineHeight:1.8,color:'#e2e8f0'}}>
-                  <p style={{color:'#fff'}}>Wait a little after clicking</p> 
-                </span>
-              </div>
+              ) : (
+                <div className={styles.infoCard} style={{
+                  background:'rgba(0,0,0,0.35)',
+                  border:'1px solid rgba(255,255,255,0.15)',
+                  borderRadius:12,
+                  padding:'12px 16px',
+                  marginBottom:16,
+                  backdropFilter:'blur(6px)'
+                }}>
+                  <p style={{fontSize:14,lineHeight:1.4,color:'#e2e8f0'}}>
+                    <strong style={{color:'#fff'}}>Note:</strong> If you do not see a pass immediately after purchase, do not panic. Please scroll down to footer and contact HR, show them your reciept. Devs also have mid-sems—thanks for understanding.
+                  </p>
+                  <div className="mt-3 mb-1">
+                    <ManualVerifyButton label="Verify Purchases" />
+                  </div>
+                  <span className="pl-3" style={{fontSize:12,lineHeight:1.8,color:'#e2e8f0'}}>
+                    <p style={{color:'#fff'}}>Wait a little after clicking</p> 
+                  </span>
+                </div>
+              )}
               {passes.length === 0 ? (
                 <EmptyState message="You don’t own any passes yet." ctaHref="/passes" ctaLabel="Browse Passes" />
               ) : (
