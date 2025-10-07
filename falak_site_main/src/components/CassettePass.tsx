@@ -399,6 +399,24 @@ export function CassettePass2({ pass, isMahe = false }: CassettePassProps) {
 </div>
 
 
+
+{pass.cost && (
+    <div
+      className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-[100%] sm:translate-y-[100%] px-2 w-full flex justify-center"
+      style={{ pointerEvents: 'none' }}
+    >  
+      <p
+        className="font-brasty font-bold text-center text-[#32212C] max-w-[86%] break-words whitespace-normal mt-0 sm:mt-2"
+        style={{ fontSize: "clamp(1rem, 4.8vw, 2.4rem)" }}
+      >
+        
+        <span className="text-sm sm:text-lg">{pass.pass_name == "Non-MAHE BLR" ? "NOT AVAILABLE" : "Limited Seats Available"}</span>
+      </p>
+    </div>
+  )}
+
+
+
           {/* BACK */}
           <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', pointerEvents: flipped ? 'auto' : 'none' }}>
             <div className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none" style={{ backgroundImage: "url('/cassette.png')", backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' }} />

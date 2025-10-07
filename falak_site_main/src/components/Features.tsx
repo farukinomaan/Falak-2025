@@ -13,9 +13,9 @@ type IncomingPass = {
   price?: number; // alternate source
 };
 
-interface FeaturesProps { passes?: IncomingPass[]; isMahe?: boolean }
+interface FeaturesProps { passes?: IncomingPass[]; isMahe?: boolean; disableEsports?: boolean }
 
-const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false }) => {
+const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false, disableEsports = false }) => {
   const { data: session } = useSession();
   const sessionIsMahe = isMahe || Boolean((session?.user as { mahe?: boolean } | undefined)?.mahe);
 
@@ -26,7 +26,7 @@ const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false }) => {
       description: p.description ?? undefined,
       cost: p.cost ?? p.price ?? "",
     }));
-    if (sessionIsMahe && !base.some(p => p.id === 'esports-pass')) {
+    if (sessionIsMahe && !disableEsports && !base.some(p => p.id === 'esports-pass')) {
       base.push({
         id: 'esports-pass',
         pass_name: 'Esports Pass',
@@ -35,7 +35,7 @@ const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false }) => {
       });
     }
     return base;
-  }, [passes, sessionIsMahe]);
+  }, [passes, sessionIsMahe, disableEsports]);
 
   const tempPass ={
     id: 'standup-pass',
@@ -63,9 +63,9 @@ const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false }) => {
           </div>
         ))}
         <div className="flex justify-center items-center min-h-[40vh] lg:min-h-[90vh] -mt-10 sm:-mt-20 lg:-mt-40 tablet:min-h-[80vh] relative">
-          {sessionIsMahe && 
+          {sessionIsMahe && !disableEsports && (
             <CassettePass2 pass={tempPass} isMahe={sessionIsMahe} />
-          }
+          )}
         </div>
         </div>
       </div>
