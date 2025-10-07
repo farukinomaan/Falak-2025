@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import { Orbitron } from "next/font/google";
 const Hero = dynamic(() => import("@/components/Hero"));
 const Artist = dynamic(() => import("@/components/Artist"));
+const Artist2 = dynamic(() => import("@/components/Artist2"));
 const Timeline = dynamic(() => import("@/components/Timeline"));
 const Trailer = dynamic(() => import("@/components/Trailer"));
 const About = dynamic(() => import("@/components/About"));
@@ -43,15 +44,39 @@ export default function Home() {
 
       {/* Page content */}
       <div className="relative z-10">
-        <Suspense fallback={<SectionSkeleton title="Welcome" />}> <Hero /> </Suspense>
-        {/* <Suspense fallback={<SectionSkeleton title="Welcome" />}> <Timer /> </Suspense> */}
-        <Suspense fallback={<SectionSkeleton title="About" />}> <About /> </Suspense>
-        <Suspense fallback={<SectionSkeleton title="Artist" />}> <Artist /> </Suspense>
-        <Suspense fallback={<SectionSkeleton title="Timeline" />}> <Timeline /> </Suspense>
-        <Suspense fallback={<SectionSkeleton title="Trailer" />}> <Trailer /> </Suspense>
-        <Suspense fallback={<SectionSkeleton title="Sponsors" />}> <Sponsor /> </Suspense>
-        <Footer />
-      </div>
+  <Suspense fallback={<SectionSkeleton title="Welcome" />}> <Hero /> </Suspense>
+  {/* <Suspense fallback={<SectionSkeleton title="Welcome" />}> <Timer /> </Suspense> */}
+  <Suspense fallback={<SectionSkeleton title="About" />}> <About /> </Suspense>
+{/* Before Artist2 */}
+<Suspense fallback={<SectionSkeleton title="Artist" />}>
+  <div className="-mb-[50vh] relative z-20">
+    <Artist />
+  </div>
+</Suspense>
+
+{/* Scroll buffer BEFORE Artist2 */}
+<div className="h-[50vh] w-full bg-transparent" aria-hidden="true" />
+
+<Suspense fallback={<SectionSkeleton title="Artist2" />}>
+  <Artist2 />
+</Suspense>
+
+{/* Scroll buffer AFTER Artist2 */}
+<div className="h-[50vh] w-full bg-transparent" aria-hidden="true" />
+
+{/* After Artist2 */}
+<Suspense fallback={<SectionSkeleton title="Timeline" />}>
+  <div className="-mt-[50vh] relative z-20">
+    <Timeline />
+  </div>
+</Suspense>
+
+  <Suspense fallback={<SectionSkeleton title="Trailer" />}> <Trailer /> </Suspense>
+  <Suspense fallback={<SectionSkeleton title="Sponsors" />}> <Sponsor /> </Suspense>
+  <Footer />
+</div>
+
+
     </div>
   );
 }
