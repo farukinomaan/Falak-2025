@@ -60,6 +60,18 @@ export async function listEventsByIds(ids: string[]) {
   return { ok: true as const, data }
 }
 
+// Admin/raw: list events by IDs irrespective of enable flag
+export async function listEventsByIdsRaw(ids: string[]) {
+  if (!Array.isArray(ids) || ids.length === 0) return { ok: true as const, data: [] as Event[] };
+  const supabase = getServiceClient()
+  const { data, error } = await supabase
+    .from(table)
+    .select("*")
+    .in("id", ids)
+  if (error) return { ok: false as const, error: error.message }
+  return { ok: true as const, data }
+}
+
 export async function updateEvent(input: z.infer<typeof EventUpdateSchema>) {
   const parsed = EventUpdateSchema.safeParse(input)
   if (!parsed.success) return { ok: false as const, error: "Invalid input" }

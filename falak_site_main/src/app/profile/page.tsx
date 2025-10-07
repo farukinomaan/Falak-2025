@@ -5,8 +5,8 @@ import { getUserByEmail } from "@/lib/actions/tables/users";
 import { listUserPassesByUserId } from "@/lib/actions/tables/userPasses";
 import { listPassesByIds } from "@/lib/actions/tables/pass";
 import { listTeamMembersByMemberId } from "@/lib/actions/tables/teamMembers";
-import { listTeams } from "@/lib/actions/tables/teams";
-import { listEventsByIds } from "@/lib/actions/tables/events";
+import { listTeams, listTeamsByIds } from "@/lib/actions/tables/teams";
+import { listEventsByIdsRaw } from "@/lib/actions/tables/events";
 import Link from "next/link";
 import QrCode from "@/components/QrCode";
 import { computeDeterministicUserQrToken } from "@/lib/security";
@@ -47,19 +47,62 @@ export default async function ProfilePage() {
 
   // Fetch events by team membership (as member)
   const tmRes = await listTeamMembersByMemberId(user.id!);
-  const memberships = tmRes.ok && tmRes.data ? tmRes.data : [];
+  let memberships = tmRes.ok && tmRes.data ? tmRes.data : [];
+  // Fallback: older rows may have stored memberId as email; try that too and merge
+  if (memberships.length === 0) {
+    const tmByEmailRes = await listTeamMembersByMemberId(email);
+    const emailMemberships = tmByEmailRes.ok && tmByEmailRes.data ? tmByEmailRes.data : [];
+    if (emailMemberships.length > 0) memberships = emailMemberships;
+  }
+  // Fallback: even older rows may have memberId as phone
+  if (memberships.length === 0 && user.phone) {
+    const tmByPhoneRes = await listTeamMembersByMemberId(user.phone);
+    const phoneMemberships = tmByPhoneRes.ok && tmByPhoneRes.data ? tmByPhoneRes.data : [];
+    if (phoneMemberships.length > 0) memberships = phoneMemberships;
+  }
+  // Some older rows may miss eventId; in that case, derive it from the Team and also keep memberTeams for display
+  const teamIdsFromMemberships = Array.from(new Set(memberships.map(m => m.teamId).filter(Boolean))) as string[];
+  let membershipsEventIds: string[] = memberships.map(m => m.eventId).filter(Boolean) as string[];
+  let memberTeams: { id: string; name: string; eventId: string }[] = [];
+  if (teamIdsFromMemberships.length > 0) {
+    const teamsByIdRes = await listTeamsByIds(teamIdsFromMemberships);
+    const teamsById = teamsByIdRes.ok && teamsByIdRes.data ? teamsByIdRes.data : [];
+    const fallbackEventIds = teamsById.map(t => t.eventId).filter(Boolean) as string[];
+    membershipsEventIds = Array.from(new Set([ ...membershipsEventIds, ...fallbackEventIds ]));
+    memberTeams = teamsById.map(t => ({ id: t.id, name: t.name, eventId: t.eventId }));
+  }
 
   // Include events where user is team captain (leader)
   const teamRes = await listTeams();
   const teams = teamRes.ok && teamRes.data ? teamRes.data : [];
-  const captainEventIds = teams.filter(t => t.captainId === user.id).map(t => t.eventId);
+  const captainEventIds = teams
+    .filter(t =>
+      t.captainId === user.id ||
+      (email && t.captainId === email) ||
+      (user.phone && t.captainId === user.phone)
+    )
+    .map(t => t.eventId);
+  const captainTeams = teams.filter(t =>
+    t.captainId === user.id ||
+    (email && t.captainId === email) ||
+    (user.phone && t.captainId === user.phone)
+  ).map(t => ({ id: t.id, name: t.name, eventId: t.eventId }));
 
   const eventIds = Array.from(new Set([
-    ...memberships.map(m => m.eventId),
+    ...membershipsEventIds,
     ...captainEventIds,
    ])).filter(Boolean) as string[];
-  const evRes = await listEventsByIds(eventIds);
+  // Use raw loader to show historical registrations even if an event is no longer enabled
+  const evRes = await listEventsByIdsRaw(eventIds);
   const events = evRes.ok && evRes.data ? evRes.data : [];
+  // Map eventId -> team names this user belongs to
+  const teamsByEvent = new Map<string, string[]>();
+  for (const t of [...memberTeams, ...captainTeams]) {
+    if (!t.eventId) continue;
+    const arr = teamsByEvent.get(t.eventId) ?? [];
+    if (!arr.includes(t.name)) arr.push(t.name);
+    teamsByEvent.set(t.eventId, arr);
+  }
   return (
     <>
             <PageBackground cluster="cultural" />
@@ -163,6 +206,7 @@ export default async function ProfilePage() {
                   {events.map((e) => {
                     const cluster = (e.cluster_name || "").toLowerCase().includes("sport") ? "sports" : "cultural";
                     const href = `/${cluster}/${encodeURIComponent(e.sub_cluster)}/${encodeURIComponent(e.id)}`;
+                    const myTeams = teamsByEvent.get(e.id) || [];
                     return (
                       <li key={e.id} className={styles.eventItem}>
                         <Link href={href} className={styles.eventLink}>
@@ -172,6 +216,9 @@ export default async function ProfilePage() {
                               <span>{e.sub_cluster}</span>
                             </div>
                             <p className={styles.eventDescription}>{e.description || ""}</p>
+                            {myTeams.length > 0 && (
+                              <p className="mt-2 text-sm opacity-80">Your team{myTeams.length>1 ? 's' : ''}: {myTeams.join(', ')}</p>
+                            )}
                           </div>
                           <div className={styles.eventDetails}>
                             <div className={styles.eventTiming}>

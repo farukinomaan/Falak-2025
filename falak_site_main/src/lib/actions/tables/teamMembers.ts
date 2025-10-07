@@ -34,8 +34,6 @@ export async function listTeamMembers() {
 }
 
 export async function listTeamMembersByMemberId(memberId: string) {
-  const parsed = uuid.safeParse(memberId)
-  if (!parsed.success) return { ok: false as const, error: "Invalid memberId" }
   const supabase = getServiceClient()
   const { data, error } = await supabase
     .from(table)
