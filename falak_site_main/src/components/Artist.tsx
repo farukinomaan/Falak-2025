@@ -132,7 +132,7 @@ const Artist: React.FC = () => {
   {/* Heading (only on mobile) */}
   {isMobile && (
     <h2 className="vintage-font text-center text-3xl sm:text-4xl text-[#DBAAA6] mb-6">
-      MEET THE ARTIST
+      MEET THE ARTISTS
     </h2>
   )}
 
@@ -180,7 +180,7 @@ const Artist: React.FC = () => {
             : "4rem",
       }}
     >
-      MEET THE ARTIST
+      MEET THE ARTISTS
     </h2>
   )}
 
