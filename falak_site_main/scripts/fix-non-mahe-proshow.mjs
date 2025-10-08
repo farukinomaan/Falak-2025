@@ -32,6 +32,26 @@ async function main() {
     global: { headers: { 'X-Maintenance-Script': 'fix-non-mahe-proshow' } },
   });
 
+  // Utilities
+  const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+  async function withRetry(fn, label = 'op', retries = 3) {
+    let lastErr;
+    for (let i = 0; i < retries; i++) {
+      try {
+        const res = await fn();
+        if (!res || res.error) {
+          lastErr = res?.error || new Error(`${label} failed`);
+        } else {
+          return res;
+        }
+      } catch (e) {
+        lastErr = e;
+      }
+      await sleep(250 * (i + 1));
+    }
+    if (lastErr) throw lastErr; else throw new Error(`${label} failed after retries`);
+  }
+
   
   // 1) Locate target Non-MAHE proshow pass
   // Prefer lowercase 'passes' table; fallback to legacy 'Pass'
@@ -78,32 +98,52 @@ async function main() {
     'raw->>userType.eq.NONMAHE',
     'raw->>user_status.eq.NONMAHE',
     'raw->>userStatus.eq.NONMAHE',
+    'raw->>user_type.eq.NON-MAHE',
+    'raw->>userType.eq.NON-MAHE',
+    'raw->>user_status.eq.NON-MAHE',
+    'raw->>userStatus.eq.NON-MAHE',
+    'raw->>user_type.ilike.%non%mahe%',
+    'raw->>userType.ilike.%non%mahe%',
+    'raw->>user_status.ilike.%non%mahe%',
+    'raw->>userStatus.ilike.%non%mahe%'
   ].join(',');
-  let plq = supabase
-    .from('payment_logs')
-    .select('user_id')
-    .in('status', statuses)
-    .or(orFilter)
-    .not('user_id', 'is', null)
-    .limit(5000);
-  if (onlyUserIds.length > 0) {
-    plq = plq.in('user_id', onlyUserIds);
+  const PAGE = Number(process.env.PAGE_SIZE || 1000);
+  const nonMaheUsers = new Set();
+  let offset = 0;
+  while (true) {
+    let q = supabase
+      .from('payment_logs')
+      .select('user_id')
+      .in('status', statuses)
+      .or(orFilter)
+      .not('user_id', 'is', null)
+      .range(offset, offset + PAGE - 1);
+    if (onlyUserIds.length > 0) q = q.in('user_id', onlyUserIds);
+    const res = await withRetry(() => q, 'scan-payment-logs');
+    const rows = res.data || [];
+    rows.forEach(r => r?.user_id && nonMaheUsers.add(r.user_id));
+    if (rows.length < PAGE) break;
+    offset += PAGE;
   }
-  const candUsersRes = await plq;
-  if (candUsersRes.error) throw candUsersRes.error;
-  const nonMaheUsers = new Set((candUsersRes.data || []).map(r => r.user_id).filter(Boolean));
   console.log(`Detected ${nonMaheUsers.size} NONMAHE user(s) from payment_logs.`);
 
   // 3) For each candidate user, load their proshow ownerships (event_id null)
   const userIds = Array.from(nonMaheUsers);
   let proshowRows = [];
   if (userIds.length > 0) {
-    const upQ = await supabase
-      .from('User_passes')
-      .select('id, userId, passId, passes:passId(id, pass_name, mahe, event_id)')
-      .in('userId', userIds);
-    if (upQ.error) throw upQ.error;
-    proshowRows = (upQ.data || []).filter(r => r?.passes?.event_id == null);
+    const BATCH = Number(process.env.BATCH_SIZE || 200);
+    for (let i = 0; i < userIds.length; i += BATCH) {
+      const slice = userIds.slice(i, i + BATCH);
+      const upQ = await withRetry(() =>
+        supabase
+          .from('User_passes')
+          .select('id, userId, passId, passes:passId(id, pass_name, mahe, event_id)')
+          .in('userId', slice),
+        'load-user-passes'
+      );
+      const part = (upQ.data || []).filter(r => r?.passes?.event_id == null);
+      proshowRows.push(...part);
+    }
   }
   console.log(`Found ${proshowRows.length} proshow ownership row(s) for NONMAHE users.`);
 
@@ -123,29 +163,35 @@ async function main() {
   let deleted = 0;
   for (const r of candidatesToFix) {
     // Check if user already owns the correct target pass
-    const existing = await supabase
-      .from('User_passes')
-      .select('id')
-      .eq('userId', r.userId)
-      .eq('passId', targetPass.id)
-      .maybeSingle();
+    const existing = await withRetry(() =>
+      supabase
+        .from('User_passes')
+        .select('id')
+        .eq('userId', r.userId)
+        .eq('passId', targetPass.id)
+        .maybeSingle(),
+      'check-existing'
+    );
     if (existing.error && existing.error.code !== 'PGRST116') {
       console.warn(`WARN: Skipping user ${r.userId} due to read error: ${existing.error.message}`);
       continue;
     }
     if (existing.data) {
       // Already has the correct one; delete the incorrect row
-      const del = await supabase.from('User_passes').delete().eq('id', r.id);
+      const del = await withRetry(() => supabase.from('User_passes').delete().eq('id', r.id), 'delete-incorrect');
       if (del.error) {
         console.warn(`WARN: Failed to delete row ${r.id}: ${del.error.message}`);
       } else { deleted++; }
       continue;
     }
     // Update passId in place to preserve ownership row id/QR linkages
-    const up = await supabase
-      .from('User_passes')
-      .update({ passId: targetPass.id })
-      .eq('id', r.id);
+    const up = await withRetry(() =>
+      supabase
+        .from('User_passes')
+        .update({ passId: targetPass.id })
+        .eq('id', r.id),
+      'update-passId'
+    );
     if (up.error) {
       console.warn(`WARN: Failed to update row ${r.id}: ${up.error.message}`);
       continue;
@@ -153,10 +199,13 @@ async function main() {
     updated++;
 
     // After updating, ensure no stray MAHE proshow remains for this user (cleanup duplicates)
-    const stray = await supabase
-      .from('User_passes')
-      .select('id, passes:passId(mahe, event_id)')
-      .eq('userId', r.userId);
+    const stray = await withRetry(() =>
+      supabase
+        .from('User_passes')
+        .select('id, passes:passId(mahe, event_id)')
+        .eq('userId', r.userId),
+      'cleanup-scan'
+    );
     if (!stray.error && Array.isArray(stray.data)) {
       for (const s of stray.data) {
         const p = s?.passes;

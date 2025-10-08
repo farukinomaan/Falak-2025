@@ -94,7 +94,48 @@ export async function GET(req: NextRequest) {
       .select('id, passId, ticket_cut, ticket_cut_by, ticket_cut_at, created_at, pass:Pass(id, pass_name, event_id, mahe)')
       .eq('userId', userId);
     if (upErr) return NextResponse.json({ ok: false, error: upErr.message }, { status: 500 });
-    return NextResponse.json({ ok: true, admin: authRes.admin, user: userRow, passes: userPasses });
+
+    // Standup Show augmentations
+    let proshow_with_standup = false;
+    let standup_cut_info: { cut: boolean; cut_by: string | null } | null = null;
+    // Find Standup event id
+    const { data: standupEvent, error: evErr } = await supabase
+      .from('Events')
+      .select('id')
+      .eq('name', 'Standup Show')
+      .limit(1)
+      .maybeSingle();
+    if (evErr) {
+      // non-fatal for GET; log-like response field
+    } else if (standupEvent?.id) {
+      // Check captaincy for standup
+      const { data: teamRow, error: teamErr } = await supabase
+        .from('Teams')
+        .select('id')
+        .eq('captainId', userId)
+        .eq('eventId', standupEvent.id)
+        .limit(1)
+        .maybeSingle();
+      if (!teamErr && teamRow) proshow_with_standup = true;
+
+      // Lookup standup_cut table
+      const { data: cutRow, error: cutErr } = await supabase
+        .from('standup_cut')
+        .select('cut, cut_by')
+        .eq('userId', userId)
+        .limit(1)
+        .maybeSingle();
+      if (!cutErr && cutRow) standup_cut_info = { cut: !!cutRow.cut, cut_by: cutRow.cut_by ?? null };
+    }
+
+    return NextResponse.json({
+      ok: true,
+      admin: authRes.admin,
+      user: userRow,
+      passes: userPasses,
+      proshow_with_standup,
+      ...(standup_cut_info ? { cut: standup_cut_info.cut, cut_by: standup_cut_info.cut_by } : {}),
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Server error';
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });

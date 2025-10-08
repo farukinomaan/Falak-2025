@@ -10,7 +10,8 @@ type IncomingPass = {
   title?: string;
   description?: string | null;
   cost?: number | string | null;
-  price?: number; // alternate source
+  price?: number; // alternate source,
+  redirect?: string; // optional redirect URL
 };
 
 interface FeaturesProps { passes?: IncomingPass[]; isMahe?: boolean; disableEsports?: boolean }
@@ -25,6 +26,7 @@ const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false, disabl
       pass_name: p.pass_name || p.title || "Pass",
       description: p.description ?? undefined,
       cost: p.cost ?? p.price ?? "",
+      redirect: p.redirect,
     }));
     if (sessionIsMahe && !disableEsports && !base.some(p => p.id === 'esports-pass')) {
       base.push({
@@ -32,6 +34,7 @@ const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false, disabl
         pass_name: 'Esports Pass',
         description: 'Access to all esports events & arenas.',
         cost: 99,
+        redirect: undefined,
       });
     }
     return base;
@@ -42,6 +45,7 @@ const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false, disabl
     pass_name: 'Standup Show Pass',
     description: 'Access to standup comedy event by THE PRANAV SHARMA.',
     cost: 1,
+    redirect: undefined,
   }
 
   return (
@@ -62,7 +66,7 @@ const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false, disabl
             <CassettePass pass={pass} isMahe={sessionIsMahe} />
           </div>
         ))}
-        <div className="flex justify-center items-center min-h-[40vh] lg:min-h-[90vh] -mt-10 sm:-mt-20 lg:-mt-40 tablet:min-h-[80vh] relative">
+        <div className="flex justify-center items-center min-h-[40vh] lg:min-h-[90vh] -mt-10 sm:-mt-10 lg:-mt-20 tablet:min-h-[80vh] relative">
           {sessionIsMahe && !disableEsports && (
             <CassettePass2 pass={tempPass} isMahe={sessionIsMahe} />
           )}
