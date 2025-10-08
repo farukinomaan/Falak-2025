@@ -46,7 +46,7 @@ const Artist2 = () => {
 
           
           {/* Left: Image */}
-          <div className="relative w-[85vw] md:w-[45%] flex justify-center items-center overflow-hidden rounded-2xl border border-2px border-[#32212C]">
+          <div className="relative w-[82vw] md:w-[42%] h-[40vh] md:h-[54vh] flex justify-center items-center overflow-hidden rounded-2xl border-[3px] border-[#32212C]">
             <Image
               src="/images/pranav.webp"
               alt="Pranav Sharma"

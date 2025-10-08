@@ -151,7 +151,7 @@ const Artist: React.FC = () => {
 
 
       {/* Description */}
-      <div className="artist-description z-40 bg-[#DBAAA6] border-2 border-[#32212C] rounded-xl flex flex-col justify-center items-center p-4 sm:p-6 text-center w-full max-w-[80vw] mt-6">
+      <div className="artist-description z-40 bg-[#DBAAA6] border-2 border-[#32212C] rounded-xl flex flex-col justify-center items-center p-4 sm:p-6 text-center w-[85vw] max-w-[500px]">
         <h3 className="vintage-font text-xl sm:text-2xl font-semibold text-[#32212C] mb-2 sm:mb-4">
         MOHIT CHAUHAN
         </h3>
@@ -188,7 +188,7 @@ const Artist: React.FC = () => {
   {!isMobile && (
     <div className="flex w-full max-w-[600px] mx-auto gap-6 flex-col items-center md:block mt-8">
       {/* TV */}
-      <div className="tv-wrapper border-4 border-[#D7897D] rounded-2xl bg-[#32212C] shadow-lg z-30 mx-auto md:relative md:left-0 mb-6 md:mb-0 w-[470px] h-[450px]">
+      <div className="tv-wrapper border-4 border-[#D7897D] rounded-2xl bg-[#32212C] shadow-lg z-30 mx-auto md:relative md:right-[10%] mb-3 md:mb-0 w-[45%] max-w-[500px] h-[55vh] flex justify-center items-center overflow-hidden">
   <img
     src="/images/mohit.webp"
     alt="Artist Mohit"
@@ -198,7 +198,7 @@ const Artist: React.FC = () => {
 
 
       {/* Description */}
-      <div className="artist-description z-40 bg-[#DBAAA6] border-2 border-[#32212C] rounded-xl flex flex-col justify-center items-center p-4 sm:p-6 text-center opacity-0 absolute md:top-1/2 md:right-[10%] md:-translate-y-1/2 w-[470px] h-[450px]">
+      <div className="artist-description z-40 bg-[#DBAAA6] border-2 border-[#32212C] rounded-xl flex flex-col justify-center items-center p-4 sm:p-6 text-center opacity-0 absolute md:top-1/2 md:right-[12%] md:-translate-y-1/2 w-[40%] max-w-[500px] h-[55vh]">
         <h3 className="vintage-font text-xl sm:text-2xl md:text-3xl font-semibold text-[#32212C] mb-2 sm:mb-4">
         MOHIT CHAUHAN
         </h3>

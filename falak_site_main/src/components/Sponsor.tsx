@@ -18,7 +18,6 @@ const sponsors = [
   { name: "Manipal", partnership: "Health Partner", logo: "/sponsors/manipal.png", url: "https://www.manipalhospitals.com/bangalore/" },
   { name: "Unstop", partnership: "Opportunity Partner", logo: "/sponsors/unstop.png", url: "https://unstop.com/" },
   { name: "DS Group", partnership: "Taste Partner", logo: "/sponsors/ds.png", url: "https://www.dsgroup.com" },
-  { name: "Bisleri", partnership: "Hydrating Partner", logo: "/sponsors/bisleri.png", url: "https://bisleri.com" },
 ];
 
 const Sponsor: React.FC = () => {
@@ -44,33 +43,31 @@ const Sponsor: React.FC = () => {
       {/* Marquee wrapper */}
       <div className="relative w-full overflow-hidden">
         <div className="flex whitespace-nowrap animate-marquee">
-        {Array(repeatCount)
-  .fill(null)
-  .flatMap(() => sponsors)
-  .map((sponsor, index) => (
-    <a
-      key={index}
-      href={sponsor.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex flex-col items-center justify-center w-[150px] sm:w-[200px] md:w-[250px] mx-4 sm:mx-6 md:mx-8 hover:scale-105 transition duration-300"
-    >
-      <div className="w-full h-24 flex items-center justify-center mb-2">
-        <Image
-          src={sponsor.logo}
-          alt={sponsor.name}
-          width={200}
-          height={100}
-          className={`object-contain max-h-16 sm:max-h-20 md:max-h-24 ${
-            sponsor.name === "JioSaavn" || sponsor.name === "Manipal"? "scale-150" : ""
-          }`}
-        />
-      </div>
-      <p className="text-base sm:text-lg md:text-lg text-[#32212C] font-[abhaya-font] text-center">
-        {sponsor.partnership}
-      </p>
-    </a>
-  ))}
+        {[...sponsors, ...sponsors].map((sponsor, index) => (
+  <a
+    key={index}
+    href={sponsor.url}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="flex flex-col items-center justify-center w-[150px] sm:w-[200px] md:w-[250px] mx-4 sm:mx-6 md:mx-8 hover:scale-105 transition duration-300"
+  >
+    <div className="w-full h-24 flex items-center justify-center mb-2">
+      <Image
+        src={sponsor.logo}
+        alt={sponsor.name}
+        width={200}
+        height={100}
+        className={`object-contain max-h-16 sm:max-h-20 md:max-h-24 ${
+          sponsor.name === "JioSaavn" || sponsor.name === "Manipal" ? "scale-150" : ""
+        }`}
+      />
+    </div>
+    <p className="text-base sm:text-lg md:text-lg text-[#32212C] font-[abhaya-font] text-center">
+      {sponsor.partnership}
+    </p>
+  </a>
+))}
+
 
         </div>
       </div>
