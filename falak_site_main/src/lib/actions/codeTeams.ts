@@ -12,9 +12,14 @@ export async function createCodeTeam(params: { eventId: string; captainId: strin
   if (!eventId || !captainId || !name.trim()) return { ok: false as const, error: "Missing required fields" };
   const supabase = getServiceClient();
   // Basic event validation
-  const { data: evt, error: evtErr } = await supabase.from("Events").select("id").eq("id", eventId).maybeSingle();
+  const { data: evt, error: evtErr } = await supabase
+    .from("Events")
+    .select("id, enable")
+    .eq("id", eventId)
+    .maybeSingle();
   if (evtErr) return { ok: false as const, error: evtErr.message };
   if (!evt) return { ok: false as const, error: "Event not found" };
+  if ((evt as { enable?: boolean }).enable !== true) return { ok: false as const, error: "Registration closed for this event" };
   // Ensure captain not already has a team for this event
   const { data: existing, error: exErr } = await supabase.from("Teams").select("id").eq("eventId", eventId).eq("captainId", captainId).maybeSingle();
   if (exErr) return { ok: false as const, error: exErr.message };
@@ -45,10 +50,11 @@ export async function joinCodeTeam(params: { teamId: string; userId: string }) {
   try {
     const { data: evtRow, error: evtErr } = await supabase
       .from("Events")
-      .select("id, max_team_size")
+      .select("id, max_team_size, enable")
       .eq("id", eventId)
       .maybeSingle();
     if (evtErr) return { ok: false as const, error: evtErr.message };
+    if (!evtRow || (evtRow as { enable?: boolean }).enable !== true) return { ok: false as const, error: "Registration closed for this event" };
     const maxSize = (evtRow as { max_team_size?: number | null } | null)?.max_team_size ?? null;
     if (typeof maxSize === 'number' && maxSize > 0) {
       const { count, error: cntErr } = await supabase

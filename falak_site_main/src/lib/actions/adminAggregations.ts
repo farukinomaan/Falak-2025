@@ -880,9 +880,17 @@ export async function saCreateTeamWithMembers(input: { eventId: string; captainI
   if (!input.eventId || !input.captainId || !input.name) return { ok: false as const, error: "Missing fields" };
   const supabase = getServiceClient();
   // Fetch event constraints
-  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, min_team_size, max_team_size").eq("id", input.eventId).maybeSingle();
+  const { data: evtRow, error: evtErr } = await supabase
+    .from("Events")
+    .select("id, min_team_size, max_team_size, enable")
+    .eq("id", input.eventId)
+    .maybeSingle();
   if (evtErr) return { ok: false as const, error: evtErr.message };
   if (!evtRow) return { ok: false as const, error: "Event not found" };
+  // Registration gating by event enable flag
+  if (((evtRow as { enable?: boolean | null }).enable) !== true) {
+    return { ok: false as const, error: "Registration closed for this event" };
+  }
   const minTeamSize: number | null = (evtRow as { id: string; min_team_size?: number | null }).min_team_size ?? null;
   const maxTeamSize: number | null = (evtRow as { id: string; max_team_size?: number | null }).max_team_size ?? null;
   const minAdditional: number = minTeamSize != null ? Math.max(minTeamSize - 1, 0) : 0; // minimum additional members beyond captain
@@ -942,9 +950,17 @@ export async function saCreateTeamWithMemberEmails(input: { eventId: string; cap
   // Disallow captain email among members (retrieve captain email)
   const supabase = getServiceClient();
   // Fetch event constraints (also sub_cluster for esports exclusion)
-  const { data: evtRow, error: evtErr } = await supabase.from("Events").select("id, sub_cluster, cluster_name, min_team_size, max_team_size").eq("id", input.eventId).maybeSingle();
+  const { data: evtRow, error: evtErr } = await supabase
+    .from("Events")
+    .select("id, sub_cluster, cluster_name, min_team_size, max_team_size, enable")
+    .eq("id", input.eventId)
+    .maybeSingle();
   if (evtErr) return { ok: false as const, error: evtErr.message };
   if (!evtRow) return { ok: false as const, error: "Event not found" };
+  // Registration gating by event enable flag
+  if (((evtRow as { enable?: boolean | null }).enable) !== true) {
+    return { ok: false as const, error: "Registration closed for this event" };
+  }
   const minTeamSize: number | null = (evtRow as { id: string; min_team_size?: number | null }).min_team_size ?? null;
   const maxTeamSize: number | null = (evtRow as { id: string; max_team_size?: number | null }).max_team_size ?? null;
   const minAdditional: number = minTeamSize != null ? Math.max(minTeamSize - 1, 0) : 0;
@@ -1071,9 +1087,17 @@ export async function saUpdateTeamWithMemberEmails(input: { teamId: string; even
   if ((teamRow as { captainId?: string }).captainId !== captainId) return { ok: false as const, error: 'forbidden_not_captain' };
   if ((teamRow as { eventId: string }).eventId !== eventId) return { ok: false as const, error: 'event_mismatch' };
   // Fetch event constraints
-  const { data: evtRow, error: evtErr } = await supabase.from('Events').select('id, min_team_size, max_team_size').eq('id', eventId).maybeSingle();
+  const { data: evtRow, error: evtErr } = await supabase
+    .from('Events')
+    .select('id, min_team_size, max_team_size, enable')
+    .eq('id', eventId)
+    .maybeSingle();
   if (evtErr) return { ok: false as const, error: evtErr.message };
   if (!evtRow) return { ok: false as const, error: 'event_not_found' };
+  // Registration gating by event enable flag
+  if (((evtRow as { enable?: boolean | null }).enable) !== true) {
+    return { ok: false as const, error: 'Registration closed for this event' };
+  }
   const minTeamSize: number | null = (evtRow as { min_team_size?: number | null }).min_team_size ?? null;
   const maxTeamSize: number | null = (evtRow as { max_team_size?: number | null }).max_team_size ?? null;
   const rawEmails = (input.memberEmails || []).map(e => (e||'').trim().toLowerCase()).filter(Boolean);

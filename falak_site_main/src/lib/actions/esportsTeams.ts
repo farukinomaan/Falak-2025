@@ -8,10 +8,11 @@ export async function createEsportsTeam(params: { eventId: string; captainId: st
   if (!eventId || !captainId || !name.trim()) return { ok: false as const, error: "Missing required fields" };
   const supabase = getServiceClient();
   // Basic event validation + ensure it's esports
-  const { data: evt, error: evtErr } = await supabase.from("Events").select("id, sub_cluster").eq("id", eventId).maybeSingle();
+  const { data: evt, error: evtErr } = await supabase.from("Events").select("id, sub_cluster, enable").eq("id", eventId).maybeSingle();
   if (evtErr) return { ok: false as const, error: evtErr.message };
   if (!evt) return { ok: false as const, error: "Event not found" };
   if ((evt.sub_cluster || '').toLowerCase() !== 'esports') return { ok: false as const, error: "Not an esports event" };
+  if ((evt as { enable?: boolean }).enable !== true) return { ok: false as const, error: "Registration closed for this event" };
   // Ensure captain not already has a team for this event
   const { data: existing, error: exErr } = await supabase.from("Teams").select("id").eq("eventId", eventId).eq("captainId", captainId).maybeSingle();
   if (exErr) return { ok: false as const, error: exErr.message };
@@ -45,10 +46,11 @@ export async function joinEsportsTeam(params: { teamId: string; userId: string }
   try {
     const { data: evtRow, error: evtErr } = await supabase
       .from("Events")
-      .select("id, max_team_size")
+      .select("id, max_team_size, enable")
       .eq("id", eventId)
       .maybeSingle();
     if (evtErr) return { ok: false as const, error: evtErr.message };
+    if (!evtRow || (evtRow as { enable?: boolean }).enable !== true) return { ok: false as const, error: "Registration closed for this event" };
     const maxSize = (evtRow as { max_team_size?: number | null } | null)?.max_team_size ?? null;
     if (typeof maxSize === 'number' && maxSize > 0) {
       const { count, error: cntErr } = await supabase
@@ -62,7 +64,7 @@ export async function joinEsportsTeam(params: { teamId: string; userId: string }
         return { ok: false as const, error: "Team is full" };
       }
     }
-  } catch (e) {
+  } catch {
     // Fail-safe: if capacity check fails unexpectedly, allow graceful join path to proceed
   }
   // Check if user already captain this team event
