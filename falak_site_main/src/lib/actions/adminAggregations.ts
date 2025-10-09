@@ -1627,7 +1627,7 @@ export async function maintenanceFixNonMaheProshow(limitUsers = 400, dryRun = fa
   // If multiple we just take first deterministic; script version forced disambiguation. Here we proceed with first.
   const targetPass = candidates[0] as { id: string; pass_name: string };
 
-  // 2) Collect NONMAHE user ids from payment_logs raw (limit for safety)
+  // 2) Collect NONMAHE user ids from payment_logs raw (paged until we collect up to limitUsers distinct users)
   const statuses = [
     'Success','Paid','Completed','Successfull','Successfull payment','Successfull_payment',
     'success','paid','completed','successfull','successfull payment','successfull_payment'
@@ -1638,16 +1638,35 @@ export async function maintenanceFixNonMaheProshow(limitUsers = 400, dryRun = fa
     'raw->>user_status.eq.NONMAHE',
     'raw->>userStatus.eq.NONMAHE'
   ].join(',');
-  const candUsersRes = await supabase
-    .from('payment_logs')
-    .select('user_id')
-    .in('status', statuses)
-    .or(orFilter)
-    .not('user_id', 'is', null)
-    .limit(limitUsers * 5); // over-fetch to allow filtering distinct then slicing
-  if (candUsersRes.error) return { ok:false as const, error: candUsersRes.error.message };
-  const userIds = Array.from(new Set((candUsersRes.data || []).map(r => (r as { user_id: string | null }).user_id).filter(Boolean))) as string[];
-  const limitedUserIds = userIds.slice(0, limitUsers);
+  const uniqueUserIds = new Set<string>();
+  // Supabase soft cap is 1000 per select; use range pagination with an explicit order to make paging deterministic
+  const pageSize = 1000;
+  let from = 0;
+  let to = pageSize - 1;
+  let pageCount = 0;
+  const MAX_PAGES = 50; // safety cap (50k rows scanned)
+  while (uniqueUserIds.size < limitUsers && pageCount < MAX_PAGES) {
+    const pageRes = await supabase
+      .from('payment_logs')
+      .select('user_id')
+      .in('status', statuses)
+      .or(orFilter)
+      .not('user_id', 'is', null)
+      .order('external_created_at', { ascending: false, nullsFirst: false })
+      .range(from, to);
+    if (pageRes.error) return { ok:false as const, error: pageRes.error.message };
+    const rows = (pageRes.data || []) as Array<{ user_id: string | null }>;
+    if (!rows.length) break;
+    for (const r of rows) {
+      if (r.user_id) uniqueUserIds.add(r.user_id);
+      if (uniqueUserIds.size >= limitUsers) break;
+    }
+    if (rows.length < pageSize) break; // last page
+    from += pageSize;
+    to += pageSize;
+    pageCount += 1;
+  }
+  const limitedUserIds = Array.from(uniqueUserIds).slice(0, limitUsers);
   if (!limitedUserIds.length) return { ok:true as const, data: { updated:0, deleted:0, scannedUsers:0, targetPass: targetPass.pass_name } };
 
   // 3) Fetch their proshow-like ownership rows
