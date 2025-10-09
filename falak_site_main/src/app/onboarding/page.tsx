@@ -262,7 +262,8 @@ export default function OnboardingPage() {
             placeholder="98XXXXXX01"
             required
           />
-          <p className="text-[10px] sm:text-xs leading-snug text-red-500 max-w-xs">
+          <p className="text-[10px] sm:text-xs leading-snug text-red-500 max-w-s">
+          <span className="font-semibold text-[#DBAAA6]">Note:</span> Registration is ONLY for undergraduate students.<br></br><br></br>
             <span className="font-semibold text-[#DBAAA6]">Note:</span> Enter the number you will use on the payment portal. Discrepancies may cause issues.
           </p>
         </div>
