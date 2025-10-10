@@ -494,7 +494,12 @@ export async function ClusterEvent({
                 const capInfo = capId ? memberUsersById?.get(capId) : undefined;
                 return (
                   <div className="space-y-3 border rounded-lg p-4 bg-black/20">
-                    <h2 className="text-xl font-medium">Your Team</h2>
+                    <h2 className="text-xl font-medium flex items-center gap-2">
+                      Your Team
+                      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-green-600/20 text-green-300 border border-green-500/40">
+                        Confirmed
+                      </span>
+                    </h2>
                     <p className="text-md">Name: {existingTeam.team.name}</p>
                     <p className="text-md break-all flex items-center gap-2">Team Code: <span className="font-mono text-sm inline-flex items-center gap-2 bg-white/10 px-2 py-1 rounded border border-white/20">{existingTeam.team.id}<CopySmall text={existingTeam.team.id} /></span></p>
                     {capInfo && (
