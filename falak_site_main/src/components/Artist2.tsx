@@ -9,7 +9,7 @@ const Artist2 = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -36,24 +36,23 @@ const Artist2 = () => {
         {/* Outer Box (DBAAA6) */}
         <div
   className="
-    bg-[#DBAAA6] 
-    border-[2px] border-[#32212C]          
-    md:border-[15px] md:outline-[2px] md:outline-[#DBAAA6] 
+    artist2-container
+    bg-[#DBAAA6] border-[2px] border-[#32212C]
+    md:border-[15px] md:outline-[2px] md:outline-[#DBAAA6]
     rounded-2xl shadow-xl
-                p-6 md:p-8 flex flex-col md:flex-row items-center justify-center
-                gap-6 md:gap-[6.75rem] w-[90%] md:w-[95%] max-w-[1100px] md:max-w-[1300px]
-                md:h-[560px]">
-
-          
-          {/* Left: Image */}
-          <div className="relative w-[82vw] md:w-[42%] h-[40vh] md:h-[54vh] flex justify-center items-center overflow-hidden rounded-2xl border-[3px] border-[#32212C]">
-            <Image
-              src="/images/pranav.webp"
-              alt="Pranav Sharma"
-              width={500} // slightly smaller
-              height={600} 
-              className="object-cover rounded-2xl shadow-lg w-full h-[50vh] md:h-[55vh] border-2px border-[#32212C]"
-            />
+    p-6 md:p-8 flex flex-col lg:flex-row items-center justify-center
+    gap-6 md:gap-[3rem] w-[90%] md:w-[90%] max-w-[1100px] md:max-w-[1300px]
+    lg:h-[560px] h-auto
+"
+>
+<div className="artist2-image-container relative w-[82vw] md:w-[85%] lg:w-[42%] h-auto min-h-[45vh] md:min-h-[20vh] flex justify-center items-center overflow-hidden rounded-2xl border-[3px] border-[#32212C]">
+    <Image
+      src="/images/pranav.webp"
+      alt="Pranav Sharma"
+      width={500}
+      height={600}
+      className="object-cover rounded-2xl shadow-lg w-full h-[50vh] md:h-[55vh] border-2px border-[#32212C]"
+    />
 
             {/* <motion.h1
               style={{
@@ -69,7 +68,7 @@ const Artist2 = () => {
           </div>
 
           {/* Right: Description */}
-          <div className="w-[85vw] md:w-[40%] flex justify-center items-center">
+          <div className="w-[85vw] md:w-[80%] lg:w-[50%] flex justify-center items-center ">
   <div className="text-[#32212C] text-center">
     <h2 className="text-3xl vintage-font font-bold mb-4">PRANAV SHARMA</h2>
     <p className="abhaya-font text-sm sm:text-base leading-relaxed">

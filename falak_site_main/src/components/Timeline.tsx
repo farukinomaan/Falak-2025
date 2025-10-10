@@ -53,6 +53,7 @@ const events = [
   { name: "Short Film Making", date: "2025-10-10", time: "09:00", endTime: "17:00", venue: "Online" },
   { name: "Photography", date: "2025-10-10", time: "09:00", endTime: "17:00", venue: "Online" },
   { name: "Treasure Hunt", date: "2025-10-10", time: "16:30", endTime: "19:30", venue: "All around campus" },
+  { name: "Standup Comedy", date: "2025-10-10", time: "17:30", endTime: "19:00", venue: "Mega Audi" },
   { name: "Valorant", date: "2025-10-11", time: "10:30", endTime: "16:00", venue: "AB4 404, 405, 406" },
   { name: "CODM", date: "2025-10-11", time: "10:30", endTime: "16:00", venue: "AB4 203, 204" },
   { name: "BGMI", date: "2025-10-11", time: "10:30", endTime: "16:00", venue: "AB4 205, 206" },
