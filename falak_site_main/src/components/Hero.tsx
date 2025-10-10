@@ -32,7 +32,20 @@ const Hero: React.FC = () => {
     });
   }, []);
 
-  const getVideoSrc = (): string => `/videos/bh.mp4`;
+  const getVideoSrc = (): string => {
+    const baseUrl = (process.env.NEXT_PUBLIC_VIDEO_BASE_URL || '').replace(/\/$/, '');
+    const fileBase = process.env.NEXT_PUBLIC_VIDEO_FILE_BASE || 'bh';
+    if (baseUrl) return `${baseUrl}/${fileBase}.mp4`;
+    return `/videos/${fileBase}.mp4`;
+  };
+
+  const getWebmSrc = (): string => {
+    const baseUrl = (process.env.NEXT_PUBLIC_VIDEO_BASE_URL || '').replace(/\/$/, '');
+    const fileBase = process.env.NEXT_PUBLIC_VIDEO_FILE_BASE || 'bh';
+    const webmSuffix = process.env.NEXT_PUBLIC_VIDEO_WEBM_SUFFIX || '_optimized';
+    if (baseUrl) return `${baseUrl}/${fileBase}${webmSuffix}.webm`;
+    return `/videos/${fileBase}${webmSuffix}.webm`;
+  };
 
   // Lazy-attach the video source when the hero enters viewport
   useEffect(() => {
@@ -74,14 +87,17 @@ const Hero: React.FC = () => {
   muted
   preload="metadata"
   playsInline
+                crossOrigin="anonymous"
   poster="/window.svg"
   className="absolute left-0 top-0 w-full h-full object-cover object-center pointer-events-none"
-  onCanPlay={() => setCanPlay(true)}
+                onCanPlay={() => setCanPlay(true)}
+                onLoadedData={() => setCanPlay(true)}
+                onPlaying={() => setCanPlay(true)}
 >
   {videoSrc && (
     <>
       {/* WebM first for modern browsers */}
-      <source src={videoSrc.replace(".mp4", "_optimized.webm")} type="video/webm" />
+      <source src={getWebmSrc()} type="video/webm" />
       {/* Fallback MP4 for Safari */}
       <source src={videoSrc} type="video/mp4" />
     </>
@@ -158,6 +174,7 @@ const Hero: React.FC = () => {
 
   );
 };
+
 
 
 export default Hero;
