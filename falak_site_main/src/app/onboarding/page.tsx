@@ -110,15 +110,13 @@ export default function OnboardingPage() {
       setSubmitting(false);
       return;
     }
-    if (mahe && !regNo.trim()) {
-      toast.warning("Registration number is required for MAHE BLR");
-      setSubmitting(false);
-      return;
-    }
     if (mahe) {
       const digits = regNo.replace(/[^0-9]/g, "");
-      if (digits.length < 9) {
-        toast.warning("Registration number must be at least 9 digits");
+      const lenOk = digits.length === 9 || digits.length === 12;
+      const allowedPrefixes = ['21','22','23','24','25','123','124','125'];
+      const startsOk = allowedPrefixes.some(p => digits.startsWith(p));
+      if (!lenOk || !startsOk) {
+        toast.warning("Invalid registration number, logout and message HR if you entered correct");
         setSubmitting(false);
         return;
       }

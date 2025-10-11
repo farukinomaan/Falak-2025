@@ -19,10 +19,12 @@ const OnboardSchema = z
   })
   .superRefine((val, ctx) => {
     if (val.mahe) {
-      // Removed strict 9-digit constraint; accept any length numeric (>=1)
       const digits = (val.regNo || '').replace(/[^0-9]/g, '');
-      if (digits.length < 1) {
-        ctx.addIssue({ code: 'custom', path: ['regNo'], message: 'Registration number is required' });
+      const lenOk = digits.length === 9 || digits.length === 12;
+      const allowedPrefixes = ['21','22','23','24','25','123','124','125'];
+      const startsOk = allowedPrefixes.some(p => digits.startsWith(p));
+      if (!lenOk || !startsOk) {
+        ctx.addIssue({ code: 'custom', path: ['regNo'], message: 'Invalid registration number, logout message HR if you entered correct' });
       }
     } else {
       if (!val.institute || val.institute.trim().length < 2) {
@@ -37,7 +39,8 @@ export async function completeOnboarding(input: OnboardInput) {
   try {
     const parsed = OnboardSchema.safeParse(input);
     if (!parsed.success) {
-      return { ok: false, message: "Invalid input" } as const;
+      const first = parsed.error?.issues?.[0]?.message || "Invalid input";
+      return { ok: false, message: first } as const;
     }
 
     const session = await getServerSession(authOptions);
