@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Image from "next/image";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -141,12 +142,15 @@ const Artist: React.FC = () => {
     <div className="flex flex-col items-center justify-start w-full gap-6 mt-4">
       {/* TV */}
       <div className="tv-wrapper border-4 border-[#D7897D] rounded-2xl bg-[#32212C] shadow-lg z-30">
-  <img
-    src="/images/mohit.webp"
-    alt="Artist Mohit"
-    className="block max-w-full h-auto object-contain rounded-xl"
-  />
-</div>
+        <Image
+          src="/images/mohit.webp"
+          alt="Artist Mohit"
+          width={600}
+          height={700}
+          className="block max-w-full h-auto object-contain rounded-xl"
+          priority
+        />
+      </div>
 
 
 
@@ -189,12 +193,15 @@ const Artist: React.FC = () => {
     <div className="flex w-full max-w-[600px] mx-auto gap-6 flex-col items-center md:block mt-8">
       {/* TV */}
       <div className="tv-wrapper border-4 border-[#D7897D] rounded-2xl bg-[#32212C] shadow-lg z-30 mx-auto md:relative md:right-[10%] mb-3 md:mb-0 w-[45%] max-w-[500px] h-[55vh] flex justify-center items-center overflow-hidden">
-  <img
-    src="/images/mohit.webp"
-    alt="Artist Mohit"
-    className="block w-full h-full object-cover rounded-xl"
-  />
-</div>
+        <Image
+          src="/images/mohit.webp"
+          alt="Artist Mohit"
+          width={800}
+          height={900}
+          className="block w-full h-full object-cover rounded-xl"
+          priority
+        />
+      </div>
 
 
       {/* Description */}

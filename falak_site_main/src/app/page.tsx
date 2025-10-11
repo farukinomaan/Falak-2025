@@ -9,7 +9,7 @@ const Timeline = dynamic(() => import("@/components/Timeline"));
 const Trailer = dynamic(() => import("@/components/Trailer"));
 const About = dynamic(() => import("@/components/About"));
 const Sponsor = dynamic(() => import("@/components/Sponsor"));
-const Timer = dynamic(() => import("@/components/Timer"));
+const BackgroundLayers = dynamic(() => import("@/components/BackgroundLayers"));
 
 const orbitron = Orbitron({
   subsets: ["latin"],
@@ -21,21 +21,8 @@ export default function Home() {
     <div className={orbitron.className}>
   {/* Preload critical media via metadata in layout if needed */}
 
-      {/* Background Layers */}
-      {/* Base background color */}
-      <div
-        className="fixed top-0 left-0 w-full h-full z-[-3]"
-        style={{ backgroundColor: "#32212C" }}
-      />
-
-      {/* SVG background */}
-      <div
-        className="fixed top-0 left-0 w-full h-full z-[-2] bg-cover bg-center opacity-20"
-        style={{ backgroundImage: "url('/cultural.svg')" }}
-      />
-
-      {/* Black overlay */}
-      <div className="fixed top-0 left-0 w-full h-full bg-black/30 z-[-1]" />
+      {/* Background Layers with smooth fade-in */}
+      <BackgroundLayers />
 
       {/* Grain Overlay (optional) */}
       {/* <div className="grain-overlay"></div> */}

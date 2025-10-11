@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { useScroll } from "framer-motion";
 import Image from "next/image";
 
 const Artist2 = () => {
@@ -15,17 +15,11 @@ const Artist2 = () => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const { scrollYProgress } = useScroll({
+  useScroll({
     target: ref,
     offset: isMobile ? ["start end", "center start"] : ["start 0.01", "end 0.99"],
   });
-
-  const textY = useTransform(
-    scrollYProgress,
-    isMobile ? [1, 0] : [0, 1],
-    isMobile ? ["250%", "-250%"] : ["170%", "-170%"]
-  );
-  const springTextY = useSpring(textY, { stiffness: 200, damping: 90 });
+  // Parallax headline reserved for future use
 
   return (
     <section

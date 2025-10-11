@@ -1,7 +1,3 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { getUserByEmail } from "@/lib/actions/tables/users";
-import { createTicket } from "@/lib/actions/tables/tickets";
 import { ticketCategories } from "@/lib/validation/tickets";
 
 
