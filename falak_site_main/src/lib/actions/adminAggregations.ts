@@ -214,21 +214,108 @@ export async function getUserDetails(userId: string) {
   const passes = (upRes.data as UserPassRow[])
     .map((row) => passById.get(row.passId))
     .filter(Boolean) as PassDetailRow[];
-  const teams = (tmRes.data as TeamMemberRow[])
-    .map((m) => {
-      const team = teamById.get(m.teamId);
-      const event = team ? eventById.get(team.eventId) : undefined;
-      return team && event
-        ? {
-            teamId: team.id,
-            teamName: team.name,
-            eventId: event.id,
-            eventName: event.name,
-            isCaptain: team.captainId === userId,
-          }
-        : undefined;
-    })
-    .filter(Boolean) as Array<{ teamId: string; teamName: string; eventId: string; eventName: string; isCaptain: boolean }>;
+
+  // Build comprehensive team list:
+  // - Include teams where user appears in Team_members by UUID and legacy variants (email/phone)
+  // - Include teams where user is captain (even if not in Team_members)
+  const user = userRes.data as UserBasicRow & { reg_no?: string | null; mahe?: boolean | null };
+  const email = (user.email || '').trim();
+  const emailLower = email.toLowerCase();
+  const rawPhone = (user.phone || '').trim();
+  const digitsOnly = (s?: string | null) => (s || '').replace(/\D/g, '');
+  const phoneDigits = digitsOnly(rawPhone);
+  const phoneVariants = new Set<string>();
+  if (phoneDigits) {
+    phoneVariants.add(rawPhone); // as stored
+    phoneVariants.add(phoneDigits); // digits-only
+    if (phoneDigits.length === 10) {
+      phoneVariants.add(`+91${phoneDigits}`);
+      phoneVariants.add(`91${phoneDigits}`);
+    }
+  }
+  const memberIdVariants = Array.from(new Set([userId, email, emailLower, ...Array.from(phoneVariants)].filter(Boolean)));
+  // Merge Team_members from base query + variants
+  let memberRows: TeamMemberRow[] = (tmRes.data as TeamMemberRow[]) || [];
+  if (memberIdVariants.length > 1) {
+    const varRes = await supabase
+      .from('Team_members')
+      .select('id, teamId, memberId, eventId')
+      .in('memberId', memberIdVariants);
+    if (!varRes.error && Array.isArray(varRes.data)) {
+      memberRows = memberRows.concat(varRes.data as TeamMemberRow[]);
+    }
+  }
+  // Case-insensitive email fallback
+  if (emailLower) {
+    const ilikeRes = await supabase
+      .from('Team_members')
+      .select('id, teamId, memberId, eventId')
+      .ilike('memberId', emailLower);
+    if (!ilikeRes.error && Array.isArray(ilikeRes.data)) {
+      memberRows = memberRows.concat(ilikeRes.data as TeamMemberRow[]);
+    }
+  }
+  // De-duplicate memberRows by id or composite
+  const memMap = new Map<string, TeamMemberRow>();
+  for (const m of memberRows) {
+    const key = (m as { id?: string }).id || `${(m as { teamId?: string }).teamId || 'na'}::${(m as { memberId?: string }).memberId || 'na'}::${(m as { eventId?: string }).eventId || 'na'}`;
+    if (!memMap.has(key)) memMap.set(key, m);
+  }
+  const mergedMembers = Array.from(memMap.values());
+
+  // Helper to match captainId across legacy formats
+  const normEmail = (s?: string | null) => (s || '').trim().toLowerCase();
+  const isMe = (cid?: string | null) => {
+    if (!cid) return false;
+    if (cid === userId) return true;
+    if (email && normEmail(cid) === emailLower) return true;
+    const cDigits = digitsOnly(cid);
+    if (phoneDigits && cDigits && cDigits === phoneDigits) return true;
+    return false;
+  };
+
+  // Build rows from memberships
+  const membershipTeams = mergedMembers.map((m) => {
+    const team = teamById.get((m as { teamId: string }).teamId);
+    const eventId = team ? (team as TeamRow).eventId : (m as { eventId?: string | null }).eventId || '';
+    const event = eventId ? eventById.get(eventId) : undefined;
+    return team && event
+      ? {
+          teamId: (team as TeamRow).id,
+          teamName: (team as TeamRow).name,
+          eventId: (event as EventNameRow).id,
+          eventName: (event as EventNameRow).name,
+          isCaptain: isMe((team as TeamRow).captainId || null),
+        }
+      : undefined;
+  }).filter(Boolean) as Array<{ teamId: string; teamName: string; eventId: string; eventName: string; isCaptain: boolean }>;
+
+  // Add captain-only teams not present in memberships
+  const captainTeams = ((teamRes.data as TeamRow[]) || []).filter(t => isMe(t.captainId));
+  const captainDerived = captainTeams.map((t) => {
+    const event = eventById.get(t.eventId);
+    return event
+      ? {
+          teamId: t.id,
+          teamName: t.name,
+          eventId: t.eventId,
+          eventName: (event as EventNameRow).name,
+          isCaptain: true,
+        }
+      : undefined;
+  }).filter(Boolean) as Array<{ teamId: string; teamName: string; eventId: string; eventName: string; isCaptain: boolean }>;
+
+  // Merge and de-dup by teamId
+  const byTeamId = new Map<string, { teamId: string; teamName: string; eventId: string; eventName: string; isCaptain: boolean }>();
+  for (const r of [...membershipTeams, ...captainDerived]) {
+    if (!byTeamId.has(r.teamId)) byTeamId.set(r.teamId, r);
+    else {
+      // If existing is not captain but new is captain, upgrade flag
+      const existing = byTeamId.get(r.teamId)!;
+      if (!existing.isCaptain && r.isCaptain) byTeamId.set(r.teamId, { ...existing, isCaptain: true });
+    }
+  }
+  const teams = Array.from(byTeamId.values());
 
   return { ok: true as const, data: { user: userRes.data as UserBasicRow & { reg_no?: string | null; mahe?: boolean | null }, passes, teams } as UserDetailsData };
 }

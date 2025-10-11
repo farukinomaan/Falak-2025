@@ -5,6 +5,7 @@ import { getUserByEmail } from "@/lib/actions/tables/users";
 import { listUserPassesByUserId } from "@/lib/actions/tables/userPasses";
 import { listPassesByIds } from "@/lib/actions/tables/pass";
 import { listTeamMembersByMemberId } from "@/lib/actions/tables/teamMembers";
+import type { TeamMember } from "@/lib/actions/tables/teamMembers";
 import { listTeams, listTeamsByIds } from "@/lib/actions/tables/teams";
 import { listEventsByIdsRaw } from "@/lib/actions/tables/events";
 import Link from "next/link";
@@ -46,20 +47,57 @@ export default async function ProfilePage() {
 
 
   // Fetch events by team membership (as member)
-  const tmRes = await listTeamMembersByMemberId(user.id!);
-  let memberships = tmRes.ok && tmRes.data ? tmRes.data : [];
-  // Fallback: older rows may have stored memberId as email; try that too and merge
-  if (memberships.length === 0) {
-    const tmByEmailRes = await listTeamMembersByMemberId(email);
-    const emailMemberships = tmByEmailRes.ok && tmByEmailRes.data ? tmByEmailRes.data : [];
-    if (emailMemberships.length > 0) memberships = emailMemberships;
+  // Primary: memberId references Users.id (UUID)
+  const tmByIdRes = await listTeamMembersByMemberId(user.id!);
+  const byId: TeamMember[] = tmByIdRes.ok && tmByIdRes.data ? tmByIdRes.data : [];
+  // Legacy fallbacks: some early rows may have stored memberId as email/phone
+  const tmByEmailRes = email ? await listTeamMembersByMemberId(email) : null;
+  const byEmail: TeamMember[] = tmByEmailRes && tmByEmailRes.ok && tmByEmailRes.data ? tmByEmailRes.data : [];
+  const tmByPhoneRes = user.phone ? await listTeamMembersByMemberId(user.phone) : null;
+  const byPhone: TeamMember[] = tmByPhoneRes && tmByPhoneRes.ok && tmByPhoneRes.data ? tmByPhoneRes.data : [];
+  // Additional legacy fallbacks: case-insensitive email match and phone variants
+  const supabase = getServiceClient();
+  const emailLower = email?.trim().toLowerCase();
+  let byEmailIlike: TeamMember[] = [];
+  if (emailLower) {
+    try {
+      const { data } = await supabase
+        .from("Team_members")
+        .select("*")
+        .ilike("memberId", emailLower);
+      byEmailIlike = Array.isArray(data) ? (data as TeamMember[]) : [];
+    } catch {}
   }
-  // Fallback: even older rows may have memberId as phone
-  if (memberships.length === 0 && user.phone) {
-    const tmByPhoneRes = await listTeamMembersByMemberId(user.phone);
-    const phoneMemberships = tmByPhoneRes.ok && tmByPhoneRes.data ? tmByPhoneRes.data : [];
-    if (phoneMemberships.length > 0) memberships = phoneMemberships;
+  const digitsOnly = (s?: string | null) => (s || "").replace(/\D/g, "");
+  const phoneDigits = digitsOnly(user.phone);
+  const phoneVariants = new Set<string>();
+  if (phoneDigits) {
+    phoneVariants.add(user.phone!);
+    phoneVariants.add(phoneDigits);
+    if (phoneDigits.length === 10) {
+      phoneVariants.add(`+91${phoneDigits}`);
+      phoneVariants.add(`91${phoneDigits}`);
+    }
   }
+  let byPhoneVariants: TeamMember[] = [];
+  if (phoneVariants.size > 0) {
+    try {
+      const { data } = await supabase
+        .from("Team_members")
+        .select("*")
+        .in("memberId", Array.from(phoneVariants));
+      byPhoneVariants = Array.isArray(data) ? (data as TeamMember[]) : [];
+    } catch {}
+  }
+
+  // Merge and de-duplicate by Team_member id if available, else by teamId+eventId combo
+  const memMap = new Map<string, TeamMember>();
+  const pushMem = (m: TeamMember) => {
+    const key = m?.id || `${m?.teamId || 'na'}::${m?.eventId || 'na'}`;
+    if (!memMap.has(key)) memMap.set(key, m);
+  };
+  [...byId, ...byEmail, ...byPhone, ...byEmailIlike, ...byPhoneVariants].forEach(pushMem);
+  const memberships = Array.from(memMap.values());
   // Some older rows may miss eventId; in that case, derive it from the Team and also keep memberTeams for display
   const teamIdsFromMemberships = Array.from(new Set(memberships.map(m => m.teamId).filter(Boolean))) as string[];
   let membershipsEventIds: string[] = memberships.map(m => m.eventId).filter(Boolean) as string[];
@@ -75,18 +113,17 @@ export default async function ProfilePage() {
   // Include events where user is team captain (leader)
   const teamRes = await listTeams();
   const teams = teamRes.ok && teamRes.data ? teamRes.data : [];
-  const captainEventIds = teams
-    .filter(t =>
-      t.captainId === user.id ||
-      (email && t.captainId === email) ||
-      (user.phone && t.captainId === user.phone)
-    )
-    .map(t => t.eventId);
-  const captainTeams = teams.filter(t =>
-    t.captainId === user.id ||
-    (email && t.captainId === email) ||
-    (user.phone && t.captainId === user.phone)
-  ).map(t => ({ id: t.id, name: t.name, eventId: t.eventId }));
+  const normEmail = (s?: string | null) => (s || "").trim().toLowerCase();
+  const isMyCaptainId = (cid: string | null | undefined) => {
+    if (!cid) return false;
+    if (cid === user.id) return true;
+    if (email && normEmail(cid) === normEmail(email)) return true;
+    const cDigits = digitsOnly(cid);
+    if (phoneDigits && cDigits && cDigits === phoneDigits) return true;
+    return false;
+  };
+  const captainEventIds = teams.filter(t => isMyCaptainId(t.captainId)).map(t => t.eventId);
+  const captainTeams = teams.filter(t => isMyCaptainId(t.captainId)).map(t => ({ id: t.id, name: t.name, eventId: t.eventId }));
 
   const eventIds = Array.from(new Set([
     ...membershipsEventIds,
