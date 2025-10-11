@@ -16,7 +16,7 @@ type IncomingPass = {
 
 interface FeaturesProps { passes?: IncomingPass[]; isMahe?: boolean; disableEsports?: boolean }
 
-const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false, disableEsports = false }) => {
+const Features: React.FC<FeaturesProps> = ({ passes = [], isMahe = false, disableEsports = true }) => {
   const { data: session } = useSession();
   const sessionIsMahe = isMahe || Boolean((session?.user as { mahe?: boolean } | undefined)?.mahe);
 

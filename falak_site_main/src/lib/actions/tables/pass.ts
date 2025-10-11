@@ -54,7 +54,7 @@ export async function listPassesWithoutEvent() {
     .from(table)
     .select("*")
     .is("event_id", null)
-  .eq("enable", true)
+  .eq("status", true)
     .order("edited_at", { ascending: false })
   if (error) return { ok: false as const, error: error.message }
   return { ok: true as const, data }
