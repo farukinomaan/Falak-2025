@@ -34,6 +34,12 @@ async function main() {
 
   // Utilities
   const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+  function timeoutFetch(resource, options = {}, ms = 8000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), ms);
+    return fetch(resource, { ...options, signal: controller.signal })
+      .finally(() => clearTimeout(id));
+  }
   async function withRetry(fn, label = 'op', retries = 3) {
     let lastErr;
     for (let i = 0; i < retries; i++) {
@@ -52,23 +58,51 @@ async function main() {
     if (lastErr) throw lastErr; else throw new Error(`${label} failed after retries`);
   }
 
+  // Preflight diagnostics: print basic context and validate network reachability.
+  console.log(`Preflight: url=${new URL(url).origin}, dryRun=${dryRun}, targetName='${targetName}'`);
+  try {
+    // Try auth health endpoint (may be 200) and a rest ping (likely 401/404) to validate TLS/DNS
+    const authHealth = await timeoutFetch(`${url.replace(/\/$/, '')}/auth/v1/health`, { method: 'GET' }, 5000);
+    console.log(`Auth health: ${authHealth.status}`);
+  } catch (e) {
+    console.warn(`WARN: Auth health check failed: ${e?.message || e}`);
+  }
+  try {
+    const restProbe = await timeoutFetch(`${url.replace(/\/$/, '')}/rest/v1/`, { method: 'GET', headers: { apikey: key } }, 5000);
+    console.log(`REST probe: ${restProbe.status}`);
+  } catch (e) {
+    console.warn(`WARN: REST probe failed: ${e?.message || e}`);
+  }
+
   
   // 1) Locate target Non-MAHE proshow pass
   // Prefer lowercase 'passes' table; fallback to legacy 'Pass'
-  let passQ = await supabase
-    .from('passes')
-    .select('id, pass_name, mahe, event_id')
-    .ilike('pass_name', `${targetName}%`)
-    .is('event_id', null)
-    .eq('mahe', false);
+  let passQ;
+  try {
+    passQ = await withRetry(() =>
+      supabase
+        .from('passes')
+        .select('id, pass_name, mahe, event_id')
+        .ilike('pass_name', `${targetName}%`)
+        .is('event_id', null)
+        .eq('mahe', false),
+      'load-pass-candidates'
+    );
+  } catch (e) {
+    console.warn(`WARN: primary 'passes' lookup failed: ${e?.message || e}. Trying legacy 'Pass' table...`);
+    passQ = { error: e };
+  }
   if (passQ.error) {
     // Retry legacy capitalization
-    passQ = await supabase
-      .from('Pass')
-      .select('id, pass_name, mahe, event_id')
-      .ilike('pass_name', `${targetName}%`)
-      .is('event_id', null)
-      .eq('mahe', false);
+    passQ = await withRetry(() =>
+      supabase
+        .from('Pass')
+        .select('id, pass_name, mahe, event_id')
+        .ilike('pass_name', `${targetName}%`)
+        .is('event_id', null)
+        .eq('mahe', false),
+      'load-pass-candidates-legacy'
+    );
   }
   if (passQ.error) throw passQ.error;
   const candidates = passQ.data || [];
