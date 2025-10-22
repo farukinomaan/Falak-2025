@@ -19,6 +19,7 @@
     "@vercel/analytics": "^1.5.0",
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
+    "dotenv": "^16.4.5",
     "firebase": "^12.1.0",
     "framer-motion": "^12.23.12",
     "gsap": "^3.13.0",
@@ -33,14 +34,13 @@
     "sonner": "2.0.7",
     "split-type": "^0.3.4",
     "tailwind-merge": "^3.3.1",
-  "twilio": "^5.8.2",
-  "xlsx": "^0.18.5",
-    "zod": "4.0.15",
-    "dotenv": "^16.4.5"
+    "twilio": "^5.8.2",
+    "xlsx": "^0.18.5",
+    "zod": "4.0.15"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/postcss": "^4.1.15",
     "@types/node": "^20.19.13",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
