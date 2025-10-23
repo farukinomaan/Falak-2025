@@ -6,6 +6,7 @@ High-performance, full‑stack event platform for registrations, passes, team ma
 
 <br />
 </div>
+
 <b>At a glance</b>
 
 - 51K visitors in a month
