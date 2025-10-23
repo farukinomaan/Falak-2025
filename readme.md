@@ -5,7 +5,7 @@
 High-performance, full‑stack event platform for registrations, passes, team management, QR ticket verification, and admin ops — built on Next.js App Router + Supabase.
 
 <br />
-
+</div>
 <b>At a glance</b>
 
 - 51K visitors in a month
@@ -14,7 +14,7 @@ High-performance, full‑stack event platform for registrations, passes, team ma
 - 2K+ team registrations
 - Survived a coordinated DDoS attempt during peak traffic
 
-</div>
+
 
 ---
 
