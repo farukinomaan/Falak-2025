@@ -80,6 +80,7 @@ export default withAuth(middleware, {
 
 export const config = {
   matcher: [
+    "/",
     "/onboarding",
     "/admin_manage",
     "/profile",
