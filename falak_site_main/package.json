@@ -16,7 +16,7 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.54.0",
     "@types/qrcode": "^1.5.5",
-    "@vercel/analytics": "^1.1.4",
+    "@vercel/analytics": "^2.0.1",
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.5",

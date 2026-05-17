@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
 import { createEsportsTeam, joinEsportsTeam, getEsportsTeam } from "@/lib/actions/esportsTeams";
-import { getServiceClient } from "@/lib/actions/supabaseClient";
 
 interface Props {
   eventId: string;
@@ -21,48 +20,39 @@ export default function EsportsTeamRegistration({ eventId, userId }: Props) {
   const [joinCode, setJoinCode] = useState("");
   const [lookupResult, setLookupResult] = useState<{ id: string; name: string } | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
+  // We default this to false. If you want strict client-side capacity checks later, 
+  // you should add that logic inside your `getEsportsTeam` Server Action instead.
   const [isFull, setIsFull] = useState(false);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!teamName.trim()) { toast.error("Enter team name"); return; }
     startCreate(async () => {
-  const res = await createEsportsTeam({ eventId, captainId: userId, name: teamName.trim() });
-  if (!res.ok) { toast.error(res.error); return; }
-  setTeamIdCreated(res.data.teamId);
-  toast.success("Team created. Share the code with members.");
-  // Refresh page so server component shows team card (slight delay so user sees toast)
-  setTimeout(() => router.refresh(), 800);
+      const res = await createEsportsTeam({ eventId, captainId: userId, name: teamName.trim() });
+      if (!res.ok) { toast.error(res.error); return; }
+      setTeamIdCreated(res.data.teamId);
+      toast.success("Team created. Share the code with members.");
+      setTimeout(() => router.refresh(), 800);
     });
   }
 
   async function handleLookup(code: string) {
     const trimmed = code.trim();
     if (!trimmed) { setLookupResult(null); return; }
-    // Only lookup on full UUID length (>= 8 maybe partial) -> require full length to reduce leakage
     if (trimmed.length < 8) { setLookupResult(null); return; }
+    
     setLookupLoading(true);
     const res = await getEsportsTeam(trimmed);
     setLookupLoading(false);
-    if (!res.ok) { setLookupResult(null); setIsFull(false); return; }
-    setLookupResult({ id: res.data.id, name: res.data.name });
-    // Client hint: check capacity to inform user early (non-authoritative; server will enforce)
-    try {
-      const supabase = getServiceClient();
-      const teamId = res.data.id;
-      const { data: evtRow } = await supabase.from("Events").select("id, max_team_size").eq("id", res.data.eventId).maybeSingle();
-      const maxSize = (evtRow as { max_team_size?: number | null } | null)?.max_team_size ?? null;
-      if (typeof maxSize === 'number' && maxSize > 0) {
-        const { count } = await supabase.from("Team_members").select("id", { count: 'exact', head: true }).eq("teamId", teamId);
-        const currentMembers = typeof count === 'number' ? count : 0;
-        const totalWithCaptain = currentMembers + 1;
-        setIsFull(totalWithCaptain >= maxSize);
-      } else {
-        setIsFull(false);
-      }
-    } catch {
-      setIsFull(false);
+    
+    if (!res.ok) { 
+      setLookupResult(null); 
+      setIsFull(false); 
+      return; 
     }
+    
+    setLookupResult({ id: res.data.id, name: res.data.name });
+    setIsFull(false); // Server Action handles capacity validation on Join
   }
 
   async function handleJoin(e: React.FormEvent) {
@@ -70,12 +60,11 @@ export default function EsportsTeamRegistration({ eventId, userId }: Props) {
     if (!joinCode.trim()) { toast.error("Enter code"); return; }
     if (isFull) { toast.error("Team is full"); return; }
     startJoin(async () => {
-  const res = await joinEsportsTeam({ teamId: joinCode.trim(), userId });
-  if (!res.ok) { toast.error(res.error); return; }
-  toast.success("Joined team successfully");
-  setLookupResult(null);
-  // Trigger refresh so the team info card appears
-  setTimeout(() => router.refresh(), 600);
+      const res = await joinEsportsTeam({ teamId: joinCode.trim(), userId });
+      if (!res.ok) { toast.error(res.error); return; }
+      toast.success("Joined team successfully");
+      setLookupResult(null);
+      setTimeout(() => router.refresh(), 600);
     });
   }
 
